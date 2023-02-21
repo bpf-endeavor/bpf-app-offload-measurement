@@ -35,12 +35,13 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
+	/* INFO("%s\n", buf); */
 	value = *((int *)buf); /* read 4 bytes of message */
 	for (int i = 0; i < instructions; i++) {
 		value = value * 2;
 	}
 	*((int *)buf) = value;
-	return 1;
+	return 0;
 }
 
 int main(int argc, char *argv[])
