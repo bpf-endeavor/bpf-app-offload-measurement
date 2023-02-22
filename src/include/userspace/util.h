@@ -1,5 +1,6 @@
 #ifndef _UTIL_H
 #define _UTIL_H
+#include <sys/time.h>
 #include <string.h>
 #include <pthread.h>
 

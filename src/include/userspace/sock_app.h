@@ -119,7 +119,7 @@ static int set_client_sock_opt(int fd)
 
 void *worker_entry(void *_arg)
 {
-	INFO("Worker started\n");
+	INFO("Worker started (pid = %d)\n", getpid());
 	int ret, i, j;
 	struct worker_arg *arg = _arg;
 	int compress_array = 0;

@@ -8,6 +8,7 @@ struct client_ctx { };
 
 #include "userspace/log.h"
 #include "userspace/sock_app.h"
+#include "userspace/util.h"
 
 #define RECV(fd, buf, size, flag)  {                  \
 	ret = recv(fd, buf, size, flag);              \
@@ -23,6 +24,10 @@ struct client_ctx { };
 }
 
 
+static double last_ts;
+static long long int sent;
+
+
 /* Handle a socket message
  * Return value:
  *     0: Keep connection open for more data.
@@ -30,17 +35,31 @@ struct client_ctx { };
  * */
 int handle_client(int client_fd, struct client_ctx *ctx)
 {
-	int ret, value;
+	int ret, len, value, i;
 	char buf[BUFSIZE];
+	double now;
+	double diff;
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
 	/* INFO("%s\n", buf); */
 	value = *((int *)buf); /* read 4 bytes of message */
-	for (int i = 0; i < instructions; i++) {
-		value = value * 2;
+	for (i = 0; i < instructions; i++) {
+		value += ((unsigned char *)buf)[i % len];
 	}
 	*((int *)buf) = value;
+	sent++;
+
+	now = get_time();
+	diff = now - last_ts;
+	if (diff > 2) {
+		printf("i = %d, %d\n", i, value);
+		printf("Throughput: %d\n", (int)(sent / diff));
+		last_ts = now;
+		sent = 0;
+	}
 	return 0;
 }
 
