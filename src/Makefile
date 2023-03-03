@@ -7,6 +7,7 @@ CFLAGS = -g -O2 -Wall -Werror
 OUTPUT_DIR = ./build/
 # BPF programs are in this dir
 OUTPUT_DIR_BPF = ./build/bpf/
+OUTPUT_DIR_BPF_LL = ./build/bpf/ll/
 
 # Loader:
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
@@ -36,6 +37,7 @@ clean:
 check_output_dir:
 	@if [ ! -d ${OUTPUT_DIR} ]; then  mkdir -p ${OUTPUT_DIR} ; fi
 	@if [ ! -d ${OUTPUT_DIR_BPF} ]; then  mkdir -p ${OUTPUT_DIR_BPF} ; fi
+	@if [ ! -d ${OUTPUT_DIR_BPF_LL} ]; then  mkdir -p ${OUTPUT_DIR_BPF_LL} ; fi
 
 
 ${OUTPUT_DIR}/server: ${SERVER_FILES}
@@ -45,6 +47,7 @@ ${OUTPUT_DIR}/loader: ${LOADER_FILES}
 	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@
 
 $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
+	LL_FILE=${OUTPUT_DIR_BPF_LL}/$(notdir $@); \
 	$(CC) ${INCLUDES} \
 		-target bpf \
 		-S \
@@ -55,5 +58,8 @@ $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 		-Wall -Werror \
 		-Wno-unused-value -Wno-pointer-sign \
 		-Wno-compare-distinct-pointer-types \
-		-O2 -g -emit-llvm -c $< -o - | \
-		$(LLC) -mcpu=v3 -march=bpf -filetype=obj -o "$@" -
+		-O2 -g -emit-llvm -c $< -o $$LL_FILE; \
+		$(LLC) -mcpu=v3 -march=bpf -filetype=obj -o "$@" $$LL_FILE;
+
+
+
