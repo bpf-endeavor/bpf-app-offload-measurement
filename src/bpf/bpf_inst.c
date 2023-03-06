@@ -10,8 +10,6 @@ struct connection_state {};
 
 #include "my_bpf/sockops.h"
 
-#define MAX_INST_COUNT 1000
-
 /* TODO: this struct is duplicated in the loader. If you are changing this also
  * update that! */
 struct arg {
@@ -34,17 +32,50 @@ int parser(struct __sk_buff *skb)
 }
 
 
+struct loop_context {
+	int value;
+	void *data_end;
+	char *ptr;
+	__u16 len;
+	__u32 index;
+};
+
+/* NOTE: Farbod: I like this type of defining loops :). It does solve some
+ * issues!
+ * */
+/*
+ * Return: 0 -> continue the loop
+ *         1 -> break from the loop
+ * */
+static long inst_loop(__u32 i, void *_ctx)
+{
+	struct loop_context *ctx = _ctx;
+	/* __u32 index = i % ctx->len; */
+
+	if (((void *)ctx->ptr + ctx->index + 1) > ctx->data_end) {
+		bpf_printk("Trying to access out of packet");
+		return SK_DROP;
+	} else {
+		ctx->value += ctx->ptr[ctx->index];
+	}
+
+	/* TODO: I want to use (i % index) but it seems clang generates a code
+	 * which kernel can not verify. So I emulate the effect.
+	 * */
+	ctx->index = ctx->index == ctx->len - 1 ? 0 : ctx->index + 1;
+
+	return 0;
+}
+
 SEC("sk_skb/stream_verdict")
 int verdict_inst_bench(struct __sk_buff *skb)
 {
-	bpf_printk("hello from verdict!");
-
 	void *data, *data_end;
 	char *ptr;
-	__u16 len;
-	__u16 i, index;
+	__u32 len;
 	int value;
 	struct arg *arg;
+	struct sock_context *sock_ctx;
 
 	/* Pull message data so that we can access it */
 	if (bpf_skb_pull_data(skb, skb->len) != 0) {
@@ -63,45 +94,37 @@ int verdict_inst_bench(struct __sk_buff *skb)
 	if (!arg) {
 		return SK_DROP;
 	}
-	if (arg->inst_count > MAX_INST_COUNT) {
-		/* The preconditions have been violated */
-		bpf_printk("The argument is asking more instructions than hard coded upper bound! change the hard coded value!");
-		return SK_DROP;
-	}
 
 	/* Benchmark logic */
 	if ((void *)(ptr + sizeof(int)) > data_end) {
 		bpf_printk("Packet is smaller than 4 bytes (len: %d)", len);
 		return SK_DROP;
 	}
-	value = *(int *)ptr;
-	for (i = 0; i < MAX_INST_COUNT; i++) {
-		if (i > arg->inst_count) {
-			break;
-		}
-
-		/* index = (i % len) & 0x0fff; */
-		index = i;
-		if (((void *)ptr + index + 1) > data_end) {
-			bpf_printk("Trying to access out of packet");
-			return SK_DROP;
-		}
-		value += ptr[index];
-	}
+	struct loop_context loop_ctx = {
+		.value = *(int *)ptr,
+		.data_end = data_end,
+		.ptr = ptr,
+		.len = len,
+		.index = 0,
+	};
+	bpf_loop(arg->inst_count, inst_loop, &loop_ctx, 0);
 	if ((void *)ptr + sizeof(int) > data_end) {
 		bpf_printk("Packet is smaller than 4 bytes (2)");
 		return SK_DROP;
 	}
-	*(int *)ptr = value;
+	*(int *)ptr = loop_ctx.value;
 
-	if (value == 13) {
-		/* This if is for asking the compiler to not optimize the for
-		 * loop by removing it */
-		bpf_printk("i: %d  val: %d", i, value);
+	/* Send a reply */
+	if (skb->sk == NULL) {
+		bpf_printk("The socket reference is NULL");
+		return SK_DROP;
 	}
-
-	bpf_printk("goodbye");
-	return SK_DROP;
+	sock_ctx = bpf_sk_storage_get(&sock_ctx_map, skb->sk, NULL, 0);
+	if (!sock_ctx) {
+		bpf_printk("Failed to get socket context!");
+		return SK_DROP;
+	}
+	return bpf_sk_redirect_map(skb, &sock_map, sock_ctx->sock_map_index, 0);
 }
 
 char _license[] SEC("license") = "GPL";

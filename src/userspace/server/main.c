@@ -24,8 +24,8 @@ struct client_ctx { };
 }
 
 
-static double last_ts;
-static long long int sent;
+/* static double last_ts; */
+/* static long long int sent; */
 
 
 /* Handle a socket message
@@ -37,8 +37,8 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len, value, i;
 	char buf[BUFSIZE];
-	double now;
-	double diff;
+	/* double now; */
+	/* double diff; */
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
@@ -50,16 +50,21 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 		value += ((unsigned char *)buf)[i % len];
 	}
 	*((int *)buf) = value;
-	sent++;
 
-	now = get_time();
-	diff = now - last_ts;
-	if (diff > 2) {
-		printf("i = %d, %d\n", i, value);
-		printf("Throughput: %d\n", (int)(sent / diff));
-		last_ts = now;
-		sent = 0;
-	}
+	/* Report throughput */
+	/* sent++; */
+	/* now = get_time(); */
+	/* diff = now - last_ts; */
+	/* if (diff > 2) { */
+	/* 	printf("i = %d, %d\n", i, value); */
+	/* 	printf("Throughput: %d\n", (int)(sent / diff)); */
+	/* 	last_ts = now; */
+	/* 	sent = 0; */
+	/* } */
+
+	/* Send a reply */
+	ret = send(client_fd, buf, len, 0);
+
 	return 0;
 }
 

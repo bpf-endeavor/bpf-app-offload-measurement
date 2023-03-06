@@ -53,7 +53,18 @@ static int configure_bpf_benchmark(int map_fd)
 	struct arg {
 		int inst_count;
 	} arg;
-	arg.inst_count = 10;
+
+	/* Get arguments from user */
+	INFO("Arguments for bpf_inst benchmakr:\n");
+	INFO("insts (uint32): ");
+	fflush(stdout);
+	scanf("%d", &arg.inst_count);
+	INFO("--------------------------\n");
+	INFO("Summary:\n");
+	INFO("insts: %d\n", arg.inst_count);
+	INFO("\n");
+	/* arg.inst_count = 10; */
+
 	return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
 }
 
@@ -175,6 +186,8 @@ int main(int argc, char *argv[])
 	/* Wait for the user to SIGNAL the program */
 	signal(SIGINT, handle_int);
 	signal(SIGHUP, handle_int);
+	INFO("Ready!\n");
+	INFO("Hit Ctrl+C to \n");
 	while (running) {
 		sleep(3);
 	}
