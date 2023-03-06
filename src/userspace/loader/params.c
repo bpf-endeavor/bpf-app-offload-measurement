@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <getopt.h>
 #include "userspace/log.h"
 #include "params.h"
@@ -31,6 +32,11 @@ int parse_args(int argc, char *argv[])
 		{"port", required_argument, NULL, DEST_PORT},
 	};
 
+
+	/* Default values */
+	context.port = 8080;
+	context.bpf_bin = NULL;
+
 	while(1) {
 		ret = getopt_long(argc, argv, "", long_opts, NULL);
 		if (ret == -1)
@@ -43,6 +49,9 @@ int parse_args(int argc, char *argv[])
 				context.bpf_prog[count_prog] = optarg;
 				count_prog++;
 				break;
+			case DEST_PORT:
+				context.port = atoi(optarg);
+				break;
 			case HELP:
 				usage();
 				return 1;
@@ -53,5 +62,15 @@ int parse_args(int argc, char *argv[])
 		}
 	}
 	context.count_prog = count_prog;
+
+	if (context.bpf_bin == NULL) {
+		ERROR("Should define the path to the BPF binary (--bpf_bin)\n");
+		return 1;
+	}
+
+	if (count_prog < 1) {
+		ERROR("Should provided at least one program (--bpf_prog)\n");
+		return 1;
+	}
 	return 0;
 }

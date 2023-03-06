@@ -44,7 +44,7 @@ ${OUTPUT_DIR}/server: ${SERVER_FILES}
 	$(CC) ${SERVER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES}
-	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@
+	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lbpf
 
 $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 	LL_FILE=${OUTPUT_DIR_BPF_LL}/$(notdir $@); \
