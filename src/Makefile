@@ -44,7 +44,7 @@ ${OUTPUT_DIR}/server: ${SERVER_FILES}
 	$(CC) ${SERVER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES}
-	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lbpf
+	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz
 
 $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 	LL_FILE=${OUTPUT_DIR_BPF_LL}/$(notdir $@); \
@@ -60,6 +60,3 @@ $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 		-Wno-compare-distinct-pointer-types \
 		-O2 -g -emit-llvm -c $< -o $$LL_FILE; \
 		$(LLC) -mcpu=v3 -march=bpf -filetype=obj -o "$@" $$LL_FILE;
-
-
-

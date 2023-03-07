@@ -3,7 +3,10 @@ CURDIR = ${shell pwd}
 DEPS_DIR = ${CURDIR}/deps/
 $(info ${DEPS_DIR})
 
-make_project: build_libbpf
+make_project: build_libbpf benchmarks
+
+benchmarks:
+	$(MAKE) -C ./src/
 
 
 build_libbpf: ./libbpf/
