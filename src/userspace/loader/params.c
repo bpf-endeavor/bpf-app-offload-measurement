@@ -30,6 +30,8 @@ int parse_args(int argc, char *argv[])
 		{"bpf_bin", required_argument, NULL, BPF_BIN},
 		{"bpf_prog", required_argument, NULL, BPF_PROG},
 		{"port", required_argument, NULL, DEST_PORT},
+		/* End of option list ------------------- */
+		{NULL, 0, NULL, 0},
 	};
 
 
