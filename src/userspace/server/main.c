@@ -23,11 +23,6 @@ struct client_ctx { };
 	}                                             \
 }
 
-
-/* static double last_ts; */
-/* static long long int sent; */
-
-
 /* Handle a socket message
  * Return value:
  *     0: Keep connection open for more data.
@@ -37,8 +32,6 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len, value, i;
 	char buf[BUFSIZE];
-	/* double now; */
-	/* double diff; */
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
@@ -51,7 +44,11 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	}
 	*((int *)buf) = value;
 
-	/* Report throughput */
+	/* /1* Report throughput *1/ */
+	/* static double last_ts = 0; */
+	/* static long long int sent = 0; */
+	/* double now; */
+	/* double diff; */
 	/* sent++; */
 	/* now = get_time(); */
 	/* diff = now - last_ts; */
