@@ -97,6 +97,13 @@ int verdict_inst_bench(struct __sk_buff *skb)
 		return SK_DROP;
 	}
 
+	/* NOTE: The userspace receives arguments as a variable and does not need to
+	 * perform the look for each packet. Is this a fair comparison? 
+	 *
+	 * One solution could be to inject the argument values to the BPF
+	 * binary when the loader program is loading it to the kernel.
+	 * */
+
 	/* Benchmark logic */
 	if ((void *)(ptr + sizeof(int)) > data_end) {
 		bpf_printk("Packet is smaller than 4 bytes (len: %d)", len);
@@ -110,10 +117,6 @@ int verdict_inst_bench(struct __sk_buff *skb)
 		.index = 0,
 	};
 	bpf_loop(arg->inst_count, inst_loop, &loop_ctx, 0);
-	if ((void *)ptr + sizeof(int) > data_end) {
-		bpf_printk("Packet is smaller than 4 bytes (2)");
-		return SK_DROP;
-	}
 	*(int *)ptr = loop_ctx.value;
 
 	/* Mark end of request */
@@ -128,7 +131,10 @@ int verdict_inst_bench(struct __sk_buff *skb)
 	ptr[3] = '\r';
 	ptr[4] = '\n';
 
-	/* Send a reply */
+	/* NOTE: can I improve the eBPF environment by introducing a helper
+	 * that does not need passing the index of socket map when redirecting
+	 * on the same socket ? */
+	/* Send a reply: I need to know the index of this socket on the socket map! */
 	if (skb->sk == NULL) {
 		bpf_printk("The socket reference is NULL");
 		return SK_DROP;
