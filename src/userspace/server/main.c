@@ -23,6 +23,8 @@ struct client_ctx { };
 	}                                             \
 }
 
+#define ASCII_LETTER(val) ((val % 26) + 'a')
+
 /* Handle a socket message
  * Return value:
  *     0: Keep connection open for more data.
@@ -37,14 +39,17 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
 
-	/* INFO("%s\n", buf); */
-	value = *((int *)buf); /* read 4 bytes of message */
+	/* Initialize the value, read 4 bytes of message */
+	value = *((int *)buf);
 	for (i = 0; i < instructions; i++) {
 		value += ((unsigned char *)buf)[i % len];
 	}
-	*((int *)buf) = value;
+	/* Next line exists just so that the calculated value has been used
+	 * somewhere */
+	*(buf) = ASCII_LETTER(value);
 
-	/* Mark end of request */
+	/* Mark end of request, this is for notifying the client of end of the
+	 * message */
 	buf[len - 5] = 'E';
 	buf[len - 4] = 'N';
 	buf[len - 3] = 'D';
