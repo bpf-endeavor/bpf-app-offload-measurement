@@ -44,20 +44,27 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	}
 	*((int *)buf) = value;
 
-	/* /1* Report throughput *1/ */
-	/* static double last_ts = 0; */
-	/* static long long int sent = 0; */
-	/* double now; */
-	/* double diff; */
-	/* sent++; */
-	/* now = get_time(); */
-	/* diff = now - last_ts; */
-	/* if (diff > 2) { */
-	/* 	printf("i = %d, %d\n", i, value); */
-	/* 	printf("Throughput: %d\n", (int)(sent / diff)); */
-	/* 	last_ts = now; */
-	/* 	sent = 0; */
-	/* } */
+	/* Mark end of request */
+	buf[len - 5] = 'E';
+	buf[len - 4] = 'N';
+	buf[len - 3] = 'D';
+	buf[len - 2] = '\r';
+	buf[len - 1] = '\n';
+
+	/* Report throughput */
+	static double last_ts = 0;
+	static long long int sent = 0;
+	double now;
+	double diff;
+	sent++;
+	now = get_time();
+	diff = now - last_ts;
+	if (diff > 2) {
+		printf("i = %d, %d\n", i, value);
+		printf("Throughput: %d\n", (int)(sent / diff));
+		last_ts = now;
+		sent = 0;
+	}
 
 	/* Send a reply */
 	ret = send(client_fd, buf, len, 0);
