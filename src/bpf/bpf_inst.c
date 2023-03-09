@@ -10,6 +10,8 @@ struct connection_state {};
 
 #include "my_bpf/sockops.h"
 
+#define OFFSET_MASK 0x0fff
+
 /* TODO: this struct is duplicated in the loader. If you are changing this also
  * update that! */
 struct arg {
@@ -113,6 +115,18 @@ int verdict_inst_bench(struct __sk_buff *skb)
 		return SK_DROP;
 	}
 	*(int *)ptr = loop_ctx.value;
+
+	/* Mark end of request */
+	ptr = data + ((len - 5) & OFFSET_MASK);
+	if ((void *)ptr < data || (void *)ptr + 5 > data_end) {
+		bpf_printk("Packet is less than 5 bytes ??\n");
+		return SK_DROP;
+	}
+	ptr[0] = 'E';
+	ptr[1] = 'N';
+	ptr[2] = 'D';
+	ptr[3] = '\r';
+	ptr[4] = '\n';
 
 	/* Send a reply */
 	if (skb->sk == NULL) {
