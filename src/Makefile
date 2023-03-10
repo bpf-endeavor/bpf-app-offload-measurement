@@ -15,6 +15,8 @@ LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 # Userspace Server
 SERVER_FILES = $(wildcard ./userspace/server/*.c) $(wildcard ./userspace/*.c)
 
+USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
+
 # BPF
 KERN_OBJECTS := bpf_inst.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
@@ -40,10 +42,10 @@ check_output_dir:
 	@if [ ! -d ${OUTPUT_DIR_BPF_LL} ]; then  mkdir -p ${OUTPUT_DIR_BPF_LL} ; fi
 
 
-${OUTPUT_DIR}/server: ${SERVER_FILES}
+${OUTPUT_DIR}/server: ${SERVER_FILES} ${USERSPACE_HEADERS}
 	$(CC) ${SERVER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread
 
-${OUTPUT_DIR}/loader: ${LOADER_FILES}
+${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}
 	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz
 
 $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)

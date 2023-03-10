@@ -35,7 +35,7 @@ int parser(struct __sk_buff *skb)
 
 
 struct loop_context {
-	int value;
+	unsigned int value;
 	void *data_end;
 	char *ptr;
 	__u16 len;
@@ -68,6 +68,8 @@ static long inst_loop(__u32 i, void *_ctx)
 
 	return 0;
 }
+
+#define ASCII_LETTER(val) ((val % 26) + 'a')
 
 SEC("sk_skb/stream_verdict")
 int verdict_inst_bench(struct __sk_buff *skb)
@@ -117,7 +119,7 @@ int verdict_inst_bench(struct __sk_buff *skb)
 		.index = 0,
 	};
 	bpf_loop(arg->inst_count, inst_loop, &loop_ctx, 0);
-	*(int *)ptr = loop_ctx.value;
+	*ptr = ASCII_LETTER(loop_ctx.value);
 
 	/* Mark end of request */
 	ptr = data + ((len - 5) & OFFSET_MASK);

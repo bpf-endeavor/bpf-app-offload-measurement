@@ -51,7 +51,8 @@ typedef int (*sock_handler_fn)(int fd, struct client_ctx *ctx);
 /* Define a socket application
  * */
 struct socket_app {
-	unsigned int core;
+	unsigned int core_listener;
+	unsigned int core_worker;
 	unsigned short port;
 	char *ip;
 	unsigned short count_workers;
@@ -62,6 +63,7 @@ struct socket_app {
  * the list of file descriptors.
  * */
 struct worker_arg {
+	int core;
 	struct pollfd *list;
 	int count_conn;
 	pthread_spinlock_t lock;
@@ -119,7 +121,6 @@ static int set_client_sock_opt(int fd)
 
 void *worker_entry(void *_arg)
 {
-	INFO("Worker started (pid = %d)\n", getpid());
 	int ret, i, j;
 	struct worker_arg *arg = _arg;
 	int compress_array = 0;
@@ -127,6 +128,8 @@ void *worker_entry(void *_arg)
 	int num_conn = arg->count_conn;
 	struct client_ctx cctx[MAX_CONN + 1];
 	long long int u;
+	set_core_affinity(arg->core);
+	INFO("Worker started (pid = %d) (core = %d)\n", getpid(), arg->core);
 	while (1) {
 		num_event = poll(arg->list, MAX_CONN, -1);
 		if (num_event < 0) {
@@ -182,12 +185,12 @@ void *worker_entry(void *_arg)
 			arg->count_conn = num_conn;
 		}
 		pthread_spin_unlock(&arg->lock);
-
 	}
 	return NULL;
 }
 
-struct worker_arg *launch_workers(sock_handler_fn handler)
+struct worker_arg *launch_workers(sock_handler_fn handler,
+		unsigned int core_worker)
 {
 	int ret;
 	int fd;
@@ -205,6 +208,7 @@ struct worker_arg *launch_workers(sock_handler_fn handler)
 	arg->list[0].events = POLLIN;
 	arg->count_conn = 1;
 	arg->sock_handler = handler;
+	arg->core = core_worker;
 
 	pthread_spin_init(&arg->lock, PTHREAD_PROCESS_PRIVATE);
 
@@ -227,11 +231,11 @@ int run_server(struct socket_app *app)
 	struct worker_arg *worker_context;
 	long long int u = 1;
 
-	if (set_core_affinity(app->core)) {
+	if (set_core_affinity(app->core_listener)) {
 		ERROR("Failed to set CPU core affinity!\n");
 		return 1;
 	}
-	INFO("Running on core %d\n", app->core);
+	INFO("Listener running on core %d\n", app->core_listener);
 
 	/* Prepare server listening socket */
 	sk_addr.sin_family = AF_INET;
@@ -259,7 +263,7 @@ int run_server(struct socket_app *app)
 	}
 
 	/* Start a worker thread */
-	worker_context = launch_workers(app->sock_handler);
+	worker_context = launch_workers(app->sock_handler, app->core_worker);
 	if (!worker_context) {
 		ERROR("Failed to launch a worker\n");
 		return 1;

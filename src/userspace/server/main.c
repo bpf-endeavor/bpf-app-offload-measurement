@@ -32,7 +32,8 @@ struct client_ctx { };
  * */
 int handle_client(int client_fd, struct client_ctx *ctx)
 {
-	int ret, len, value, i;
+	int ret, len, i;
+	unsigned int value;
 	char buf[BUFSIZE];
 
 	/* Receive message and check the return value */
@@ -87,7 +88,8 @@ int main(int argc, char *argv[])
 		INFO("usage: prog <core> <ip> <num insts>\n");
 		return 1;
 	}
-	app.core = atoi(argv[1]);
+	app.core_listener = 0;
+	app.core_worker = atoi(argv[1]);
 	app.port = 8080;
 	app.ip = argv[2];
 	app.count_workers = 1;
