@@ -131,7 +131,7 @@ void *worker_entry(void *_arg)
 	set_core_affinity(arg->core);
 	INFO("Worker started (pid = %d) (core = %d)\n", getpid(), arg->core);
 	while (1) {
-		num_event = poll(arg->list, MAX_CONN, -1);
+		num_event = poll(arg->list, num_conn, -1);
 		if (num_event < 0) {
 			ERROR("Polling failed! (%s)\n", strerror(errno));
 			pthread_exit((void *)1);
