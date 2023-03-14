@@ -80,7 +80,6 @@ int verdict(struct __sk_buff *skb)
 	__u32 len;
 	int value;
 	struct arg *arg;
-	struct sock_context *sock_ctx;
 
 	/* Pull message data so that we can access it */
 	if (bpf_skb_pull_data(skb, skb->len) != 0) {
@@ -131,37 +130,8 @@ int verdict(struct __sk_buff *skb)
 		bpf_printk("Failed to resize the packet");
 		return SK_DROP;
 	}
-	data = (void *)(long)skb->data;
-	data_end = (void *)(long)skb->data_end;
-	ptr = data;
-	len = arg->summary_size;
 
-	/* Mark end of request */
-	ptr = data + ((len - 5) & OFFSET_MASK);
-	if ((void *)ptr < data || (void *)ptr + 5 > data_end) {
-		bpf_printk("Packet is less than 5 bytes ??\n");
-		return SK_DROP;
-	}
-	ptr[0] = 'E';
-	ptr[1] = 'N';
-	ptr[2] = 'D';
-	ptr[3] = '\r';
-	ptr[4] = '\n';
-
-	/* NOTE: can I improve the eBPF environment by introducing a helper
-	 * that does not need passing the index of socket map when redirecting
-	 * on the same socket ? */
-	/* Send a reply: I need to know the index of this socket on the socket map! */
-	if (skb->sk == NULL) {
-		bpf_printk("The socket reference is NULL");
-		return SK_DROP;
-	}
-	sock_ctx = bpf_sk_storage_get(&sock_ctx_map, skb->sk, NULL, 0);
-	if (!sock_ctx) {
-		bpf_printk("Failed to get socket context!");
-		return SK_DROP;
-	}
-	return bpf_sk_redirect_map(skb, &sock_map, sock_ctx->sock_map_index, 0);
+	return SK_PASS;
 }
 
 char _license[] SEC("license") = "GPL";
