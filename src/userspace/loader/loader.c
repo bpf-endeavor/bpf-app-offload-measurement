@@ -1,8 +1,10 @@
+#define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -48,24 +50,47 @@ static int configure_connection_monitor(int map_fd)
 static int configure_bpf_benchmark(int map_fd)
 {
 	const int zero = 0;
+	char *file_name = basename(context.bpf_bin);
 	/* TODO: how am I going to support different benchmark arguments ? */
-	/* TODO: this struct should be same as the one in the BPF source code  */
-	struct arg {
-		int inst_count;
-	} arg;
+	if (strcmp(file_name, "bpf_inst.o") == 0) {
+		/* TODO: this struct should be same as the one in the BPF source code  */
+		struct arg {
+			int inst_count;
+		} arg;
 
-	/* Get arguments from user */
-	INFO("Arguments for bpf_inst benchmakr:\n");
-	INFO("insts (uint32): ");
-	fflush(stdout);
-	scanf("%d", &arg.inst_count);
-	INFO("--------------------------\n");
-	INFO("Summary:\n");
-	INFO("insts: %d\n", arg.inst_count);
-	INFO("\n");
-	/* arg.inst_count = 10; */
+		/* Get arguments from user */
+		INFO("Arguments for bpf_inst benchmakr:\n");
+		INFO("insts (uint32): ");
+		fflush(stdout);
+		scanf("%d", &arg.inst_count);
+		INFO("--------------------------\n");
+		INFO("Summary:\n");
+		INFO("insts: %d\n", arg.inst_count);
+		INFO("\n");
+		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
+	} else if (strcmp(file_name, "bpf_summarize.o") == 0) {
+		/* TODO: this struct should be same as the one in the BPF source code  */
+		struct arg {
+			int summary_size;
+			int inst_count;
+		} arg;
 
-	return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
+		/* Get arguments from user */
+		INFO("Arguments for bpf_inst benchmakr:\n");
+		INFO("insts (uint32): ");
+		fflush(stdout);
+		scanf("%d", &arg.inst_count);
+		INFO("summary size (uint32): ");
+		fflush(stdout);
+		scanf("%d", &arg.summary_size);
+		INFO("--------------------------\n");
+		INFO("Summary:\n");
+		INFO("insts: %d\n", arg.inst_count);
+		INFO("summary size: %d\n", arg.summary_size);
+		INFO("\n");
+		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
+	}
+	return -1;
 }
 
 int main(int argc, char *argv[])

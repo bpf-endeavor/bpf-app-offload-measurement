@@ -18,7 +18,7 @@ SERVER_FILES = $(wildcard ./userspace/server/*.c) $(wildcard ./userspace/*.c)
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 
 # BPF
-KERN_OBJECTS := bpf_inst.o
+KERN_OBJECTS := bpf_inst.o bpf_summarize.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
