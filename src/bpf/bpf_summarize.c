@@ -5,8 +5,11 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
 
-/* Put state of each socket in this struct */
-struct connection_state {};
+/* Put state of each socket in this struct (This will be used in sockops.h as
+ * part of per socket metadata) */
+struct connection_state {
+	__u16 parser_seeker;
+};
 
 #include "my_bpf/sockops.h"
 
@@ -27,13 +30,105 @@ struct {
 	__uint(max_entries, 1);
 } arg_map SEC(".maps");
 
+struct parser_loop_ctx {
+	char *ptr;
+	void *data_end;
+	int found;
+	int err;
+};
 
+static long parse_until_end_of_req(__u32 i, void *_ctx)
+{
+	struct parser_loop_ctx *ctx = _ctx;
+	char *ptr = ctx->ptr;
+	if ((void *)ptr + 3 > ctx->data_end) {
+		bpf_printk("Parser: index is out of range of packet");
+		ctx->err = 1;
+		// break;
+		return 1;
+	}
+	if (ptr[0] == 'E'
+	 && ptr[1] == 'N'
+	 && ptr[2] == 'D') {
+		ctx->found = 1;
+		// break;
+		return 1;
+	}
+	ctx->ptr = ctx->ptr + 1;
+	return 0;
+}
+
+/* This parser looks for the end of a request wich can span over multiple TCP
+ * packets segments.
+ *
+ * It is for testing if summarizing multiple packets into a single context
+ * switch would have any benfits.
+ * */
 SEC("sk_skb/stream_parser")
 int parser(struct __sk_buff *skb)
 {
-	return skb->len;
-}
 
+	void *data;
+	void *data_end;
+	struct parser_loop_ctx loop_ctx;
+	struct sock_context *sock_ctx;
+	__u16 head, len;
+
+	/* Pull message data so that we can access it */
+	if (bpf_skb_pull_data(skb, skb->len) != 0) {
+		bpf_printk("Parser: Failed to load message data\n");
+		return SK_DROP;
+	}
+
+	/* Load the socket context */
+	if (skb->sk == NULL) {
+		bpf_printk("Parser: The socket reference is NULL");
+		return SK_DROP;
+	}
+	sock_ctx = bpf_sk_storage_get(&sock_ctx_map, skb->sk, NULL, 0);
+	if (!sock_ctx) {
+		bpf_printk("Parser: Failed to get socket context!");
+		return SK_DROP;
+	}
+
+	data = (void *)(long)skb->data;
+	data_end = (void *)(long)skb->data_end;
+	head = sock_ctx->state.parser_seeker;
+	len = skb->len - head;
+
+	if (len  < 3) {
+		// Not enough data wait
+		return 0;
+	}
+
+	loop_ctx = (struct parser_loop_ctx) {
+		.ptr = data + (head & OFFSET_MASK),
+		.data_end = data_end,
+		.found = 0,
+		.err = 0,
+	};
+	bpf_printk("packet size: %d | head: %d", skb->len, head);
+	bpf_loop(len - 2, parse_until_end_of_req, &loop_ctx, 0);
+	bpf_printk("found: %d | err: %d", loop_ctx.found, loop_ctx.err);
+
+	if (loop_ctx.err) {
+		return SK_DROP;
+	}
+
+	if (loop_ctx.found) {
+		// clear the offset for the new request
+		sock_ctx->state.parser_seeker = 0;
+		bpf_printk("done", loop_ctx.found, loop_ctx.err);
+		return skb->len;
+	} else {
+		// remember the offset for the next iteration
+		sock_ctx->state.parser_seeker = ((long)loop_ctx.ptr - (long)data) + 2;
+	}
+
+	/* Wait for the rest of the request */
+	bpf_printk("wait for more!", loop_ctx.found, loop_ctx.err);
+	return 0;
+}
 
 struct loop_context {
 	unsigned int value;
@@ -56,8 +151,10 @@ static long inst_loop(__u32 i, void *_ctx)
 	/* __u32 index = i % ctx->len; */
 
 	if (((void *)ctx->ptr + ctx->index + 1) > ctx->data_end) {
+		/* TODO: set error flag in the context and return from the main
+		 * function */
 		bpf_printk("Trying to access out of packet");
-		return SK_DROP;
+		return 1;
 	} else {
 		ctx->value += ctx->ptr[ctx->index];
 	}
@@ -100,7 +197,7 @@ int verdict(struct __sk_buff *skb)
 	}
 
 	/* NOTE: The userspace receives arguments as a variable and does not need to
-	 * perform the look for each packet. Is this a fair comparison? 
+	 * perform the look for each packet. Is this a fair comparison?
 	 *
 	 * One solution could be to inject the argument values to the BPF
 	 * binary when the loader program is loading it to the kernel.
@@ -126,7 +223,7 @@ int verdict(struct __sk_buff *skb)
 		bpf_printk("Error: Summary size is larger than request size");
 		return SK_DROP;
 	}
-	if(bpf_skb_adjust_room(skb, arg->summary_size - len, 0, 0) < 0) {
+	if (bpf_skb_adjust_room(skb, arg->summary_size - len, 0, 0) < 0) {
 		bpf_printk("Failed to resize the packet");
 		return SK_DROP;
 	}
