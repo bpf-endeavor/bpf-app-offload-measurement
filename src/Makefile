@@ -13,9 +13,12 @@ OUTPUT_DIR_BPF_LL = ./build/bpf/ll/
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 
 # Userspace Server
-SERVER_FILES = $(wildcard ./userspace/server/*.c) $(wildcard ./userspace/*.c)
+SERVER_FILES = $(wildcard ./userspace/server/*.c)
+SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c)
 
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
+
+SERVER_BINS = ${OUTPUT_DIR}/main ${OUTPUT_DIR}/server_summarize
 
 # BPF
 KERN_OBJECTS := bpf_inst.o bpf_summarize.o
@@ -26,7 +29,7 @@ KERN_HEADERS = $(wildcard ./include/bpf/*.h) $(wildcard ./include/*.h)
 
 # $(info ${LOADER_FILES})
 
-OUTPUTS = ${OUTPUT_DIR}/server ${OUTPUT_DIR}/loader ${_KERN_OBJECTS}
+OUTPUTS = ${SERVER_BINS} ${OUTPUT_DIR}/loader ${_KERN_OBJECTS}
 
 
 .PHONY: all clean check_output_dir
@@ -42,8 +45,9 @@ check_output_dir:
 	@if [ ! -d ${OUTPUT_DIR_BPF_LL} ]; then  mkdir -p ${OUTPUT_DIR_BPF_LL} ; fi
 
 
-${OUTPUT_DIR}/server: ${SERVER_FILES} ${USERSPACE_HEADERS}
-	$(CC) ${SERVER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread
+${SERVER_BINS}: ${SERVER_FILES} ${SERVER_SHARED_C_FILES} ${USERSPACE_HEADERS}
+	MAIN=$$(basename $@); \
+	$(CC) ./userspace/server/$$MAIN.c ${SERVER_SHARED_C_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread;
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}
 	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz

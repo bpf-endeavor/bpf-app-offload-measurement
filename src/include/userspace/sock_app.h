@@ -43,6 +43,7 @@
 	list[i].fd = -1;                                  \
 	list[i].events = 0;                               \
 	compress_array = 1;                               \
+	cctx[i] = (struct client_ctx) {};                 \
 }
 
 struct client_ctx;
@@ -126,7 +127,7 @@ void *worker_entry(void *_arg)
 	int compress_array = 0;
 	int num_event;
 	int num_conn = arg->count_conn;
-	struct client_ctx cctx[MAX_CONN + 1];
+	struct client_ctx cctx[MAX_CONN + 1] = {};
 	long long int u;
 	set_core_affinity(arg->core);
 	INFO("Worker started (pid = %d) (core = %d)\n", getpid(), arg->core);
