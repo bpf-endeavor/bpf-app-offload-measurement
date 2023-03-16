@@ -107,9 +107,9 @@ int parser(struct __sk_buff *skb)
 		.found = 0,
 		.err = 0,
 	};
-	bpf_printk("packet size: %d | head: %d", skb->len, head);
+	/* bpf_printk("packet size: %d | head: %d", skb->len, head); */
 	bpf_loop(len - 2, parse_until_end_of_req, &loop_ctx, 0);
-	bpf_printk("found: %d | err: %d", loop_ctx.found, loop_ctx.err);
+	/* bpf_printk("found: %d | err: %d", loop_ctx.found, loop_ctx.err); */
 
 	if (loop_ctx.err) {
 		return SK_DROP;
@@ -118,7 +118,7 @@ int parser(struct __sk_buff *skb)
 	if (loop_ctx.found) {
 		// clear the offset for the new request
 		sock_ctx->state.parser_seeker = 0;
-		bpf_printk("done", loop_ctx.found, loop_ctx.err);
+		/* bpf_printk("done", loop_ctx.found, loop_ctx.err); */
 		return skb->len;
 	} else {
 		// remember the offset for the next iteration
@@ -126,7 +126,7 @@ int parser(struct __sk_buff *skb)
 	}
 
 	/* Wait for the rest of the request */
-	bpf_printk("wait for more!", loop_ctx.found, loop_ctx.err);
+	/* bpf_printk("wait for more!", loop_ctx.found, loop_ctx.err); */
 	return 0;
 }
 
@@ -223,9 +223,20 @@ int verdict(struct __sk_buff *skb)
 		bpf_printk("Error: Summary size is larger than request size");
 		return SK_DROP;
 	}
-	if (bpf_skb_adjust_room(skb, arg->summary_size - len, 0, 0) < 0) {
-		bpf_printk("Failed to resize the packet");
+
+	int len_delta = -(arg->summary_size - len);
+	int to_shrink = len_delta > 0xfff ? 0xfff : len_delta;
+	len_delta -= to_shrink;
+	if (bpf_skb_adjust_room(skb, -to_shrink, 0, BPF_ADJ_ROOM_NET) < 0) {
+		bpf_printk("Failed to resize the packet (delta: %d)", to_shrink);
 		return SK_DROP;
+	}
+	if (len_delta > 0) {
+		// Farbod: Assuming it would be done in two attempts at most!
+		if (bpf_skb_adjust_room(skb, -len_delta, 0, BPF_ADJ_ROOM_NET) < 0) {
+			bpf_printk("Failed to resize the packet at second attempt (delta: %d)", len_delta);
+			return SK_DROP;
+		}
 	}
 
 	return SK_PASS;
