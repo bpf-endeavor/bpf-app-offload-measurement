@@ -220,10 +220,12 @@ int verdict(struct __sk_buff *skb)
 
 	/* Summarize the request */
 	if (arg->summary_size > len) {
-		bpf_printk("Error: Summary size is larger than request size");
-		return SK_DROP;
+		/* There is nothing to summarize */
+		return SK_PASS;
 	}
 
+	/* Farbod: This is ridiculous!! bpf_skb_adj_room has limit of maximum
+	 * 0xfff length change but I can call it twice for more changes! */
 	int len_delta = -(arg->summary_size - len);
 	int to_shrink = len_delta > 0xfff ? 0xfff : len_delta;
 	len_delta -= to_shrink;
