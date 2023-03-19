@@ -13,12 +13,12 @@ OUTPUT_DIR_BPF_LL = ./build/bpf/ll/
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 
 # Userspace Server
-SERVER_FILES = $(wildcard ./userspace/server/*.c)
+# SERVER_FILES = $(wildcard ./userspace/server/*.c)
 SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c)
-
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
-
-SERVER_BINS = ${OUTPUT_DIR}/main ${OUTPUT_DIR}/server_summarize
+# The server binaries that should be built
+SERVER_BINS = ${OUTPUT_DIR}/server_inst \
+			  ${OUTPUT_DIR}/server_summarize
 
 # BPF
 KERN_OBJECTS := bpf_inst.o bpf_summarize.o
@@ -27,8 +27,7 @@ _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 KERN_DIR = ./bpf/
 KERN_HEADERS = $(wildcard ./include/bpf/*.h) $(wildcard ./include/*.h)
 
-# $(info ${LOADER_FILES})
-
+# All the binary object that should be created
 OUTPUTS = ${SERVER_BINS} ${OUTPUT_DIR}/loader ${_KERN_OBJECTS}
 
 
@@ -46,7 +45,7 @@ check_output_dir:
 
 
 ${SERVER_BINS}: ${SERVER_FILES} ${SERVER_SHARED_C_FILES} ${USERSPACE_HEADERS}
-	MAIN=$$(basename $@); \
+	@MAIN=$$(basename $@); \
 	$(CC) ./userspace/server/$$MAIN.c ${SERVER_SHARED_C_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread;
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}
