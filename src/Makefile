@@ -13,7 +13,7 @@ OUTPUT_DIR_BPF_LL = ./build/bpf/ll/
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 
 # Userspace Server
-# SERVER_FILES = $(wildcard ./userspace/server/*.c)
+SERVER_FILES = $(wildcard ./userspace/server/*.c)
 SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c)
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 # The server binaries that should be built

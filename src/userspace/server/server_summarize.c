@@ -74,7 +74,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	*(buf) = ASCII_LETTER(value);
 
 	/* Prepare the response (END is need for notifying end of response) */
-	strcpy(buf, "Done,END\r\n");
+	strcpy(buf, "Done,END\r\n\0");
 
 	/* /1* Report throughput *1/ */
 	/* static double last_ts = 0; */
@@ -92,7 +92,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	/* } */
 
 	/* Send a reply */
-	ret = send(client_fd, buf, len, 0);
+	ret = send(client_fd, buf, sizeof("Done,END\r\n"), 0);
 
 	return 0;
 }
