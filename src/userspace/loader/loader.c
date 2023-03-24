@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 	map_obj = bpf_object__find_map_by_name(bpfobj, BENCHMARK_ARG_MAP_NAME);
 	if (!map_obj) {
 		ERROR("Failed to find the benchmark specific argument map\n");
-		goto unload;
+		goto ignore_arg_map;
 	}
 	map_fd = bpf_map__fd(map_obj);
 	ret = configure_bpf_benchmark(map_fd);
@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 		goto unload;
 	}
 
+ignore_arg_map:
 	/* Get sock_map for attaching programs */
 	map_obj = bpf_object__find_map_by_name(bpfobj, SOCK_MAP_NAME);
 	if (!map_obj) {

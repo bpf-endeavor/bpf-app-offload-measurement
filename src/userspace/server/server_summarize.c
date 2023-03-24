@@ -42,7 +42,11 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
+	/* RECV(client_fd, buf, BUFSIZE - 1, 0); */
 	len = ret;
+	/* buf[len] = '\0'; */
+
+	/* printf("%s\n", buf); */
 
 	if (ctx->old) {
 		/* Load the previousely calculated value */
