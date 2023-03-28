@@ -42,11 +42,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
-	/* RECV(client_fd, buf, BUFSIZE - 1, 0); */
 	len = ret;
-	/* buf[len] = '\0'; */
-
-	/* printf("%s\n", buf); */
 
 	if (ctx->old) {
 		/* Load the previousely calculated value */
@@ -79,21 +75,6 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 	/* Prepare the response (END is need for notifying end of response) */
 	strcpy(buf, "Done,END\r\n\0");
-
-	/* /1* Report throughput *1/ */
-	/* static double last_ts = 0; */
-	/* static long long int sent = 0; */
-	/* double now; */
-	/* double diff; */
-	/* sent++; */
-	/* now = get_time(); */
-	/* diff = now - last_ts; */
-	/* if (diff > 2) { */
-	/* 	printf("i = %d, %d\n", i, value); */
-	/* 	printf("Throughput: %d\n", (int)(sent / diff)); */
-	/* 	last_ts = now; */
-	/* 	sent = 0; */
-	/* } */
 
 	/* Send a reply */
 	ret = send(client_fd, buf, sizeof("Done,END\r\n"), 0);

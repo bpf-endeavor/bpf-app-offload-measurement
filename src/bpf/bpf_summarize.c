@@ -7,9 +7,7 @@
 
 /* Put state of each socket in this struct (This will be used in sockops.h as
  * part of per socket metadata) */
-struct connection_state {
-	/* __u16 parser_seeker; */
-};
+struct connection_state { };
 
 #include "my_bpf/sockops.h"
 
@@ -24,39 +22,10 @@ struct arg {
 
 struct {
 	__uint(type,  BPF_MAP_TYPE_ARRAY);
-	/* __uint(map_flags, BPF_F_MMAPABLE); */
 	__type(key,   __u32);
 	__type(value, struct arg);
 	__uint(max_entries, 1);
 } arg_map SEC(".maps");
-
-/* struct parser_loop_ctx { */
-/* 	char *ptr; */
-/* 	void *data_end; */
-/* 	int found; */
-/* 	int err; */
-/* }; */
-
-/* static long parse_until_end_of_req(__u32 i, void *_ctx) */
-/* { */
-/* 	struct parser_loop_ctx *ctx = _ctx; */
-/* 	char *ptr = ctx->ptr; */
-/* 	if ((void *)ptr + 3 > ctx->data_end) { */
-/* 		bpf_printk("Parser: index is out of range of packet"); */
-/* 		ctx->err = 1; */
-/* 		// break; */
-/* 		return 1; */
-/* 	} */
-/* 	if (ptr[0] == 'E' */
-/* 	 && ptr[1] == 'N' */
-/* 	 && ptr[2] == 'D') { */
-/* 		ctx->found = 1; */
-/* 		// break; */
-/* 		return 1; */
-/* 	} */
-/* 	ctx->ptr = ctx->ptr + 1; */
-/* 	return 0; */
-/* } */
 
 /* This parser looks for the end of a request wich can span over multiple TCP
  * packets segments.
@@ -70,9 +39,6 @@ int parser(struct __sk_buff *skb)
 
 	void *data;
 	void *data_end;
-	/* struct parser_loop_ctx loop_ctx; */
-	/* struct sock_context *sock_ctx; */
-	/* __u16 head; */
 	__u16 len;
 
 	/* Pull message data so that we can access it */
@@ -81,21 +47,8 @@ int parser(struct __sk_buff *skb)
 		return 0;
 	}
 
-	/* /1* Load the socket context *1/ */
-	/* if (skb->sk == NULL) { */
-	/* 	bpf_printk("Parser: The socket reference is NULL"); */
-	/* 	return SK_DROP; */
-	/* } */
-	/* sock_ctx = bpf_sk_storage_get(&sock_ctx_map, skb->sk, NULL, 0); */
-	/* if (!sock_ctx) { */
-	/* 	bpf_printk("Parser: Failed to get socket context!"); */
-	/* 	return SK_DROP; */
-	/* } */
-
 	data = (void *)(long)skb->data;
 	data_end = (void *)(long)skb->data_end;
-	/* head = sock_ctx->state.parser_seeker; */
-	/* len = skb->len - head; */
 	len = skb->len;
 
 	char *ptr = data + ((len - 3) & 0x7fff);
@@ -108,34 +61,9 @@ int parser(struct __sk_buff *skb)
 		/* Found the end of request */
 		return skb->len;
 	}
-	bpf_printk("@%d\n%s", (long)ptr - (long)data, ptr);
-
-	/* loop_ctx = (struct parser_loop_ctx) { */
-	/* 	.ptr = data + (head & OFFSET_MASK), */
-	/* 	.data_end = data_end, */
-	/* 	.found = 0, */
-	/* 	.err = 0, */
-	/* }; */
-	/* /1* bpf_printk("packet size: %d | head: %d", skb->len, head); *1/ */
-	/* bpf_loop(len - 2, parse_until_end_of_req, &loop_ctx, 0); */
-	/* /1* bpf_printk("found: %d | err: %d", loop_ctx.found, loop_ctx.err); *1/ */
-
-	/* if (loop_ctx.err) { */
-	/* 	return SK_DROP; */
-	/* } */
-
-	/* if (loop_ctx.found) { */
-	/* 	// clear the offset for the new request */
-	/* 	sock_ctx->state.parser_seeker = 0; */
-	/* 	/1* bpf_printk("done", loop_ctx.found, loop_ctx.err); *1/ */
-	/* 	return skb->len; */
-	/* } else { */
-	/* 	// remember the offset for the next iteration */
-	/* 	sock_ctx->state.parser_seeker = ((long)loop_ctx.ptr - (long)data) + 2; */
-	/* } */
+	/* bpf_printk("@%d\n%s", (long)ptr - (long)data, ptr); */
 
 	/* Wait for the rest of the request */
-	/* bpf_printk("wait for more!"); */
 	return 0;
 }
 
@@ -157,7 +85,6 @@ struct loop_context {
 static long inst_loop(__u32 i, void *_ctx)
 {
 	struct loop_context *ctx = _ctx;
-	/* __u32 index = i % ctx->len; */
 
 	if (((void *)ctx->ptr + ctx->index + 1) > ctx->data_end) {
 		/* TODO: set error flag in the context and return from the main
