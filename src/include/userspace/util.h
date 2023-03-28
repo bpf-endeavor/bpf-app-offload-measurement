@@ -14,7 +14,6 @@ unsigned int fnv_hash(const unsigned char *message, unsigned short length,
 {
 	unsigned short off;
 	*hash = FNV_OFFSET_BASIS_32;
-	#pragma clang loop unroll(disable)
 	for (off = 0; off < length; off++) {
 		*hash ^= message[off];
 		*hash *= FNV_PRIME_32;

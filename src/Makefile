@@ -18,7 +18,8 @@ SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c)
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 # The server binaries that should be built
 SERVER_BINS = ${OUTPUT_DIR}/server_inst \
-			  ${OUTPUT_DIR}/server_summarize
+			  ${OUTPUT_DIR}/server_summarize \
+			  ${OUTPUT_DIR}/server_lookup
 
 # BPF
 KERN_OBJECTS := bpf_inst.o bpf_summarize.o bpf_test.o

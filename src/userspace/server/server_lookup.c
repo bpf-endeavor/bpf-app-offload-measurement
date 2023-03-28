@@ -1,0 +1,127 @@
+#define _GNU_SOURCE
+
+/* If a value should be shared across multiple message of a socket place it in
+ * this struct */
+struct client_ctx {
+	int old;
+	int req_type;
+	unsigned int remaining_req_length;
+	unsigned int hash;
+};
+
+struct request {
+	int req_type;
+	unsigned int payload_length;
+} __attribute__((__packed__));
+
+#include "userspace/log.h"
+#include "userspace/sock_app.h"
+#include "userspace/util.h"
+
+#define RECV(fd, buf, size, flag)  {                  \
+	ret = recv(fd, buf, size, flag);              \
+	if (ret == 0)                                 \
+		return 1;                             \
+	if (ret < 0) {                                \
+		if (errno != EWOULDBLOCK) {           \
+			/* all message was received and connection is closed */ \
+			return 1;                     \
+		}                                     \
+		return 0;                             \
+	}                                             \
+}
+
+#define ASCII_LETTER(val) ((val % 26) + 'a')
+
+/* Handle a socket message
+ * Return value:
+ *     0: Keep connection open for more data.
+ *     1: Close the conneection.
+ * */
+int handle_client(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	unsigned int hash;
+	char buf[BUFSIZE];
+	unsigned char *message;
+	unsigned int message_length;
+
+	/* Receive message and check the return value */
+	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
+	if (ctx->old) {
+		/* Load the previousely calculated value */
+		hash = ctx->hash;
+		message = (unsigned char *)buf;
+		message_length = len;
+	} else {
+		/* Initialize the value, read 4 bytes of message */
+		struct request *req = (struct request *)buf;
+		ctx->old = 1;
+		ctx->req_type = req->req_type;
+		ctx->remaining_req_length = req->payload_length;
+		hash = FNV_OFFSET_BASIS_32;
+		message = (unsigned char *)(req + 1);
+		message_length = len - sizeof(struct request);
+	}
+
+	fnv_hash(message, message_length, &hash);
+
+	ctx->hash = hash;
+	ctx->remaining_req_length -= message_length;
+
+
+	if (ctx->remaining_req_length > 0) {
+		/* The request is not received completely yet */
+		return 0; /* Returning zero means keep connection open for more
+			     data */
+	} else if (ctx->remaining_req_length < 0) {
+		ERROR("Unexpected request length !!\n");
+		return 1;
+	}
+
+	/* Request has been received completely */
+
+	/* TODO: implement this part */
+	/* if (ctx->req_type == 1) { */
+	/* } else if (ctx->req_type == 2) { */
+	/* } else { */
+	/* 	ERROR("Unknown request type!!\n"); */
+	/* 	return 1; */
+	/* } */
+
+	/* Prepare the response (END is need for notifying end of response) */
+	strcpy(buf, "Done,END\r\n\0");
+
+	/* Send a reply */
+	ret = send(client_fd, buf, sizeof("Done,END\r\n"), 0);
+
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	int ret;
+	struct socket_app app;
+
+	/* parse args */
+	if (argc < 4) {
+		INFO("usage: prog <core> <ip> <num insts>\n");
+		return 1;
+	}
+	app.core_listener = 0;
+	app.core_worker = atoi(argv[1]);
+	app.port = 8080;
+	app.ip = argv[2];
+	app.count_workers = 1;
+	app.sock_handler = handle_client;
+
+	ret = run_server(&app);
+	if (ret != 0) {
+		ERROR("Failed to run server!\n");
+		return 1;
+	}
+
+	return 0;
+}
