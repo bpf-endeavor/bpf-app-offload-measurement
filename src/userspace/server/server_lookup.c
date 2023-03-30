@@ -64,12 +64,15 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 		hash = FNV_OFFSET_BASIS_32;
 		message = (unsigned char *)(req + 1);
 		message_length = len - sizeof(struct request);
+
+		/* INFO("New request: type: %d size: %d\n", ctx->req_type, ctx->remaining_req_length); */
 	}
 
 	fnv_hash(message, message_length, &hash);
 
 	ctx->hash = hash;
 	ctx->remaining_req_length -= message_length;
+	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
 
 
 	if (ctx->remaining_req_length > 0) {
@@ -82,6 +85,8 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	}
 
 	/* Request has been received completely */
+	/* INFO("END OF REQUEST\n"); */
+	ctx->old = 0;
 
 	/* TODO: implement this part */
 	/* if (ctx->req_type == 1) { */
@@ -92,10 +97,10 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	/* } */
 
 	/* Prepare the response (END is need for notifying end of response) */
-	strcpy(buf, "Done,END\r\n\0");
+	strcpy(buf, "Done,END\r\n");
 
 	/* Send a reply */
-	ret = send(client_fd, buf, sizeof("Done,END\r\n"), 0);
+	ret = send(client_fd, buf, sizeof("Done,END\r\n") - 1, 0);
 
 	return 0;
 }
@@ -106,8 +111,8 @@ int main(int argc, char *argv[])
 	struct socket_app app;
 
 	/* parse args */
-	if (argc < 4) {
-		INFO("usage: prog <core> <ip> <num insts>\n");
+	if (argc < 3) {
+		INFO("usage: prog <core> <ip>\n");
 		return 1;
 	}
 	app.core_listener = 0;
