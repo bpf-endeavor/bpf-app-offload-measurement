@@ -128,18 +128,34 @@ int verdict(struct __sk_buff *skb)
 		return 0;
 	}
 
-	__adjust_skb_size(skb, sizeof("Done,END\r\n") - 1);
+	if (sock_ctx->state.req_type == 1) {
+		__adjust_skb_size(skb, sizeof("Done,END\r\n") - 1);
+		data = (void *)(long)skb->data;
+		data_end = (void *)(long)skb->data_end;
 
-	data = (void *)(long)skb->data;
-	data_end = (void *)(long)skb->data_end;
+		/* Reply */
+		if (data + sizeof("done,END\r\n") - 1 > data_end) {
+			bpf_printk("Not enough space for writing reply");
+			return SK_DROP;
+		}
+		memcpy(data, "Done,END\r\n", sizeof("Done,END\r\n") - 1);
+		return bpf_sk_redirect_map(skb, &sock_map,
+				sock_ctx->sock_map_index, 0);
+	} else if (sock_ctx->state.req_type == 2) {
+		__adjust_skb_size(skb, sizeof(sock_ctx->state.hash));
+		data = (void *)(long)skb->data;
+		data_end = (void *)(long)skb->data_end;
 
-	/* Reply */
-	if (data + sizeof("done,END\r\n") - 1 > data_end) {
-		bpf_printk("Not enough space for writing reply");
-		return SK_DROP;
+		if ((void *)data + sizeof(sock_ctx->state.hash) > data_end) {
+			bpf_printk("Failed to copy hash value to the packet!");
+			return SK_DROP;
+		}
+		memcpy(data, &sock_ctx->state.hash, sizeof(sock_ctx->state.hash));
+		return SK_PASS;
 	}
-	memcpy(data, "Done,END\r\n", sizeof("Done,END\r\n") - 1);
-	return bpf_sk_redirect_map(skb, &sock_map, sock_ctx->sock_map_index, 0);
+
+	bpf_printk("Unknown request type");
+	return SK_DROP;
 }
 
 char _license[] SEC("license") = "GPL";

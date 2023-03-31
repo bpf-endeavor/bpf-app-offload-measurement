@@ -1,5 +1,10 @@
 #define _GNU_SOURCE
 
+enum {
+	FULL_USERSPACE = 0,
+	BPF_OFFLOAD = 1,
+} mode;
+
 /* If a value should be shared across multiple message of a socket place it in
  * this struct */
 struct client_ctx {
@@ -38,7 +43,7 @@ struct request {
  *     0: Keep connection open for more data.
  *     1: Close the conneection.
  * */
-int handle_client(int client_fd, struct client_ctx *ctx)
+int handle_client_full(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len;
 	unsigned int hash;
@@ -105,14 +110,37 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+int handle_client_bpf(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	unsigned int hash;
+	char buf[BUFSIZE];
+
+	/* Receive message and check the return value */
+	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
+	hash = *(unsigned int *)buf;
+
+	/* Prepare the response (END is need for notifying end of response) */
+	strcpy(buf, "Done,END\r\n");
+
+	/* Send a reply */
+	ret = send(client_fd, buf, sizeof("Done,END\r\n") - 1, 0);
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
 	struct socket_app app;
 
 	/* parse args */
-	if (argc < 3) {
-		INFO("usage: prog <core> <ip>\n");
+	if (argc < 4) {
+		INFO("usage: prog <core> <ip> <mode>\n"
+		"* mode: either 0 or 1.\n"
+		"  0: full userspace - 1: recieve hash from ebpf\n");
+
 		return 1;
 	}
 	app.core_listener = 0;
@@ -120,7 +148,14 @@ int main(int argc, char *argv[])
 	app.port = 8080;
 	app.ip = argv[2];
 	app.count_workers = 1;
-	app.sock_handler = handle_client;
+
+	mode = atoi(argv[3]);
+
+	if (mode == FULL_USERSPACE) {
+		app.sock_handler = handle_client_full;
+	} else {
+		app.sock_handler = handle_client_bpf;
+	}
 
 	ret = run_server(&app);
 	if (ret != 0) {
