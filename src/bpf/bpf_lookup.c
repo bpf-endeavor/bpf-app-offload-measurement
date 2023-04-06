@@ -8,7 +8,7 @@
 #include "my_bpf/hash_fn.h"
 #include "my_bpf/commons.h"
 
-#define NO_SUMMARY
+/* #define NO_SUMMARY */
 
 /* Put state of each socket in this struct (This will be used in sockops.h as
  * part of per socket metadata) */

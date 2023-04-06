@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-#define NO_SUMMARY
+/* #define NO_SUMMARY */
 
 enum {
 	FULL_USERSPACE = 0,
