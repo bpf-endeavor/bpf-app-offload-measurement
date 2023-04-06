@@ -30,7 +30,7 @@
 #include "userspace/log.h"
 
 #define MAX_CONN 1024
-#define BUFSIZE 1024
+#define BUFSIZE 2048
 
 #define ADD_SOCKET_TO_POLL_LIST(sd, list, index) {        \
 		list[index].fd = sd;                              \

@@ -8,6 +8,8 @@
 #include "my_bpf/hash_fn.h"
 #include "my_bpf/commons.h"
 
+#define NO_SUMMARY
+
 /* Put state of each socket in this struct (This will be used in sockops.h as
  * part of per socket metadata) */
 struct connection_state {
@@ -119,8 +121,13 @@ int verdict(struct __sk_buff *skb)
 		return SK_DROP;
 	}
 
-	if (!sock_ctx->state.ready)
+	if (!sock_ctx->state.ready) {
+#ifdef NO_SUMMARY
+		return SK_PASS;
+#else
 		return SK_DROP;
+#endif
+	}
 
 	/* Pull message data so that we can access it */
 	if (bpf_skb_pull_data(skb, skb->len) != 0) {
@@ -142,6 +149,9 @@ int verdict(struct __sk_buff *skb)
 		return bpf_sk_redirect_map(skb, &sock_map,
 				sock_ctx->sock_map_index, 0);
 	} else if (sock_ctx->state.req_type == 2) {
+#ifdef NO_SUMMARY
+		return SK_PASS;
+#else
 		__adjust_skb_size(skb, sizeof(sock_ctx->state.hash));
 		data = (void *)(long)skb->data;
 		data_end = (void *)(long)skb->data_end;
@@ -152,6 +162,7 @@ int verdict(struct __sk_buff *skb)
 		}
 		memcpy(data, &sock_ctx->state.hash, sizeof(sock_ctx->state.hash));
 		return SK_PASS;
+#endif
 	}
 
 	bpf_printk("Unknown request type");

@@ -13,7 +13,7 @@ unsigned int fnv_hash(const unsigned char *message, unsigned short length,
 		unsigned int *hash)
 {
 	unsigned short off;
-	*hash = FNV_OFFSET_BASIS_32;
+	/* *hash = FNV_OFFSET_BASIS_32; */
 	for (off = 0; off < length; off++) {
 		*hash ^= message[off];
 		*hash *= FNV_PRIME_32;

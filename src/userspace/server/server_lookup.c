@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 
+#define NO_SUMMARY
+
 enum {
 	FULL_USERSPACE = 0,
 	BPF_OFFLOAD = 1,
@@ -78,6 +80,7 @@ int handle_client_full(int client_fd, struct client_ctx *ctx)
 	ctx->hash = hash;
 	ctx->remaining_req_length -= message_length;
 	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
+	/* INFO("received: (remaining: %d)\n", ctx->remaining_req_length); */
 
 
 	if (ctx->remaining_req_length > 0) {
@@ -92,20 +95,36 @@ int handle_client_full(int client_fd, struct client_ctx *ctx)
 	/* Request has been received completely */
 	/* INFO("END OF REQUEST\n"); */
 	ctx->old = 0;
+	/* INFO("hash: %d\n", hash); */
 
 	/* TODO: implement this part */
-	/* if (ctx->req_type == 1) { */
-	/* } else if (ctx->req_type == 2) { */
-	/* } else { */
-	/* 	ERROR("Unknown request type!!\n"); */
-	/* 	return 1; */
-	/* } */
-
-	/* Prepare the response (END is need for notifying end of response) */
-	strcpy(buf, "Done,END\r\n");
+	if (ctx->req_type == 1) {
+		/* Prepare the response (END is need for notifying end of response) */
+		strcpy(buf, "Done,END\r\n");
+		message_length = sizeof("Done,END\r\n") - 1;
+	} else if (ctx->req_type == 2) {
+		int file_fd = open("./file.txt", O_RDONLY);
+		if (file_fd < 0) {
+			ERROR("Failed to open the file!\n");
+			return 1;
+		}
+		/* Assume read the file in one chunk */
+		ret = read(file_fd, buf, BUFSIZE);
+		close(file_fd);
+		if (ret == BUFSIZE) {
+			ERROR("Warning: File is probably larger than buffer!\n");
+		}
+		buf[ret] = '\0';
+		/* Prepare the response (END is need for notifying end of response) */
+		strcpy(buf + 8, "Done,END\r\n");
+		message_length = sizeof("Done,END\r\n") - 1 + 8;
+	} else {
+		ERROR("Unknown request type!!\n");
+		return 1;
+	}
 
 	/* Send a reply */
-	ret = send(client_fd, buf, sizeof("Done,END\r\n") - 1, 0);
+	ret = send(client_fd, buf, message_length, 0);
 
 	return 0;
 }
@@ -115,18 +134,64 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	int ret, len;
 	unsigned int hash;
 	char buf[BUFSIZE];
+	unsigned int message_length;
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
 
-	hash = *(unsigned int *)buf;
+#ifdef NO_SUMMARY
+	if (ctx->old) {
+		/* Load the previousely calculated value */
+		message_length = len;
+	} else {
+		/* Initialize the value, read 4 bytes of message */
+		struct request *req = (struct request *)buf;
+		ctx->old = 1;
+		ctx->remaining_req_length = req->payload_length;
+		message_length = len - sizeof(struct request);
 
+		/* INFO("New request: type: %d size: %d\n", ctx->req_type, ctx->remaining_req_length); */
+	}
+
+	ctx->remaining_req_length -= message_length;
+	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
+	/* INFO("received: (remaining: %d)\n", ctx->remaining_req_length); */
+
+
+	if (ctx->remaining_req_length > 0) {
+		/* The request is not received completely yet */
+		return 0; /* Returning zero means keep connection open for more
+			     data */
+	} else if (ctx->remaining_req_length < 0) {
+		ERROR("Unexpected request length !!\n");
+		return 1;
+	}
+	ctx->old = 0;
+#endif
+
+
+	hash = *(unsigned int *)buf;
+	/* INFO("hash: %d\n", hash); */
+
+	int file_fd = open("./file.txt", O_RDONLY);
+	if (file_fd < 0) {
+		ERROR("Failed to open the file!\n");
+		return 1;
+	}
+	/* Assume read the file in one chunk */
+	ret = read(file_fd, buf, BUFSIZE);
+	close(file_fd);
+	if (ret == BUFSIZE) {
+		ERROR("Warning: File is probably larger than buffer!\n");
+	}
+	buf[ret] = '\0';
 	/* Prepare the response (END is need for notifying end of response) */
-	strcpy(buf, "Done,END\r\n");
+	strcpy(buf + 8, "Done,END\r\n");
+	message_length = sizeof("Done,END\r\n") - 1 + 8;
 
 	/* Send a reply */
-	ret = send(client_fd, buf, sizeof("Done,END\r\n") - 1, 0);
+	ret = send(client_fd, buf, message_length, 0);
 	return 0;
 }
 
