@@ -2,11 +2,6 @@
 
 /* #define NO_SUMMARY */
 
-enum {
-	FULL_USERSPACE = 0,
-	BPF_OFFLOAD = 1,
-} mode;
-
 /* If a value should be shared across multiple message of a socket place it in
  * this struct */
 struct client_ctx {
@@ -15,14 +10,11 @@ struct client_ctx {
 	unsigned int remaining_req_length;
 	unsigned int hash;
 };
-
-struct request {
-	int req_type;
-	unsigned int payload_length;
-} __attribute__((__packed__));
+/* ---------------------- */
 
 #include "userspace/log.h"
 #include "userspace/sock_app.h"
+#include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
 #define RECV(fd, buf, size, flag)  {                  \
@@ -38,24 +30,60 @@ struct request {
 	}                                             \
 }
 
-#define ASCII_LETTER(val) ((val % 26) + 'a')
+enum {
+	FULL_USERSPACE = 0,
+	BPF_OFFLOAD = 1,
+	FULL_USERSPACE_UDP = 2,
+	BPF_MULTI_SHOT_UDP = 3,
+} mode;
 
-/* Handle a socket message
- * Return value:
- *     0: Keep connection open for more data.
- *     1: Close the conneection.
- * */
-int handle_client_full(int client_fd, struct client_ctx *ctx)
-{
-	int ret, len;
+struct request {
+	int req_type;
+	unsigned int payload_length;
+} __attribute__((__packed__));
+
+/* For multi-shot support */
+struct hash_package {
 	unsigned int hash;
-	char buf[BUFSIZE];
+} __attribute__((__packed__));
+
+struct multi_shot_package {
+	int count_package;
+	struct hash_package packages[0];
+}__attribute__((__packed__));
+
+static inline int prepare_type2_response(char *buf,
+		unsigned int *message_length)
+{
+	int ret;
+	int file_fd = open("./file.txt", O_RDONLY);
+	if (file_fd < 0) {
+		ERROR("Failed to open the file!\n");
+		return 1;
+	}
+	/* Assume read the file in one chunk */
+	ret = read(file_fd, buf, BUFSIZE);
+	close(file_fd);
+	if (ret == BUFSIZE) {
+		ERROR("Warning: File is probably larger than buffer!\n");
+		ret--;
+	}
+	buf[ret] = '\0';
+	/* Prepare the response (END is need for notifying end of response) */
+	strcpy(buf + 8, "Done,END\r\n");
+	*message_length = sizeof("Done,END\r\n") - 1 + 8;
+	return 0;
+}
+
+#define WAIT_FOR_MORE_DATE 101
+#define SEND_REPLY 200
+#define UNEXPECTED 500
+static inline int full_request_handle(struct client_ctx *ctx, char *buf,
+		unsigned int len, unsigned int *response_size)
+{
 	unsigned char *message;
 	unsigned int message_length;
-
-	/* Receive message and check the return value */
-	RECV(client_fd, buf, BUFSIZE, 0);
-	len = ret;
+	unsigned int hash;
 
 	if (ctx->old) {
 		/* Load the previousely calculated value */
@@ -79,17 +107,17 @@ int handle_client_full(int client_fd, struct client_ctx *ctx)
 
 	ctx->hash = hash;
 	ctx->remaining_req_length -= message_length;
+	message[message_length] = '\0';
 	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
 	/* INFO("received: (remaining: %d)\n", ctx->remaining_req_length); */
 
 
 	if (ctx->remaining_req_length > 0) {
 		/* The request is not received completely yet */
-		return 0; /* Returning zero means keep connection open for more
-			     data */
+		return WAIT_FOR_MORE_DATE;
 	} else if (ctx->remaining_req_length < 0) {
 		ERROR("Unexpected request length !!\n");
-		return 1;
+		return UNEXPECTED;
 	}
 
 	/* Request has been received completely */
@@ -101,30 +129,49 @@ int handle_client_full(int client_fd, struct client_ctx *ctx)
 	if (ctx->req_type == 1) {
 		/* Prepare the response (END is need for notifying end of response) */
 		strcpy(buf, "Done,END\r\n");
-		message_length = sizeof("Done,END\r\n") - 1;
+		*response_size = sizeof("Done,END\r\n") - 1;
 	} else if (ctx->req_type == 2) {
-		int file_fd = open("./file.txt", O_RDONLY);
-		if (file_fd < 0) {
-			ERROR("Failed to open the file!\n");
-			return 1;
-		}
-		/* Assume read the file in one chunk */
-		ret = read(file_fd, buf, BUFSIZE);
-		close(file_fd);
-		if (ret == BUFSIZE) {
-			ERROR("Warning: File is probably larger than buffer!\n");
-		}
-		buf[ret] = '\0';
-		/* Prepare the response (END is need for notifying end of response) */
-		strcpy(buf + 8, "Done,END\r\n");
-		message_length = sizeof("Done,END\r\n") - 1 + 8;
+		if (prepare_type2_response(buf, &message_length) != 0)
+			return UNEXPECTED;
 	} else {
 		ERROR("Unknown request type!!\n");
-		return 1;
+		return UNEXPECTED;
 	}
+	return SEND_REPLY;
+}
 
-	/* Send a reply */
-	ret = send(client_fd, buf, message_length, 0);
+/* Handle a socket message
+ * Return value:
+ *     0: Keep connection open for more data.
+ *     1: Close the conneection.
+ * */
+int handle_client_full(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	char buf[BUFSIZE];
+	unsigned int message_length;
+
+	/* Receive message and check the return value */
+	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
+	switch (full_request_handle(ctx, buf, len, &message_length)) {
+		case UNEXPECTED:
+			return 1;
+			break;
+		case WAIT_FOR_MORE_DATE:
+			return 0;
+			break;
+		case SEND_REPLY:
+			/* Send a reply */
+			ret = send(client_fd, buf, message_length, 0);
+			return 0;
+			break;
+		default:
+			ERROR("Unexpected return value from full_request_handle!\n");
+			return 1;
+			break;
+	}
 
 	return 0;
 }
@@ -159,7 +206,6 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
 	/* INFO("received: (remaining: %d)\n", ctx->remaining_req_length); */
 
-
 	if (ctx->remaining_req_length > 0) {
 		/* The request is not received completely yet */
 		return 0; /* Returning zero means keep connection open for more
@@ -174,25 +220,65 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	hash = *(unsigned int *)buf;
 	/* INFO("hash: %d\n", hash); */
 
-	int file_fd = open("./file.txt", O_RDONLY);
-	if (file_fd < 0) {
-		ERROR("Failed to open the file!\n");
-		return 1;
-	}
-	/* Assume read the file in one chunk */
-	ret = read(file_fd, buf, BUFSIZE);
-	close(file_fd);
-	if (ret == BUFSIZE) {
-		ERROR("Warning: File is probably larger than buffer!\n");
-	}
-	/* buf[ret] = '\0'; */
-	/* Prepare the response (END is need for notifying end of response) */
-	strcpy(buf + 8, "Done,END\r\n");
-	message_length = sizeof("Done,END\r\n") - 1 + 8;
-
 	/* Send a reply */
+	ret = prepare_type2_response(buf, &message_length);
+	if (ret != 0)
+		return 1;
 	ret = send(client_fd, buf, message_length, 0);
 	/* INFO("SEND\n"); */
+	return 0;
+}
+
+int handle_client_udp(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	char buf[BUFSIZE];
+	unsigned int message_length;
+
+	struct sockaddr_in client_addr;
+	socklen_t addr_len = sizeof(client_addr);
+
+	/* Receive message and check the return value */
+	ret = recvfrom(client_fd, buf, BUFSIZE, 0 /*udp_flags*/,
+			(struct sockaddr *)&client_addr, &addr_len);
+	if (ret == 0) {
+		ERROR("Receive no data!\n");
+		return 1;
+	}
+	if (ret < 0) {
+		if (errno != EWOULDBLOCK) {
+			ERROR("Recving failed! %s\n", strerror(errno));
+			return 1;
+		}
+		/* Would block continue polling */
+		return 0;
+	}
+	len = ret;
+
+	/* INFO("received data!\n"); */
+
+	switch (full_request_handle(ctx, buf, len, &message_length)) {
+		case UNEXPECTED:
+			ERROR("Handling request failed!\n");
+			return 1;
+			break;
+		case WAIT_FOR_MORE_DATE:
+			/* INFO("Wait\n"); */
+			return 0;
+			break;
+		case SEND_REPLY:
+			/* INFO("Reply\n"); */
+			/* Send a reply */
+			sendto(client_fd, buf, message_length, 0 /*flags*/,
+					(struct sockaddr *)&client_addr, addr_len);
+			return 0;
+			break;
+		default:
+			ERROR("Unexpected return value from full_request_handle!\n");
+			return 1;
+			break;
+	}
+
 	return 0;
 }
 
@@ -205,7 +291,11 @@ int main(int argc, char *argv[])
 	if (argc < 4) {
 		INFO("usage: prog <core> <ip> <mode>\n"
 		"* mode: either 0 or 1.\n"
-		"  0: full userspace - 1: recieve hash from ebpf\n");
+		"  0: full userspace\n"
+		"  1: recieve hash from ebpf\n"
+		"  2: full userspace (UDP)\n"
+		"  3: bpf multi-shot (UDP)\n"
+		);
 
 		return 1;
 	}
@@ -217,15 +307,32 @@ int main(int argc, char *argv[])
 
 	mode = atoi(argv[3]);
 
-	if (mode == FULL_USERSPACE) {
-		INFO("Mode: statndalone\n");
-		app.sock_handler = handle_client_full;
-	} else {
-		INFO("Mode: bpf+userspace\n");
-		app.sock_handler = handle_client_bpf;
+	int udp = 0;
+	switch (mode) {
+		case FULL_USERSPACE:
+			INFO("Mode: statndalone\n");
+			app.sock_handler = handle_client_full;
+			break;
+		case BPF_OFFLOAD:
+			INFO("Mode: bpf+userspace\n");
+			app.sock_handler = handle_client_bpf;
+			break;
+		case FULL_USERSPACE_UDP:
+			udp = 1;
+			app.sock_handler = handle_client_udp;
+			break;
+		case BPF_MULTI_SHOT_UDP:
+			ERROR("Not implemented!");
+		default:
+			ERROR("Unexpected value for application mode!\n");
+			return 1;
 	}
 
-	ret = run_server(&app);
+	if (!udp) {
+		ret = run_server(&app);
+	} else {
+		ret = run_udp_server(&app);
+	}
 	if (ret != 0) {
 		ERROR("Failed to run server!\n");
 		return 1;
