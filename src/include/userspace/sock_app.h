@@ -120,7 +120,7 @@ static int set_client_sock_opt(int fd)
 	return 0;
 }
 
-void *worker_entry(void *_arg)
+static void *worker_entry(void *_arg)
 {
 	int ret, i, j;
 	struct worker_arg *arg = _arg;
@@ -260,7 +260,7 @@ int run_server(struct socket_app *app)
 	/* TODO: may lunch multiple workers */
 	if (app->count_workers != 1) {
 		ERROR("Multy worker servers have not been implemented yet!\n");
-		return -1;
+		return 1;
 	}
 
 	/* Start a worker thread */
