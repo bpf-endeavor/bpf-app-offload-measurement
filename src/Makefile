@@ -46,7 +46,7 @@ check_output_dir:
 
 
 ${SERVER_BINS}: ${SERVER_FILES} ${SERVER_SHARED_C_FILES} ${USERSPACE_HEADERS}
-	@MAIN=$$(basename $@); \
+	MAIN=$$(basename $@); \
 	$(CC) ./userspace/server/$$MAIN.c ${SERVER_SHARED_C_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread;
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}

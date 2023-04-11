@@ -139,6 +139,7 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
+	/* INFO("HERE\n"); */
 
 #ifdef NO_SUMMARY
 	if (ctx->old) {
@@ -170,7 +171,6 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	ctx->old = 0;
 #endif
 
-
 	hash = *(unsigned int *)buf;
 	/* INFO("hash: %d\n", hash); */
 
@@ -185,13 +185,14 @@ int handle_client_bpf(int client_fd, struct client_ctx *ctx)
 	if (ret == BUFSIZE) {
 		ERROR("Warning: File is probably larger than buffer!\n");
 	}
-	buf[ret] = '\0';
+	/* buf[ret] = '\0'; */
 	/* Prepare the response (END is need for notifying end of response) */
 	strcpy(buf + 8, "Done,END\r\n");
 	message_length = sizeof("Done,END\r\n") - 1 + 8;
 
 	/* Send a reply */
 	ret = send(client_fd, buf, message_length, 0);
+	/* INFO("SEND\n"); */
 	return 0;
 }
 
@@ -217,8 +218,10 @@ int main(int argc, char *argv[])
 	mode = atoi(argv[3]);
 
 	if (mode == FULL_USERSPACE) {
+		INFO("Mode: statndalone\n");
 		app.sock_handler = handle_client_full;
 	} else {
+		INFO("Mode: bpf+userspace\n");
 		app.sock_handler = handle_client_bpf;
 	}
 
