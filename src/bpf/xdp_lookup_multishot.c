@@ -16,7 +16,7 @@
 #define PORT 8080
 #define MAX_CONN 10240
 
-#define BATCH_SIZE 1
+#define BATCH_SIZE 5
 
 struct reqhdr {
 	int req_type;
@@ -66,6 +66,7 @@ int xdp_prog(struct xdp_md *ctx)
 	__u8 *base;
 	__u16 len;
 	/* __u16 data_off; */
+	short new_size, packet_size;
 	short size_delta;
 	__u32 hash;
 
@@ -128,11 +129,13 @@ int xdp_prog(struct xdp_md *ctx)
 
 		if (pkg->count == BATCH_SIZE) {
 			/* I just want to place a package as UDP payload.
-			 * `len` has the curent length of UDP payload. I use it
+			 * `` has the curent length of UDP payload. I use it
 			 * to calculate the amount of memory adjustment needed.
 			 * */
-			size_delta = sizeof(struct package) - len;
-			bpf_printk("resize delta: %d", size_delta);
+			packet_size = (__u64)data_end - (__u64)data;
+			new_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct package);
+			size_delta = new_size - packet_size;
+			/* bpf_printk("resize delta: %d", size_delta); */
 			if (bpf_xdp_adjust_tail(ctx, size_delta) != 0) {
 				bpf_printk("Failed to resize the packet");
 				return XDP_ABORTED;
@@ -162,6 +165,9 @@ int xdp_prog(struct xdp_md *ctx)
 			/* Fix value of some fields */
 			len = (__u64)data_end - (__u64)ip;
 			ip->tot_len = bpf_htons(len);
+			/* bpf_printk("len: %d (%d, %d, %d)", len, sizeof(*ip), sizeof(*udp), sizeof(*state)); */
+
+			udp->len = bpf_htons(sizeof(struct udphdr) + sizeof(struct package));
 
 			cksum = 0;
 			ip->check = 0;
@@ -170,10 +176,10 @@ int xdp_prog(struct xdp_md *ctx)
 
 			cksum = 0;
 			udp->check = 0;
-			ipv4_l4_csum_inline(data_end, udp, ip, &cksum);
-			udp->check = bpf_htons(cksum);
+			/* ipv4_l4_csum_inline(data_end, udp, ip, &cksum); */
+			/* udp->check = bpf_htons(cksum); */
 
-			bpf_printk("To userspace %x:%d", bpf_ntohl(pkg->data[0].source_ip), bpf_ntohs(pkg->data[0].source_port));
+			/* bpf_printk("To userspace %x:%d", bpf_ntohl(pkg->data[0].source_ip), bpf_ntohs(pkg->data[0].source_port)); */
 			/* Send it to the userspace app */
 			return XDP_PASS;
 		} else {

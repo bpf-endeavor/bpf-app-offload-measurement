@@ -52,7 +52,7 @@ struct req_data {
 
 struct package {
 	unsigned int count;
-	struct req_data data[1];
+	struct req_data data[5];
 } __attribute__((__packed__));
 
 static inline int prepare_type2_response(char *buf,
@@ -314,10 +314,10 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 	}
 	len = ret;
 
-	INFO("recv!\n");
+	/* INFO("recv! len = %d\n", len); */
 
 	pkg = *(struct package *)buf;
-	INFO("Receive a package: count: %d\n", pkg.count);
+	/* INFO("Receive a package: count: %d\n", pkg.count); */
 
 	for (i = 0; i < pkg.count; i++) {
 		/* Send a reply */
@@ -330,12 +330,12 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 		client_addr.sin_addr.s_addr = pkg.data[i].source_ip;
 		client_addr.sin_port = pkg.data[i].source_port;
 		addr_len = sizeof(struct sockaddr_in);
-		INFO("ip: %x port: %d\n", ntohl(client_addr.sin_addr.s_addr), ntohs(client_addr.sin_port));
+		/* INFO("ip: %x port: %d\n", ntohl(client_addr.sin_addr.s_addr), ntohs(client_addr.sin_port)); */
 		if (sendto(client_fd, buf, message_length, 0 /*flags*/,
 				(struct sockaddr *)&client_addr, addr_len) < 0) {
 			ERROR("Failed to send: %s\n", strerror(errno));
 		} else {
-			INFO("SEND\n");
+			/* INFO("SEND\n"); */
 		}
 	}
 
