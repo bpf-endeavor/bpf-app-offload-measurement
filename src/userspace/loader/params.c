@@ -1,5 +1,9 @@
 #include <stdlib.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <net/if.h> /* if_nametoindex */
 #include "userspace/log.h"
 #include "params.h"
 
@@ -12,6 +16,18 @@ void usage(void)
 	INFO("  --bpf_bin:  path to bpf binary file\n");
 	INFO("  --bpf_prog: name of bpf program to load (can suply multiple)\n"); 
 	INFO("  --port:     the destination port (for connection monitor)\n");
+	INFO("  --xdp:      load xdp program on given interface\n");
+}
+
+static int get_default_cgroup_fd(void)
+{
+	/* TODO: Get the CGROUP name from the user */
+	int fd;
+	fd = open("/sys/fs/cgroup/user.slice", O_DIRECTORY | O_RDONLY);
+	if (fd < 0) {
+		fd = open("/sys/fs/cgroup/unified/", O_DIRECTORY | O_RDONLY);
+	}
+	return fd;
 }
 
 int parse_args(int argc, char *argv[])
@@ -23,13 +39,15 @@ int parse_args(int argc, char *argv[])
 		BPF_BIN,
 		BPF_PROG,
 		DEST_PORT,
+		XDP,
 	};
 
 	struct option long_opts[] = {
-		{"help", no_argument, NULL, HELP},
-		{"bpf_bin", required_argument, NULL, BPF_BIN},
+		{"help",     no_argument,       NULL, HELP},
+		{"bpf_bin",  required_argument, NULL, BPF_BIN},
 		{"bpf_prog", required_argument, NULL, BPF_PROG},
-		{"port", required_argument, NULL, DEST_PORT},
+		{"port",     required_argument, NULL, DEST_PORT},
+		{"xdp",      required_argument, NULL, XDP},
 		/* End of option list ------------------- */
 		{NULL, 0, NULL, 0},
 	};
@@ -38,6 +56,8 @@ int parse_args(int argc, char *argv[])
 	/* Default values */
 	context.port = 8080;
 	context.bpf_bin = NULL;
+	context.cgroup_fd = get_default_cgroup_fd();
+	context.is_xdp = 0;
 
 	while(1) {
 		ret = getopt_long(argc, argv, "", long_opts, NULL);
@@ -53,6 +73,14 @@ int parse_args(int argc, char *argv[])
 				break;
 			case DEST_PORT:
 				context.port = atoi(optarg);
+				break;
+			case XDP:
+				context.is_xdp = 1;
+				context.ifindex = if_nametoindex(optarg);
+				if (context.ifindex == 0) {
+					ERROR("Failed to get interface index!\n");
+					return 1;
+				}
 				break;
 			case HELP:
 				usage();

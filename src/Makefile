@@ -22,7 +22,7 @@ SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_lookup
 
 # BPF
-KERN_OBJECTS := bpf_inst.o bpf_summarize.o bpf_test.o bpf_lookup.o
+KERN_OBJECTS := bpf_inst.o bpf_summarize.o bpf_test.o bpf_lookup.o xdp_lookup_multishot.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/

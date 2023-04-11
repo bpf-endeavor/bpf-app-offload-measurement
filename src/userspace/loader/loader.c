@@ -8,6 +8,7 @@
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <linux/if_link.h> // XDP_FLAGS_*
 
 #include "userspace/log.h"
 #include "params.h"
@@ -19,23 +20,13 @@
 #define SOCKOPS_NAME "monitor_connections"
 #define SK_SKB_PARSER_NAME "parser"
 #define BENCHMARK_ARG_MAP_NAME "arg_map"
+#define XDP_PROG_NAME "xdp_prog"
 
 static int running = 1;
 
 static void handle_int(int sig)
 {
 	running = 0;
-}
-
-static int get_default_cgroup_fd(void)
-{
-	/* TODO: Get the CGROUP name from the user */
-	int fd;
-	fd = open("/sys/fs/cgroup/user.slice", O_DIRECTORY | O_RDONLY);
-	if (fd < 0) {
-		fd = open("/sys/fs/cgroup/unified/", O_DIRECTORY | O_RDONLY);
-	}
-	return fd;
 }
 
 static int configure_connection_monitor(int map_fd)
@@ -93,44 +84,25 @@ static int configure_bpf_benchmark(int map_fd)
 	return -1;
 }
 
-int main(int argc, char *argv[])
+struct sk_skb_progs {
+	struct bpf_program *parser;
+	struct bpf_program *verdict;
+	struct bpf_program *sockops;
+};
+
+static struct {
+	struct sk_skb_progs progs;
+	int map_fd; /* sockmap fd */
+} sk_skb_ctx;
+
+static unsigned int xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
+
+int load_sk_skb(struct bpf_object *bpfobj)
 {
 	int ret;
-	int map_fd, cgroup_fd;
-	struct bpf_object *bpfobj;
+	int map_fd;
 	struct bpf_map *map_obj;
-	struct {
-		struct bpf_program *parser;
-		struct bpf_program *verdict;
-		struct bpf_program *sockops;
-	} progs;
-
-	if (parse_args(argc, argv) != 0) {
-		return EXIT_FAILURE;
-	}
-
-	/* The goal is to load a SK_SKB eBPF program.  The program has a
-	 * `monitor_connections` function (sockops program), a `parser`
-	 * function and a SK_SKB_VERDICT function which name is given in the
-	 * arguments (--bpf_prog). There should exist a `sock_map` to which
-	 * SK_SKB programs are attached. The `sockops` will be attached to the
-	 * default cgroup.
-	 */
-
-	/* Open eBPF binary file */
-	bpfobj = bpf_object__open_file(context.bpf_bin, NULL);
-	if (!bpfobj) {
-		ERROR("Failed to open the BPF binary!\n    %s\n",
-				context.bpf_bin);
-		return EXIT_FAILURE;
-	}
-
-	/* Load all the BPF object to the kernel */
-	ret = bpf_object__load(bpfobj);
-	if (ret) {
-		ERROR("Failed to load the BPF binary to the kernel\n");
-		return EXIT_FAILURE;
-	}
+	struct sk_skb_progs progs;
 
 	progs.parser = bpf_object__find_program_by_name(bpfobj, SK_SKB_PARSER_NAME);
 	if (!progs.parser) {
@@ -201,12 +173,97 @@ ignore_arg_map:
 		goto unload;
 	}
 
-	cgroup_fd = get_default_cgroup_fd();
-	ret = bpf_prog_attach(bpf_program__fd(progs.sockops), cgroup_fd,
+	ret = bpf_prog_attach(bpf_program__fd(progs.sockops), context.cgroup_fd,
 			BPF_CGROUP_SOCK_OPS, 0);
 	if (ret) {
 		ERROR("Failed to attach sockops\n");
 		goto unload;
+	}
+
+	sk_skb_ctx.progs = progs;
+	sk_skb_ctx.map_fd = map_fd;
+
+	return 0;
+
+unload:
+	/* Should unload the eBPF objects */
+	bpf_object__close(bpfobj);
+	return 1;
+}
+
+void detach_sk_skb(void)
+{
+	struct sk_skb_progs progs = sk_skb_ctx.progs;
+	int map_fd = sk_skb_ctx.map_fd;
+	bpf_prog_detach2(bpf_program__fd(progs.sockops), context.cgroup_fd, BPF_CGROUP_SOCK_OPS);
+	bpf_prog_detach2(bpf_program__fd(progs.parser), map_fd, BPF_SK_SKB_STREAM_PARSER);
+	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);
+}
+
+int load_xdp(struct bpf_object *bpfobj)
+{
+	/* Attach XDP program */
+	struct bpf_program *prog = bpf_object__find_program_by_name(bpfobj,
+			context.bpf_prog[0]);
+	if (!prog) {
+		ERROR("Failed to find xdp program (%s)\n", context.bpf_prog[0]);
+		return 1;
+	}
+
+	int prog_fd = bpf_program__fd(prog);
+	if (bpf_xdp_attach(context.ifindex, prog_fd, xdp_flags, NULL) != 0) {
+		ERROR("Failed to attach XDP program!\n");
+		return 1;
+	}
+	return 0;
+}
+
+void detach_xdp(void)
+{
+	bpf_xdp_detach(context.ifindex, xdp_flags, NULL);
+}
+
+int main(int argc, char *argv[])
+{
+	int ret;
+	struct bpf_object *bpfobj;
+
+	if (parse_args(argc, argv) != 0) {
+		return EXIT_FAILURE;
+	}
+
+	/* The goal is to load a SK_SKB eBPF program.  The program has a
+	 * `monitor_connections` function (sockops program), a `parser`
+	 * function and a SK_SKB_VERDICT function which name is given in the
+	 * arguments (--bpf_prog). There should exist a `sock_map` to which
+	 * SK_SKB programs are attached. The `sockops` will be attached to the
+	 * default cgroup.
+	 */
+
+	/* Open eBPF binary file */
+	bpfobj = bpf_object__open_file(context.bpf_bin, NULL);
+	if (!bpfobj) {
+		ERROR("Failed to open the BPF binary!\n    %s\n",
+				context.bpf_bin);
+		return EXIT_FAILURE;
+	}
+
+	/* Load all the BPF object to the kernel */
+	ret = bpf_object__load(bpfobj);
+	if (ret) {
+		ERROR("Failed to load the BPF binary to the kernel\n");
+		return EXIT_FAILURE;
+	}
+
+	if (context.is_xdp) {
+		if (load_xdp(bpfobj) != 0) {
+			return EXIT_FAILURE;
+		}
+	} else {
+		/* sk_skb */
+		if (load_sk_skb(bpfobj) != 0) {
+			return EXIT_FAILURE;
+		}
 	}
 
 	/* Wait for the user to SIGNAL the program */
@@ -219,16 +276,14 @@ ignore_arg_map:
 	}
 
 	/* Deattach programs */
-	ret = bpf_prog_detach2(bpf_program__fd(progs.sockops), cgroup_fd, BPF_CGROUP_SOCK_OPS);
-	bpf_prog_detach2(bpf_program__fd(progs.parser), map_fd, BPF_SK_SKB_STREAM_PARSER);
-	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);
+	if (context.is_xdp) {
+		detach_xdp();
+	} else {
+		/* sk_skb */
+		detach_sk_skb();
+	}
 	bpf_object__close(bpfobj);
 
 	INFO("Done!\n");
 	return 0;
-
-unload:
-	/* Should unload the eBPF objects */
-	bpf_object__close(bpfobj);
-	return EXIT_FAILURE;
 }

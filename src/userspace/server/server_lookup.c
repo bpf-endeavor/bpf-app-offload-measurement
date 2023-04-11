@@ -43,14 +43,17 @@ struct request {
 } __attribute__((__packed__));
 
 /* For multi-shot support */
-struct hash_package {
+/* NOTE: this struct is duplicated in the XDP program */
+struct req_data {
 	unsigned int hash;
+	unsigned int source_ip;
+	unsigned short source_port;
 } __attribute__((__packed__));
 
-struct multi_shot_package {
-	int count_package;
-	struct hash_package packages[0];
-}__attribute__((__packed__));
+struct package {
+	unsigned int count;
+	struct req_data data[1];
+} __attribute__((__packed__));
 
 static inline int prepare_type2_response(char *buf,
 		unsigned int *message_length)
@@ -282,6 +285,63 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	char buf[BUFSIZE];
+	unsigned int message_length;
+
+	struct sockaddr_in client_addr;
+	socklen_t addr_len = sizeof(client_addr);
+
+	struct package pkg;
+	int i;
+
+	/* Receive message and check the return value */
+	ret = recvfrom(client_fd, buf, BUFSIZE, 0 /*udp_flags*/,
+			(struct sockaddr *)&client_addr, &addr_len);
+	if (ret == 0) {
+		ERROR("Receive no data!\n");
+		return 1;
+	}
+	if (ret < 0) {
+		if (errno != EWOULDBLOCK) {
+			ERROR("Recving failed! %s\n", strerror(errno));
+			return 1;
+		}
+		/* Would block continue polling */
+		return 0;
+	}
+	len = ret;
+
+	INFO("recv!\n");
+
+	pkg = *(struct package *)buf;
+	INFO("Receive a package: count: %d\n", pkg.count);
+
+	for (i = 0; i < pkg.count; i++) {
+		/* Send a reply */
+		ret = prepare_type2_response(buf, &message_length);
+		if (ret != 0) {
+			ERROR("Failed to prepare a response!\n");
+			return 1;
+		}
+		client_addr.sin_family = AF_INET;
+		client_addr.sin_addr.s_addr = pkg.data[i].source_ip;
+		client_addr.sin_port = pkg.data[i].source_port;
+		addr_len = sizeof(struct sockaddr_in);
+		INFO("ip: %x port: %d\n", ntohl(client_addr.sin_addr.s_addr), ntohs(client_addr.sin_port));
+		if (sendto(client_fd, buf, message_length, 0 /*flags*/,
+				(struct sockaddr *)&client_addr, addr_len) < 0) {
+			ERROR("Failed to send: %s\n", strerror(errno));
+		} else {
+			INFO("SEND\n");
+		}
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -322,7 +382,9 @@ int main(int argc, char *argv[])
 			app.sock_handler = handle_client_udp;
 			break;
 		case BPF_MULTI_SHOT_UDP:
-			ERROR("Not implemented!");
+			udp = 1;
+			app.sock_handler = handle_client_bpf_multishot;
+			break;
 		default:
 			ERROR("Unexpected value for application mode!\n");
 			return 1;

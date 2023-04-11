@@ -8,6 +8,9 @@ struct context {
 	char *bpf_prog[MAX_BPF_PROG];
 	unsigned short count_prog;
 	unsigned short port;
+	int cgroup_fd;
+	int is_xdp;
+	int ifindex;
 };
 
 extern struct context context;
