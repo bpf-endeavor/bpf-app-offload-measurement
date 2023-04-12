@@ -110,7 +110,7 @@ static inline int full_request_handle(struct client_ctx *ctx, char *buf,
 
 	ctx->hash = hash;
 	ctx->remaining_req_length -= message_length;
-	message[message_length] = '\0';
+	/* message[message_length] = '\0'; */
 	/* INFO("received: %s (remaining: %d)\n", message, ctx->remaining_req_length); */
 	/* INFO("received: (remaining: %d)\n", ctx->remaining_req_length); */
 
@@ -134,7 +134,7 @@ static inline int full_request_handle(struct client_ctx *ctx, char *buf,
 		strcpy(buf, "Done,END\r\n");
 		*response_size = sizeof("Done,END\r\n") - 1;
 	} else if (ctx->req_type == 2) {
-		if (prepare_type2_response(buf, &message_length) != 0)
+		if (prepare_type2_response(buf, response_size) != 0)
 			return UNEXPECTED;
 	} else {
 		ERROR("Unknown request type!!\n");
@@ -258,7 +258,8 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	}
 	len = ret;
 
-	/* INFO("received data!\n"); */
+	/* buf[len] = '\0'; */
+	/* INFO("received data! (len: %d) %s\n", len, buf); */
 
 	switch (full_request_handle(ctx, buf, len, &message_length)) {
 		case UNEXPECTED:
@@ -272,8 +273,11 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 		case SEND_REPLY:
 			/* INFO("Reply\n"); */
 			/* Send a reply */
-			sendto(client_fd, buf, message_length, 0 /*flags*/,
+			ret = sendto(client_fd, buf, message_length, 0 /*flags*/,
 					(struct sockaddr *)&client_addr, addr_len);
+			if (ret < 0) {
+				ERROR("Failed to send the message\n");
+			}
 			return 0;
 			break;
 		default:
@@ -314,7 +318,8 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 	}
 	len = ret;
 
-	/* INFO("recv! len = %d\n", len); */
+	/* buf[ret] = '\0'; */
+	/* INFO("recv! len = %d %s\n", len, buf); */
 
 	pkg = *(struct package *)buf;
 	/* INFO("Receive a package: count: %d\n", pkg.count); */

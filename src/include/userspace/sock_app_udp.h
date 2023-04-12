@@ -45,7 +45,7 @@ int run_udp_server(struct socket_app *app)
 	struct client_ctx cctx[MAX_UDP_SOCKS + 1] = {};
 	struct worker_arg *arg;
 
-	if (set_core_affinity(app->core_listener)) {
+	if (set_core_affinity(app->core_worker)) {
 		ERROR("Failed to set CPU core affinity!\n");
 		return 1;
 	}
