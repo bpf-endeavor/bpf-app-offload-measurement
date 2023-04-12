@@ -223,6 +223,15 @@ void detach_xdp(void)
 	bpf_xdp_detach(context.ifindex, xdp_flags, NULL);
 }
 
+int load_tc(struct bpf_object *bpfobj)
+{
+	return 0;
+}
+
+void detach_tc(void)
+{
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
