@@ -375,18 +375,20 @@ int main(int argc, char *argv[])
 	int udp = 0;
 	switch (mode) {
 		case FULL_USERSPACE:
-			INFO("Mode: statndalone\n");
+			INFO("Mode: statndalone (TCP)\n");
 			app.sock_handler = handle_client_full;
 			break;
 		case BPF_OFFLOAD:
-			INFO("Mode: bpf+userspace\n");
+			INFO("Mode: bpf + userspace (TCP)\n");
 			app.sock_handler = handle_client_bpf;
 			break;
 		case FULL_USERSPACE_UDP:
+			INFO("Mode: standalone (UDP)\n");
 			udp = 1;
 			app.sock_handler = handle_client_udp;
 			break;
 		case BPF_MULTI_SHOT_UDP:
+			INFO("Mode: bpf + batching (UDP)\n");
 			udp = 1;
 			app.sock_handler = handle_client_bpf_multishot;
 			break;

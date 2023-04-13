@@ -95,6 +95,10 @@ static struct {
 	int map_fd; /* sockmap fd */
 } sk_skb_ctx;
 
+static struct {
+	struct bpf_tc_hook tc_hook;
+} tc_ctx;
+
 static unsigned int xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
 
 int load_sk_skb(struct bpf_object *bpfobj)
@@ -225,11 +229,76 @@ void detach_xdp(void)
 
 int load_tc(struct bpf_object *bpfobj)
 {
+	int ret;
+	int prog_fd;
+	struct bpf_program *prog;
+
+	/* Create the TC hook */
+	tc_ctx.tc_hook = (struct bpf_tc_hook) {
+		.sz = sizeof(struct bpf_tc_hook),
+		.ifindex = context.ifindex,
+		.attach_point = BPF_TC_INGRESS,
+		.parent = 0,
+	};
+	if (bpf_tc_hook_create(&tc_ctx.tc_hook) != 0) {
+		/* Maybe the hook already exists. Let's try to delete it and
+		 * recreate it
+		 * */
+		tc_ctx.tc_hook.attach_point = BPF_TC_INGRESS | BPF_TC_EGRESS;
+		ret = bpf_tc_hook_destroy(&tc_ctx.tc_hook);
+
+		tc_ctx.tc_hook.attach_point = BPF_TC_INGRESS;
+		ret = bpf_tc_hook_create(&tc_ctx.tc_hook);
+		if (ret != 0) {
+			/* Really failed */
+			ERROR("Failed to create the TC hook\n");
+			return 1;
+		}
+	}
+
+	/* Attach TC program */
+	prog = bpf_object__find_program_by_name(bpfobj, context.bpf_prog[0]);
+	if (!prog) {
+		ERROR("Failed to find the program %s\n", context.bpf_prog[0]);
+		return 1;
+	}
+	prog_fd = bpf_program__fd(prog);
+	struct bpf_tc_opts tc_opts = {
+		.sz = sizeof(struct bpf_tc_opts),
+		.prog_fd = prog_fd,
+		.flags = 0,
+		.prog_id = 0,
+		.handle = 1,
+		.priority = 1,
+	};
+	if (bpf_tc_attach(&tc_ctx.tc_hook, &tc_opts) != 0) {
+		ERROR("Failed to attach TC program!\n");
+		goto err;
+	}
+
 	return 0;
+err:
+	/* Destroy TC hook */
+	tc_ctx.tc_hook.attach_point = BPF_TC_INGRESS | BPF_TC_EGRESS;
+	bpf_tc_hook_destroy(&tc_ctx.tc_hook);
+	return 1;
 }
 
 void detach_tc(void)
 {
+	struct bpf_tc_opts tc_opts = {
+		.sz = sizeof(struct bpf_tc_opts),
+		.prog_fd = 0,
+		.flags = 0,
+		.prog_id = 0,
+		.handle = 1,
+		.priority = 1,
+	};
+	if (bpf_tc_detach(&tc_ctx.tc_hook, &tc_opts)!= 0)
+		ERROR("Failed to detach TC program\n");
+
+	tc_ctx.tc_hook.attach_point = BPF_TC_INGRESS | BPF_TC_EGRESS;
+	bpf_tc_hook_destroy(&tc_ctx.tc_hook);
 }
 
 int main(int argc, char *argv[])
@@ -264,15 +333,19 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (context.is_xdp) {
-		if (load_xdp(bpfobj) != 0) {
+	switch(context.bpf_hook) {
+		case SK_SKB:
+			if (load_sk_skb(bpfobj) != 0) return EXIT_FAILURE;
+			break;
+		case XDP:
+			if (load_xdp(bpfobj) != 0) return EXIT_FAILURE;
+			break;
+		case TC:
+			if (load_tc(bpfobj) != 0) return EXIT_FAILURE;
+			break;
+		default:
+			ERROR("Unexpected value!");
 			return EXIT_FAILURE;
-		}
-	} else {
-		/* sk_skb */
-		if (load_sk_skb(bpfobj) != 0) {
-			return EXIT_FAILURE;
-		}
 	}
 
 	/* Wait for the user to SIGNAL the program */
@@ -285,11 +358,19 @@ int main(int argc, char *argv[])
 	}
 
 	/* Deattach programs */
-	if (context.is_xdp) {
-		detach_xdp();
-	} else {
-		/* sk_skb */
-		detach_sk_skb();
+	switch(context.bpf_hook) {
+		case SK_SKB:
+			detach_sk_skb();
+			break;
+		case XDP:
+			detach_xdp();
+			break;
+		case TC:
+			detach_tc();
+			break;
+		default:
+			ERROR("Unexpected value!");
+			return EXIT_FAILURE;
 	}
 	bpf_object__close(bpfobj);
 

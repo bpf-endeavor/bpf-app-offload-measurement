@@ -54,21 +54,18 @@ int tc_prog(struct __sk_buff *skb)
 	struct udphdr *udp;
 	struct reqhdr *req;
 
-	/* struct five_tuple flow_key; */
-	/* struct flow_context *flow_ctx; */
-
 	__u8 *base;
 	__u16 len;
-	/* __u16 data_off; */
 	short new_size, packet_size;
 	short size_delta;
-	__u32 hash;
+	struct udphdr *old_udp;
+	__u16 tmp_off;
 
+	__u32 hash;
 	struct package *pkg;
 	const int zero = 0;
 	struct package *state;
 	__u8 index;
-
 	unsigned long long int cksum;
 
 	data = (void *)(__u64)skb->data;
@@ -92,7 +89,7 @@ int tc_prog(struct __sk_buff *skb)
 		return TC_ACT_OK;
 	}
 
-	/* bpf_printk("XDP"); */
+	/* bpf_printk("TC"); */
 	if (req->req_type == 1) {
 		bpf_printk("Currently type 1 request is not supported\n");
 		return TC_ACT_SHOT;
@@ -139,13 +136,41 @@ int tc_prog(struct __sk_buff *skb)
 			eth = data;
 			ip = (struct iphdr *)(eth + 1);
 			if ((void *)(ip + 1) > data_end) {
-				return TC_ACT_SHOT;
-			}
-			udp = (void *)ip + (ip->ihl * 4);
-			if ((void *)(udp + 1) > data_end) {
+				bpf_printk("Failed: IP header out of range!!");
 				return TC_ACT_SHOT;
 			}
 
+			udp = (void *)ip + (ip->ihl * 4);
+
+			if (size_delta > 0 && size_delta < 256) {
+				/* If we have grown the packet, then the space
+				 * is added between IP header and UDP header
+				 * (notice BPF_ADJ_ROOM_NET). Move UDP up to
+				 * fill the gap and create space for data.
+				 * */
+
+				/* The if condition is wiered because of the
+				 * BPF verifier. I am not sure why I need to
+				 * check the upper value of size_delta.
+				 * */
+
+				/* tmp_off is unsigned short and is used only
+				 * to get pass the BPF verifier
+				 * */
+				tmp_off = size_delta;
+				tmp_off = (tmp_off & OFFSET_MASK);
+				old_udp = ((void *)udp) + tmp_off;
+				if ((void *)(udp+1) > data_end ||
+					(void *)(old_udp + 1) > data_end) {
+					bpf_printk("Accessing out of packet when moving UDP header (size_delta: %d tmp_off: %d)", size_delta, tmp_off);
+					return TC_ACT_SHOT;
+				}
+				memmove(udp, old_udp, sizeof(*old_udp));
+			}
+
+			if ((void *)(udp + 1) > data_end) {
+				return TC_ACT_SHOT;
+			}
 			state = (struct package *)(udp + 1);
 			if ((void *)(state + 1) > data_end) {
 				bpf_printk("not enough space for the state");

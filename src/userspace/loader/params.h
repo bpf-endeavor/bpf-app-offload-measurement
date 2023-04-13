@@ -3,13 +3,19 @@
 
 #define MAX_BPF_PROG 8
 
+enum attach_type {
+	SK_SKB,
+	XDP,
+	TC
+};
+
 struct context {
 	char *bpf_bin;
 	char *bpf_prog[MAX_BPF_PROG];
 	unsigned short count_prog;
 	unsigned short port;
 	int cgroup_fd;
-	int is_xdp;
+	enum attach_type bpf_hook;
 	int ifindex;
 };
 

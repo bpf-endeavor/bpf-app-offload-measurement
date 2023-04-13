@@ -19,6 +19,10 @@ typedef unsigned long long  __u64;
 #define memcpy(d, s, len) __builtin_memcpy(d, s, len)
 #endif
 
+#ifndef memmove
+#define memmove(d, s, len) __builtin_memmove(d, s, len)
+#endif
+
 #define ABS(val) ((val) < 0) ? (-(val)) : (val)
 #define CAP(val, cap) (val > cap ? cap : val)
 #define SIGNED(val, neg) (neg ? -val : val)
