@@ -123,7 +123,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 	progs.sockops = bpf_object__find_program_by_name(bpfobj, SOCKOPS_NAME);
 	if (!progs.sockops) {
 		ERROR("Failed to find sockops\n");
-		goto unload;
+		goto no_sockops;
 	}
 
 	/* Configure the connection monitor */
@@ -140,6 +140,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 		goto unload;
 	}
 
+no_sockops:
 	/* Configure the benchmark */
 	map_obj = bpf_object__find_map_by_name(bpfobj, BENCHMARK_ARG_MAP_NAME);
 	if (!map_obj) {
@@ -177,11 +178,14 @@ ignore_arg_map:
 		goto unload;
 	}
 
-	ret = bpf_prog_attach(bpf_program__fd(progs.sockops), context.cgroup_fd,
-			BPF_CGROUP_SOCK_OPS, 0);
-	if (ret) {
-		ERROR("Failed to attach sockops\n");
-		goto unload;
+	if (progs.sockops) {
+		/* Sockops could be optional */
+		ret = bpf_prog_attach(bpf_program__fd(progs.sockops), context.cgroup_fd,
+				BPF_CGROUP_SOCK_OPS, 0);
+		if (ret) {
+			ERROR("Failed to attach sockops\n");
+			goto unload;
+		}
 	}
 
 	sk_skb_ctx.progs = progs;

@@ -20,6 +20,7 @@ USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_summarize \
 			  ${OUTPUT_DIR}/server_lookup
+SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF
 KERN_OBJECTS := bpf_inst.o \
@@ -27,7 +28,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_test.o \
 	bpf_lookup.o \
 	xdp_lookup_multishot.o \
-	tc_lookup_multishot.o
+	tc_lookup_multishot.o \
+	skskb_lookup_multishot.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
@@ -52,7 +54,7 @@ check_output_dir:
 
 ${SERVER_BINS}: ${SERVER_FILES} ${SERVER_SHARED_C_FILES} ${USERSPACE_HEADERS}
 	MAIN=$$(basename $@); \
-	$(CC) ./userspace/server/$$MAIN.c ${SERVER_SHARED_C_FILES} ${CFLAGS} ${INCLUDES} -o $@ -lpthread;
+	$(CC) ./userspace/server/$$MAIN.c ${SERVER_SHARED_C_FILES} ${CFLAGS} ${INCLUDES} -o $@ $(SERVER_LIBS);
 
 ${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}
 	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz

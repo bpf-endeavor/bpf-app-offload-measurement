@@ -4,6 +4,9 @@
 #include <string.h>
 #include <pthread.h>
 
+#include <bpf/libbpf.h> // bpf_get_link_xdp_id
+#include <bpf/bpf.h> // bpf_prog_get_fd_by_id, bpf_obj_get_info_by_fd, ...
+
 #define FNV_OFFSET_BASIS_32	2166136261
 #define FNV_PRIME_32		16777619
 
@@ -63,4 +66,37 @@ int send_http_reply(int fd, char *str)
 	/* printf("sent (fd: %d): %d\n", fd, ret); */
 	return ret;
 }
+
+/*
+ * Find a map by name. Search the global list of BPF maps.
+ * */
+int find_map(char *name)
+{
+	struct bpf_map_info map_info = {};
+	uint32_t info_size = sizeof(map_info);
+	unsigned int id = 0;
+	int ret = 0;
+	int map_fd;
+
+	while (!ret) {
+		ret = bpf_map_get_next_id(id, &id);
+		if (ret) {
+			if (errno == ENOENT)
+				break;
+			printf("can't get next map: %s%s", strerror(errno),
+				errno == EINVAL ? " -- kernel too old?" : "");
+			break;
+		}
+		map_fd = bpf_map_get_fd_by_id(id);
+		bpf_obj_get_info_by_fd(map_fd, &map_info, &info_size);
+		/* Compare the found map's name with our list of names */
+		if (!strcmp(map_info.name, name)) {
+			return map_fd;
+		}
+		/* This is not our map */
+		close(map_fd);
+	}
+	return -1;
+}
+
 #endif

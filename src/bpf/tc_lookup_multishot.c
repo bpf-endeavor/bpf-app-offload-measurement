@@ -16,7 +16,7 @@
 #define OFFSET_MASK 0x7fff
 
 #define PORT 8080
-#define MAX_CONN 10240
+/* #define MAX_CONN 10240 */
 
 #define BATCH_SIZE 5
 
@@ -41,7 +41,7 @@ struct {
 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key,   __u32);
 	__type(value, struct package);
-	__uint(max_entries, MAX_CONN);
+	__uint(max_entries, 2);
 } batching_map SEC(".maps");
 /* ---------------- */
 

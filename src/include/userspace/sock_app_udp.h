@@ -76,6 +76,12 @@ int run_udp_server(struct socket_app *app)
 		return 1;
 	}
 
+
+	/* Allow user to do more with the socket before receiving data */
+	if (app->on_sockready != NULL) {
+		app->on_sockready(sk_fd);
+	}
+
 	arg = malloc(sizeof(struct worker_arg));
 	if (!arg)
 		return 1;

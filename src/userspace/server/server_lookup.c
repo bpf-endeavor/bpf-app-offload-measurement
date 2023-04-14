@@ -17,6 +17,8 @@ struct client_ctx {
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
+#define SOCKMAP_NAME "sock_map"
+
 #define RECV(fd, buf, size, flag)  {                  \
 	ret = recv(fd, buf, size, flag);              \
 	if (ret == 0)                                 \
@@ -347,10 +349,30 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+void insert_to_sockmap(int sockfd)
+{
+	int ret;
+	int map_fd = find_map(SOCKMAP_NAME);
+
+	if (map_fd < 1) {
+		ERROR("Failed to find the SOCKMAP\n");
+		return;
+	}
+
+	DEBUG("map_fd: %d sockfd: %d\n", map_fd, sockfd);
+	ret = 0;
+	ret = bpf_map_update_elem(map_fd, &ret, &sockfd, BPF_NOEXIST);
+	if (ret) {
+		ERROR("Failed to insert to sockmap %s\n", strerror(errno));
+		return;
+	}
+	INFO("Successfully insert socket fd to SOCKMAP\n");
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct socket_app app;
+	struct socket_app app = {};
 
 	/* parse args */
 	if (argc < 4) {
@@ -369,6 +391,7 @@ int main(int argc, char *argv[])
 	app.port = 8080;
 	app.ip = argv[2];
 	app.count_workers = 1;
+	app.on_sockready = NULL;
 
 	mode = atoi(argv[3]);
 
@@ -395,6 +418,11 @@ int main(int argc, char *argv[])
 		default:
 			ERROR("Unexpected value for application mode!\n");
 			return 1;
+	}
+
+	if (argc > 4 && !strcmp(argv[4], "--sockmap")) {
+		INFO("Trying to insert socket fd into sockmap\n");
+		app.on_sockready = insert_to_sockmap;
 	}
 
 	if (!udp) {

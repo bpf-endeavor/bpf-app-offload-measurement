@@ -51,6 +51,8 @@ int get_shared_map(void)
 
 			flag = 1;
 			break;
+		} else {
+			close(map_fd);
 		}
 	}
 

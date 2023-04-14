@@ -58,6 +58,8 @@ struct socket_app {
 	char *ip;
 	unsigned short count_workers;
 	sock_handler_fn sock_handler;
+
+	void (* on_sockready)(int fd);
 };
 
 /* Argument of a worker thread. The sockets are passed to each worker through
