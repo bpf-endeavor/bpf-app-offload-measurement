@@ -288,6 +288,10 @@ int run_server(struct socket_app *app)
 		}
 		set_client_sock_opt(client_fd);
 
+		if (app->on_sockready != NULL) {
+			app->on_sockready(client_fd);
+		}
+
 		/* Add the socket to the worker list of connections */
 		pthread_spin_lock(&worker_context->lock);
 		ADD_SOCKET_TO_POLL_LIST(client_fd, worker_context->list, worker_context->count_conn);

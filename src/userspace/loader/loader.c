@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -220,7 +221,8 @@ int load_xdp(struct bpf_object *bpfobj)
 
 	int prog_fd = bpf_program__fd(prog);
 	if (bpf_xdp_attach(context.ifindex, prog_fd, xdp_flags, NULL) != 0) {
-		ERROR("Failed to attach XDP program!\n");
+		DEBUG("if: %d prog fd: %d\n", context.ifindex, prog_fd);
+		ERROR("Failed to attach XDP program! %s\n", strerror(errno));
 		return 1;
 	}
 	return 0;

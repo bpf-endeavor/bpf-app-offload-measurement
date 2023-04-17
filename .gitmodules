@@ -1,3 +1,6 @@
 [submodule "libbpf"]
 	path = libbpf
 	url = https://github.com/libbpf/libbpf/
+[submodule "c-hashmap"]
+	path = c-hashmap
+	url = https://github.com/Mashpoe/c-hashmap/

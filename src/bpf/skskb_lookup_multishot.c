@@ -21,6 +21,8 @@ struct connection_state {};
 #define PORT 8080
 #define MAX_CONN 10240
 
+/* NOTE: I am using a __u8 as index, if changing the value to larger than 255
+ * update the code */
 #define BATCH_SIZE 5
 
 struct reqhdr {

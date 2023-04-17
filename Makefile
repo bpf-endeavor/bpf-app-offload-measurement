@@ -16,3 +16,8 @@ build_libbpf: ./libbpf/
 	if [ ! -d  ${DEPS_DIR} ]; then mkdir -p ${DEPS_DIR}; fi
 	# Build libbpf into deps directory
 	BUILD_STATIC_ONLY=y DESTDIR=${DEPS_DIR} OBJDIR=${DEPS_DIR} $(MAKE) -C libbpf/src install
+
+	# C-HashMap
+	INCDIR=${DEPS_DIR}/usr/include/c-hashmap/; \
+	if [ ! -d $$INCDIR ]; then mkdir -p $$INCDIR; fi ; \
+	cp ${CURDIR}/c-hashmap/map.h $$INCDIR

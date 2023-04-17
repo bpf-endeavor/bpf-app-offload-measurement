@@ -17,6 +17,9 @@ struct client_ctx {
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
+/* use c-hashmap library */
+#include <c-hashmap/map.h>
+
 #define SOCKMAP_NAME "sock_map"
 
 #define RECV(fd, buf, size, flag)  {                  \
@@ -37,6 +40,7 @@ enum {
 	BPF_OFFLOAD = 1,
 	FULL_USERSPACE_UDP = 2,
 	BPF_MULTI_SHOT_UDP = 3,
+	BPF_MULTI_SHOT_TCP = 4,
 } mode;
 
 struct request {
@@ -46,10 +50,13 @@ struct request {
 
 /* For multi-shot support */
 /* NOTE: this struct is duplicated in the XDP program */
-struct req_data {
-	unsigned int hash;
+struct source_addr {
 	unsigned int source_ip;
 	unsigned short source_port;
+} __attribute__((__packed__));
+struct req_data {
+	unsigned int hash;
+	struct source_addr src_addr;
 } __attribute__((__packed__));
 
 struct package {
@@ -334,8 +341,8 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 			return 1;
 		}
 		client_addr.sin_family = AF_INET;
-		client_addr.sin_addr.s_addr = pkg.data[i].source_ip;
-		client_addr.sin_port = pkg.data[i].source_port;
+		client_addr.sin_addr.s_addr = pkg.data[i].src_addr.source_ip;
+		client_addr.sin_port = pkg.data[i].src_addr.source_port;
 		addr_len = sizeof(struct sockaddr_in);
 		/* INFO("ip: %x port: %d\n", ntohl(client_addr.sin_addr.s_addr), ntohs(client_addr.sin_port)); */
 		if (sendto(client_fd, buf, message_length, 0 /*flags*/,
@@ -343,6 +350,85 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 			ERROR("Failed to send: %s\n", strerror(errno));
 		} else {
 			/* INFO("SEND\n"); */
+		}
+	}
+
+	return 0;
+}
+
+
+/* Connection table */
+static hashmap *tcp_connection_table;
+
+/*
+ * Add the incomming connections to the connection table
+ * TODO: I should remove them from connection table when the socket is closed.
+ * */
+void add_sock_to_table(int sockfd)
+{
+	struct sockaddr_in _addr;
+	socklen_t _addrlen;
+	struct source_addr *addr = malloc(sizeof(struct source_addr));
+
+	_addrlen = sizeof(_addr);
+	if (getpeername(sockfd, &_addr, &_addrlen) != 0) {
+		ERROR("Failed to get socket peer address\n");
+		return;
+	}
+
+	/* I expect the address to be in network byte order */
+	addr-> source_ip = _addr.sin_addr.s_addr;
+	addr->source_port = _addr.sin_port;
+
+	/* NOTE: The keys should not be freed while hashmap is using them! */
+	hashmap_set(tcp_connection_table, addr, sizeof(*addr), sockfd);
+	INFO("Add connection: %x:%d\n", ntohl(addr->source_ip), ntohs(addr->source_port));
+}
+
+int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	char buf[BUFSIZE];
+	unsigned int message_length;
+
+	struct package pkg;
+	int i;
+	int real_client_fd;
+
+	/* Receive message and check the return value */
+	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
+	/* buf[ret] = '\0'; */
+	/* INFO("recv! len = %d %s\n", len, buf); */
+
+	pkg = *(struct package *)buf;
+	/* INFO("Receive a package: count: %d\n", pkg.count); */
+
+	for (i = 0; i < pkg.count; i++) {
+		/* Hash value */
+		/* hash = pkg.data[i].hash; */
+
+		/* Send a reply */
+		ret = prepare_type2_response(buf, &message_length);
+		if (ret != 0) {
+			ERROR("Failed to prepare a response!\n");
+			return 1;
+		}
+		/* Lookup the socket */
+		if (!hashmap_get(tcp_connection_table, &pkg.data[i].src_addr,
+					sizeof(struct source_addr),
+					(uintptr_t *)&real_client_fd)) {
+			/* Failed to find the connection */
+			ERROR("Connection not found\n");
+			return 1;
+		}
+
+
+		if (send(real_client_fd, buf, message_length, 0) < 0) {
+			ERROR("Failed to send: %s\n", strerror(errno));
+		} else {
+			INFO("SEND\n");
 		}
 	}
 
@@ -382,6 +468,7 @@ int main(int argc, char *argv[])
 		"  1: recieve hash from ebpf\n"
 		"  2: full userspace (UDP)\n"
 		"  3: bpf multi-shot (UDP)\n"
+		"  4: bpf multi-shot (TCP)\n"
 		);
 
 		return 1;
@@ -402,7 +489,7 @@ int main(int argc, char *argv[])
 			app.sock_handler = handle_client_full;
 			break;
 		case BPF_OFFLOAD:
-			INFO("Mode: bpf + userspace (TCP)\n");
+			INFO("Mode: Summarize: bpf + userspace (TCP)\n");
 			app.sock_handler = handle_client_bpf;
 			break;
 		case FULL_USERSPACE_UDP:
@@ -411,9 +498,16 @@ int main(int argc, char *argv[])
 			app.sock_handler = handle_client_udp;
 			break;
 		case BPF_MULTI_SHOT_UDP:
-			INFO("Mode: bpf + batching (UDP)\n");
+			INFO("Mode: Batch: bpf + userspace (UDP)\n");
 			udp = 1;
 			app.sock_handler = handle_client_bpf_multishot;
+			break;
+		case BPF_MULTI_SHOT_TCP:
+			INFO("Mode: Batch: bpf + userspace (TCP)\n");
+			app.sock_handler = handle_client_bpf_multishot_tcp;
+			app.on_sockready = add_sock_to_table;
+
+			tcp_connection_table = hashmap_create();
 			break;
 		default:
 			ERROR("Unexpected value for application mode!\n");
@@ -434,6 +528,8 @@ int main(int argc, char *argv[])
 		ERROR("Failed to run server!\n");
 		return 1;
 	}
+
+	/* TODO: Clean/free the hashmap */
 
 	return 0;
 }

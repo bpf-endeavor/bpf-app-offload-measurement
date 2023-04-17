@@ -14,7 +14,7 @@ LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 
 # Userspace Server
 SERVER_FILES = $(wildcard ./userspace/server/*.c)
-SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c)
+SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c) ../c-hashmap/map.c
 USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 # The server binaries that should be built
 SERVER_BINS = ${OUTPUT_DIR}/server_inst \
@@ -29,7 +29,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_lookup.o \
 	xdp_lookup_multishot.o \
 	tc_lookup_multishot.o \
-	skskb_lookup_multishot.o
+	skskb_lookup_multishot.o \
+	tcp_lookup_multishot.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
