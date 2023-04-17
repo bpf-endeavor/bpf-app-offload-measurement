@@ -393,7 +393,7 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 
 	struct package pkg;
 	int i;
-	int real_client_fd;
+	long long int real_client_fd;
 
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
@@ -416,19 +416,25 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 			return 1;
 		}
 		/* Lookup the socket */
-		if (!hashmap_get(tcp_connection_table, &pkg.data[i].src_addr,
+		if (!hashmap_get(tcp_connection_table,
+					(void *)&pkg.data[i].src_addr,
 					sizeof(struct source_addr),
 					(uintptr_t *)&real_client_fd)) {
 			/* Failed to find the connection */
-			ERROR("Connection not found\n");
-			return 1;
+			ERROR("Connection not found %x:%d\n",
+					ntohl(pkg.data[i].src_addr.source_ip),
+					ntohs(pkg.data[i].src_addr.source_port));
+			continue;
+			/* I should not terminate this connection because it is
+			 * not the real connection ! */
+			/* return 1; */
 		}
 
 
 		if (send(real_client_fd, buf, message_length, 0) < 0) {
 			ERROR("Failed to send: %s\n", strerror(errno));
 		} else {
-			INFO("SEND\n");
+			/* INFO("SEND\n"); */
 		}
 	}
 

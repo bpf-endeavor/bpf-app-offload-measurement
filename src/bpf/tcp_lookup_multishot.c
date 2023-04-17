@@ -183,11 +183,13 @@ int verdict(struct __sk_buff *skb)
 
 		pkg->count++;
 		pkg->data[index].hash = sock_ctx->state.hash;
-		/* ? */
 		pkg->data[index].source_ip = skb->remote_ip4;
-		pkg->data[index].source_port = skb->remote_port;
-		bpf_printk("receive: %x:%d", pkg->data[index].source_ip,
-				pkg->data[index].source_port);
+		/* This is ridiculous! I should think about it a bit. Why such
+		 * a juggling is needed?
+		 * */
+		pkg->data[index].source_port = bpf_ntohs((__u16)bpf_ntohl(skb->remote_port));
+		/* bpf_printk("receive: %x:%d", bpf_ntohl(pkg->data[index].source_ip), */
+		/* 		bpf_ntohs(pkg->data[index].source_port)); */
 
 		if (pkg->count == BATCH_SIZE) {
 			__adjust_skb_size(skb, sizeof(*pkg));
