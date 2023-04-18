@@ -33,12 +33,13 @@
 #define BUFSIZE 2048
 
 #define ADD_SOCKET_TO_POLL_LIST(sd, list, index) {        \
-		list[index].fd = sd;                              \
-		list[index].events = POLLIN;                      \
-		index++;                                          \
+		list[index].fd = sd;                      \
+		list[index].events = POLLIN;              \
+		index++;                                  \
 }
 
-#define TERMINATE(i, list) {                          \
+#define TERMINATE(i, list) {                              \
+	if (arg->on_sockclose != NULL) arg->on_sockclose(list[i].fd); \
 	close(list[i].fd);                                \
 	list[i].fd = -1;                                  \
 	list[i].events = 0;                               \
@@ -60,6 +61,7 @@ struct socket_app {
 	sock_handler_fn sock_handler;
 
 	void (* on_sockready)(int fd);
+	void (* on_sockclose)(int fd);
 };
 
 /* Argument of a worker thread. The sockets are passed to each worker through
@@ -72,6 +74,8 @@ struct worker_arg {
 	pthread_spinlock_t lock;
 	pthread_t thread;
 	sock_handler_fn sock_handler;
+
+	void (* on_sockclose)(int fd);
 };
 
 static int set_core_affinity(int core)
@@ -193,7 +197,7 @@ static void *worker_entry(void *_arg)
 }
 
 struct worker_arg *launch_workers(sock_handler_fn handler,
-		unsigned int core_worker)
+		unsigned int core_worker, void (*on_close)(int))
 {
 	int ret;
 	int fd;
@@ -212,6 +216,8 @@ struct worker_arg *launch_workers(sock_handler_fn handler,
 	arg->count_conn = 1;
 	arg->sock_handler = handler;
 	arg->core = core_worker;
+
+	arg->on_sockclose = on_close;
 
 	pthread_spin_init(&arg->lock, PTHREAD_PROCESS_PRIVATE);
 
@@ -266,7 +272,7 @@ int run_server(struct socket_app *app)
 	}
 
 	/* Start a worker thread */
-	worker_context = launch_workers(app->sock_handler, app->core_worker);
+	worker_context = launch_workers(app->sock_handler, app->core_worker, app->on_sockclose);
 	if (!worker_context) {
 		ERROR("Failed to launch a worker\n");
 		return 1;

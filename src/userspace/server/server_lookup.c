@@ -360,31 +360,6 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 /* Connection table */
 static hashmap *tcp_connection_table;
 
-/*
- * Add the incomming connections to the connection table
- * TODO: I should remove them from connection table when the socket is closed.
- * */
-void add_sock_to_table(int sockfd)
-{
-	struct sockaddr_in _addr;
-	socklen_t _addrlen;
-	struct source_addr *addr = malloc(sizeof(struct source_addr));
-
-	_addrlen = sizeof(_addr);
-	if (getpeername(sockfd, &_addr, &_addrlen) != 0) {
-		ERROR("Failed to get socket peer address\n");
-		return;
-	}
-
-	/* I expect the address to be in network byte order */
-	addr-> source_ip = _addr.sin_addr.s_addr;
-	addr->source_port = _addr.sin_port;
-
-	/* NOTE: The keys should not be freed while hashmap is using them! */
-	hashmap_set(tcp_connection_table, addr, sizeof(*addr), sockfd);
-	INFO("Add connection: %x:%d\n", ntohl(addr->source_ip), ntohs(addr->source_port));
-}
-
 int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len;
@@ -405,6 +380,7 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 	pkg = *(struct package *)buf;
 	/* INFO("Receive a package: count: %d\n", pkg.count); */
 
+	int sent = 0;
 	for (i = 0; i < pkg.count; i++) {
 		/* Hash value */
 		/* hash = pkg.data[i].hash; */
@@ -434,9 +410,11 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 		if (send(real_client_fd, buf, message_length, 0) < 0) {
 			ERROR("Failed to send: %s\n", strerror(errno));
 		} else {
+			sent++;
 			/* INFO("SEND\n"); */
 		}
 	}
+	/* INFO("sent: %d\n", sent); */
 
 	return 0;
 }
@@ -459,6 +437,58 @@ void insert_to_sockmap(int sockfd)
 		return;
 	}
 	INFO("Successfully insert socket fd to SOCKMAP\n");
+}
+
+
+/*
+ * Add the incomming connections to the connection table
+ * TODO: I should remove them from connection table when the socket is closed.
+ * */
+void add_sock_to_table(int sockfd)
+{
+	struct sockaddr_in _addr;
+	socklen_t _addrlen;
+	struct source_addr *addr = malloc(sizeof(struct source_addr));
+
+	_addrlen = sizeof(_addr);
+	if (getpeername(sockfd, &_addr, &_addrlen) != 0) {
+		ERROR("Failed to get socket peer address\n");
+		return;
+	}
+
+	/* I expect the address to be in network byte order */
+	addr-> source_ip = _addr.sin_addr.s_addr;
+	addr->source_port = _addr.sin_port;
+
+	/* NOTE: The keys should not be freed while hashmap is using them! */
+	hashmap_set(tcp_connection_table, addr, sizeof(*addr), sockfd);
+	/* INFO("Add connection: %x:%d\n", ntohl(addr->source_ip), ntohs(addr->source_port)); */
+}
+
+void __free_hashmap_entry(void *key, size_t ksize, uintptr_t value, void *usr)
+{
+	free(key);
+}
+
+void remove_sock_from_table(int sockfd)
+{
+	struct sockaddr_in _addr;
+	socklen_t _addrlen;
+	struct source_addr addr;
+
+	_addrlen = sizeof(_addr);
+	if (getpeername(sockfd, &_addr, &_addrlen) != 0) {
+		ERROR("Failed to get socket peer address\n");
+		return;
+	}
+
+	/* I expect the address to be in network byte order */
+	addr.source_ip = _addr.sin_addr.s_addr;
+	addr.source_port = _addr.sin_port;
+
+	hashmap_remove_free(tcp_connection_table, &addr, sizeof(addr),
+			__free_hashmap_entry, NULL);
+	INFO("Add connection: %x:%d\n", ntohl(addr.source_ip), ntohs(addr.source_port));
 }
 
 int main(int argc, char *argv[])
@@ -485,6 +515,7 @@ int main(int argc, char *argv[])
 	app.ip = argv[2];
 	app.count_workers = 1;
 	app.on_sockready = NULL;
+	app.on_sockclose = NULL;
 
 	mode = atoi(argv[3]);
 
@@ -512,6 +543,7 @@ int main(int argc, char *argv[])
 			INFO("Mode: Batch: bpf + userspace (TCP)\n");
 			app.sock_handler = handle_client_bpf_multishot_tcp;
 			app.on_sockready = add_sock_to_table;
+			/* app.on_sockclose = remove_sock_from_table; */
 
 			tcp_connection_table = hashmap_create();
 			break;

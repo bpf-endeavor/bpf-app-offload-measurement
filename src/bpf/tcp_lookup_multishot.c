@@ -31,10 +31,13 @@ struct request {
 } __attribute__((__packed__));
 
 /* NOTE: this struct is duplicated in the userspace program */
+struct source_addr {
+	unsigned int source_ip;
+	unsigned short source_port;
+} __attribute__((__packed__));
 struct req_data {
 	unsigned int hash;
-	__u32 source_ip;
-	__u16 source_port;
+	struct source_addr src_addr;
 } __attribute__((__packed__));
 
 struct package {
@@ -48,6 +51,13 @@ struct {
 	__type(value, struct package);
 	__uint(max_entries, 2);
 } batching_map SEC(".maps");
+
+/* struct { */
+/* 	__uint(type, BPF_MAP_TYPE_BLOOM_FILTER); */
+/* 	__type(value, struct source_addr); */
+/* 	__uint(max_entries, MAX_CONN); */
+/* 	__uint(map_extra, 3); */
+/* } bloom_filter_map SEC(".maps"); */
 /* ---------------- */
 
 SEC("sk_skb/stream_parser")
@@ -181,15 +191,24 @@ int verdict(struct __sk_buff *skb)
 			return SK_DROP;
 		}
 
-		pkg->count++;
-		pkg->data[index].hash = sock_ctx->state.hash;
-		pkg->data[index].source_ip = skb->remote_ip4;
+		/* Extract the packet source address */
+		pkg->data[index].src_addr.source_ip = skb->remote_ip4;
 		/* This is ridiculous! I should think about it a bit. Why such
 		 * a juggling is needed?
 		 * */
-		pkg->data[index].source_port = bpf_ntohs((__u16)bpf_ntohl(skb->remote_port));
+		pkg->data[index].src_addr.source_port =
+			bpf_ntohs((__u16)bpf_ntohl(skb->remote_port));
 		/* bpf_printk("receive: %x:%d", bpf_ntohl(pkg->data[index].source_ip), */
 		/* 		bpf_ntohs(pkg->data[index].source_port)); */
+
+		/* Check connection available */
+		/* if (bpf_map_peek_elem(&bloom_filter_map, &pkg->data[index].src_addr) != 0) { */
+		/* 	/1* This is the first time we see data from this source address *1/ */
+		/* } */
+
+		/* Mark this index as used */
+		pkg->count++;
+		pkg->data[index].hash = sock_ctx->state.hash;
 
 		if (pkg->count == BATCH_SIZE) {
 			__adjust_skb_size(skb, sizeof(*pkg));
