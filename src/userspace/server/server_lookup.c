@@ -20,6 +20,8 @@ struct client_ctx {
 /* use c-hashmap library */
 #include <c-hashmap/map.h>
 
+#include "sockops_shared.h"
+
 #define SOCKMAP_NAME "sock_map"
 
 #define RECV(fd, buf, size, flag)  {                  \
@@ -421,8 +423,10 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 
 void insert_to_sockmap(int sockfd)
 {
+	unsigned long long int x = sockfd;
 	int ret;
-	int map_fd = find_map(SOCKMAP_NAME);
+	/* int map_fd = find_map(SOCKMAP_NAME); */
+	int map_fd = bpf_obj_get(SOCKMAP_PINNED_PATH);
 
 	if (map_fd < 1) {
 		ERROR("Failed to find the SOCKMAP\n");
@@ -431,7 +435,7 @@ void insert_to_sockmap(int sockfd)
 
 	DEBUG("map_fd: %d sockfd: %d\n", map_fd, sockfd);
 	ret = 0;
-	ret = bpf_map_update_elem(map_fd, &ret, &sockfd, BPF_NOEXIST);
+	ret = bpf_map_update_elem(map_fd, &ret, &x, BPF_ANY);
 	if (ret) {
 		ERROR("Failed to insert to sockmap %s\n", strerror(errno));
 		return;

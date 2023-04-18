@@ -93,7 +93,7 @@ struct sk_skb_progs {
 
 static struct {
 	struct sk_skb_progs progs;
-	int map_fd; /* sockmap fd */
+	int sockmap_fd;
 } sk_skb_ctx;
 
 static struct {
@@ -138,7 +138,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 	ret = configure_connection_monitor(map_fd);
 	if (ret) {
 		ERROR("Failed to update the connection monitor config\n");
-		goto unload;
+		goto unload2;
 	}
 
 no_sockops:
@@ -152,31 +152,41 @@ no_sockops:
 	ret = configure_bpf_benchmark(map_fd);
 	if (ret) {
 		ERROR("Failed to configure the benchmark\n");
-		goto unload;
+		goto unload2;
 	}
 
 ignore_arg_map:
 	/* Get sock_map for attaching programs */
 	map_obj = bpf_object__find_map_by_name(bpfobj, SOCK_MAP_NAME);
 	if (!map_obj) {
-		ERROR("Failed to find the sock_map\n");
-		goto unload;
+		INFO("Failed to find the sock_map!\n");
+		INFO("Created a SOCKMAP for attaching programs!\n");
+		map_fd = bpf_map_create(BPF_MAP_TYPE_SOCKMAP, "sock_map",
+				4, 8, 10240, NULL);
+	} else {
+		map_fd = bpf_map__fd(map_obj);
 	}
-	map_fd = bpf_map__fd(map_obj);
+
+
+	/* Pin sockmap */
+	if (bpf_obj_pin(map_fd, SOCKMAP_PINNED_PATH) != 0) {
+		printf("Failed to pin sockmap (%s)\n", strerror(errno));
+		goto unload2;
+	}
 
 	/* Attach loaded programs */
 	ret = bpf_prog_attach(bpf_program__fd(progs.parser), map_fd,
 			BPF_SK_SKB_STREAM_PARSER, 0);
 	if (ret) {
 		ERROR("Failed to attach parser\n");
-		goto unload;
+		goto unload2;
 	}
 
 	ret = bpf_prog_attach(bpf_program__fd(progs.verdict), map_fd,
 			BPF_SK_SKB_STREAM_VERDICT, 0);
 	if (ret) {
 		ERROR("Failed to attach verdict\n");
-		goto unload;
+		goto unload2;
 	}
 
 	if (progs.sockops) {
@@ -185,15 +195,16 @@ ignore_arg_map:
 				BPF_CGROUP_SOCK_OPS, 0);
 		if (ret) {
 			ERROR("Failed to attach sockops\n");
-			goto unload;
+			goto unload2;
 		}
 	}
 
 	sk_skb_ctx.progs = progs;
-	sk_skb_ctx.map_fd = map_fd;
+	sk_skb_ctx.sockmap_fd = map_fd;
 
 	return 0;
-
+unload2:
+	unlink(SOCKMAP_PINNED_PATH);
 unload:
 	/* Should unload the eBPF objects */
 	bpf_object__close(bpfobj);
@@ -203,7 +214,8 @@ unload:
 void detach_sk_skb(void)
 {
 	struct sk_skb_progs progs = sk_skb_ctx.progs;
-	int map_fd = sk_skb_ctx.map_fd;
+	int map_fd = sk_skb_ctx.sockmap_fd;
+	unlink(SOCKMAP_PINNED_PATH);
 	bpf_prog_detach2(bpf_program__fd(progs.sockops), context.cgroup_fd, BPF_CGROUP_SOCK_OPS);
 	bpf_prog_detach2(bpf_program__fd(progs.parser), map_fd, BPF_SK_SKB_STREAM_PARSER);
 	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);

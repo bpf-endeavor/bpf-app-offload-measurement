@@ -48,13 +48,6 @@ struct {
 	__type(value, struct package);
 	__uint(max_entries, 2);
 } batching_map SEC(".maps");
-
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKMAP);
-	__type(key,   __u32);
-	__type(value, __u64);
-	__uint(max_entries, MAX_CONN);
-} sock_map SEC(".maps");
 /* ---------------- */
 
 SEC("sk_skb/stream_parser")

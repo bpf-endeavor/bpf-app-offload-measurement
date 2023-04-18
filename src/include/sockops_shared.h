@@ -9,4 +9,7 @@ struct conn_monitor_config {
 	unsigned int listen_ip;
 	unsigned short port; /* Expect it to be in bigendian format */
 };
+
+#define SOCKMAP_PINNED_PATH "/sys/fs/bpf/mysockmap"
+
 #endif

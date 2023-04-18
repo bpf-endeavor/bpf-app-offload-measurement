@@ -285,6 +285,9 @@ int run_server(struct socket_app *app)
 	}
 	INFO("Listening %s:%d\n", app->ip, app->port);
 
+	if (app->on_sockready != NULL)
+		app->on_sockready(sk_fd);
+
 	while (1) {
 		/* The listening server socket is blocking */
 		client_fd = accept(sk_fd, (struct sockaddr *)&peer_addr, &peer_addr_size);
