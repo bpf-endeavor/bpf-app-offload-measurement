@@ -329,11 +329,14 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 	}
 	len = ret;
 
-	/* buf[ret] = '\0'; */
-	/* INFO("recv! len = %d %s\n", len, buf); */
+	buf[ret] = '\0';
+	INFO("recv! len = %d %s\n", len, buf);
 
 	pkg = *(struct package *)buf;
 	/* INFO("Receive a package: count: %d\n", pkg.count); */
+
+	/* A safty check for when the data is not in correct format */
+	if (pkg.count > 5) return 1;
 
 	for (i = 0; i < pkg.count; i++) {
 		/* Send a reply */

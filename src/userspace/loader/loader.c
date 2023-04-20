@@ -112,7 +112,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 	progs.parser = bpf_object__find_program_by_name(bpfobj, SK_SKB_PARSER_NAME);
 	if (!progs.parser) {
 		ERROR("Failed to find parser\n");
-		goto unload;
+		/* goto unload; */
 	}
 
 	progs.verdict = bpf_object__find_program_by_name(bpfobj, context.bpf_prog[0]);
@@ -175,11 +175,13 @@ ignore_arg_map:
 	}
 
 	/* Attach loaded programs */
-	ret = bpf_prog_attach(bpf_program__fd(progs.parser), map_fd,
-			BPF_SK_SKB_STREAM_PARSER, 0);
-	if (ret) {
-		ERROR("Failed to attach parser\n");
-		goto unload2;
+	if (progs.parser != NULL) {
+		ret = bpf_prog_attach(bpf_program__fd(progs.parser), map_fd,
+				BPF_SK_SKB_STREAM_PARSER, 0);
+		if (ret) {
+			ERROR("Failed to attach parser\n");
+			goto unload2;
+		}
 	}
 
 	ret = bpf_prog_attach(bpf_program__fd(progs.verdict), map_fd,

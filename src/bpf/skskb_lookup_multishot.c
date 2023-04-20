@@ -50,12 +50,12 @@ struct {
 } batching_map SEC(".maps");
 /* ---------------- */
 
-SEC("sk_skb/stream_parser")
-int parser(struct __sk_buff *skb)
-{
-	bpf_printk("parser: %d", skb->len);
-	return skb->len;
-}
+/* SEC("sk_skb/stream_parser") */
+/* int parser(struct __sk_buff *skb) */
+/* { */
+/* 	bpf_printk("parser: %d", skb->len); */
+/* 	return skb->len; */
+/* } */
 
 SEC("sk_skb/stream_verdict")
 int verdict(struct __sk_buff *skb)
