@@ -12,7 +12,7 @@
 
 // removal of map elements is disabled by default because of its slight overhead.
 // if you want to enable this feature, uncomment the line below:
-//#define __HASHMAP_REMOVABLE
+#define __HASHMAP_REMOVABLE
 
 #include <stdint.h>
 #include <stdbool.h>
