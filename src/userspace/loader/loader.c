@@ -111,7 +111,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 
 	progs.parser = bpf_object__find_program_by_name(bpfobj, SK_SKB_PARSER_NAME);
 	if (!progs.parser) {
-		ERROR("Failed to find parser\n");
+		WARN("Failed to find sk_skb parser program\n");
 		/* goto unload; */
 	}
 
@@ -123,7 +123,7 @@ int load_sk_skb(struct bpf_object *bpfobj)
 
 	progs.sockops = bpf_object__find_program_by_name(bpfobj, SOCKOPS_NAME);
 	if (!progs.sockops) {
-		ERROR("Failed to find sockops\n");
+		WARN("Failed to find sockops program\n");
 		goto no_sockops;
 	}
 
@@ -138,31 +138,35 @@ int load_sk_skb(struct bpf_object *bpfobj)
 	ret = configure_connection_monitor(map_fd);
 	if (ret) {
 		ERROR("Failed to update the connection monitor config\n");
-		goto unload2;
+		goto unload;
 	}
 
 no_sockops:
 	/* Configure the benchmark */
 	map_obj = bpf_object__find_map_by_name(bpfobj, BENCHMARK_ARG_MAP_NAME);
 	if (!map_obj) {
-		ERROR("Failed to find the benchmark specific argument map\n");
+		WARN("Failed to find the benchmark specific argument map\n");
 		goto ignore_arg_map;
 	}
 	map_fd = bpf_map__fd(map_obj);
 	ret = configure_bpf_benchmark(map_fd);
 	if (ret) {
 		ERROR("Failed to configure the benchmark\n");
-		goto unload2;
+		goto unload;
 	}
 
 ignore_arg_map:
 	/* Get sock_map for attaching programs */
 	map_obj = bpf_object__find_map_by_name(bpfobj, SOCK_MAP_NAME);
 	if (!map_obj) {
-		INFO("Failed to find the sock_map!\n");
-		INFO("Created a SOCKMAP for attaching programs!\n");
+		WARN("Failed to find the sock_map!\n");
+		INFO("Creating a SOCKMAP for attaching programs.\n");
 		map_fd = bpf_map_create(BPF_MAP_TYPE_SOCKMAP, "sock_map",
 				4, 8, 10240, NULL);
+		if (map_fd < 1) {
+			ERROR("Failed to create a SOCKMAP!\n");
+			goto unload;
+		}
 	} else {
 		map_fd = bpf_map__fd(map_obj);
 	}
@@ -170,7 +174,7 @@ ignore_arg_map:
 
 	/* Pin sockmap */
 	if (bpf_obj_pin(map_fd, SOCKMAP_PINNED_PATH) != 0) {
-		printf("Failed to pin sockmap (%s)\n", strerror(errno));
+		ERROR("Failed to pin sockmap (%s)\n", strerror(errno));
 		goto unload2;
 	}
 
@@ -193,8 +197,8 @@ ignore_arg_map:
 
 	if (progs.sockops) {
 		/* Sockops could be optional */
-		ret = bpf_prog_attach(bpf_program__fd(progs.sockops), context.cgroup_fd,
-				BPF_CGROUP_SOCK_OPS, 0);
+		ret = bpf_prog_attach(bpf_program__fd(progs.sockops),
+				context.cgroup_fd, BPF_CGROUP_SOCK_OPS, 0);
 		if (ret) {
 			ERROR("Failed to attach sockops\n");
 			goto unload2;

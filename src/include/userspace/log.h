@@ -7,12 +7,13 @@
 #define INFO(fmt, args...) msg(LVL_INFO, __func__, __FILE__, __LINE__, fmt, ##args)
 #define DEBUG(fmt, args...) msg(LVL_DEBUG, __func__, __FILE__, __LINE__, fmt, ##args)
 #define ERROR(fmt, args...) msg(LVL_ERROR, __func__, __FILE__, __LINE__, fmt, ##args)
+#define WARN(fmt, args...) msg(LVL_WARN, __func__, __FILE__, __LINE__, fmt, ##args)
 
 enum log_level {
   LVL_INFO = 500,
   LVL_DEBUG,
   LVL_ERROR,
-
+  LVL_WARN,
 };
 
 extern int _output_log_fd;
