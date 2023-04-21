@@ -287,7 +287,9 @@ int load_tc(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 		return 1;
 	}
 	prog_fd = bpf_program__fd(prog);
-	struct bpf_tc_opts tc_opts = {
+	struct bpf_tc_opts tc_opts;
+	memset(&tc_opts, 0, sizeof(tc_opts));
+	tc_opts = (struct bpf_tc_opts) {
 		.sz = sizeof(struct bpf_tc_opts),
 		.prog_fd = prog_fd,
 		.flags = 0,
