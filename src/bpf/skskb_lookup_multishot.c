@@ -61,6 +61,12 @@ struct {
 } batching_map SEC(".maps");
 /* ---------------- */
 
+/* SEC("sk_skb/stream_parser") */
+/* int parser(struct __sk_buff *skb) */
+/* { */
+/* 	return skb->len; */
+/* } */
+
 SEC("sk_skb/stream_verdict")
 int verdict(struct __sk_buff *skb)
 {
@@ -189,6 +195,7 @@ int tc_encap_with_source(struct __sk_buff *skb)
 
 	udp = (void *)ip + (ip->ihl * 4);
 	if ((void *)(udp + 1) > data_end || udp->dest != bpf_htons(PORT)) {
+		bpf_printk("not our packet");
 		return TC_ACT_OK;
 	}
 
@@ -231,7 +238,7 @@ int tc_encap_with_source(struct __sk_buff *skb)
 	src_addr_hdr->source_ip = ip->saddr;
 	src_addr_hdr->source_port = udp->source;
 
-	/* Now I have changed the payload, I should update the some fields in 
+	/* Now I have changed the payload, I should update the some fields in
 	 * IP and UDP headers
 	 * */
 	len = (__u64)data_end - (__u64)ip;
