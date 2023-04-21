@@ -9,14 +9,19 @@ enum attach_type {
 	TC
 };
 
+/* Load a program of the given type and attach it to the interface */
+struct attach_request {
+	char *prog_name;
+	enum attach_type bpf_hook;
+	int ifindex;
+};
+
 struct context {
 	char *bpf_bin;
-	char *bpf_prog[MAX_BPF_PROG];
+	struct attach_request bpf_prog[MAX_BPF_PROG];
 	unsigned short count_prog;
 	unsigned short port;
 	int cgroup_fd;
-	enum attach_type bpf_hook;
-	int ifindex;
 };
 
 extern struct context context;

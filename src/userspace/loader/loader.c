@@ -102,7 +102,7 @@ static struct {
 
 static unsigned int xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
 
-int load_sk_skb(struct bpf_object *bpfobj)
+int load_sk_skb(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 {
 	int ret;
 	int map_fd;
@@ -115,9 +115,9 @@ int load_sk_skb(struct bpf_object *bpfobj)
 		/* goto unload; */
 	}
 
-	progs.verdict = bpf_object__find_program_by_name(bpfobj, context.bpf_prog[0]);
+	progs.verdict = bpf_object__find_program_by_name(bpfobj, bpf_req->prog_name);
 	if (!progs.verdict) {
-		ERROR("Failed to find verdict (%s)\n", context.bpf_prog[0]);
+		ERROR("Failed to find verdict (%s)\n", bpf_req->prog_name);
 		goto unload;
 	}
 
@@ -227,31 +227,31 @@ void detach_sk_skb(void)
 	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);
 }
 
-int load_xdp(struct bpf_object *bpfobj)
+int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 {
 	/* Attach XDP program */
 	struct bpf_program *prog = bpf_object__find_program_by_name(bpfobj,
-			context.bpf_prog[0]);
+			bpf_req->prog_name);
 	if (!prog) {
-		ERROR("Failed to find xdp program (%s)\n", context.bpf_prog[0]);
+		ERROR("Failed to find xdp program (%s)\n", bpf_req->prog_name);
 		return 1;
 	}
 
 	int prog_fd = bpf_program__fd(prog);
-	if (bpf_xdp_attach(context.ifindex, prog_fd, xdp_flags, NULL) != 0) {
-		DEBUG("if: %d prog fd: %d\n", context.ifindex, prog_fd);
+	if (bpf_xdp_attach(bpf_req->ifindex, prog_fd, xdp_flags, NULL) != 0) {
+		DEBUG("if: %d prog fd: %d\n", bpf_req->ifindex, prog_fd);
 		ERROR("Failed to attach XDP program! %s\n", strerror(errno));
 		return 1;
 	}
 	return 0;
 }
 
-void detach_xdp(void)
+void detach_xdp(struct attach_request *bpf_req)
 {
-	bpf_xdp_detach(context.ifindex, xdp_flags, NULL);
+	bpf_xdp_detach(bpf_req->ifindex, xdp_flags, NULL);
 }
 
-int load_tc(struct bpf_object *bpfobj)
+int load_tc(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 {
 	int ret;
 	int prog_fd;
@@ -260,7 +260,7 @@ int load_tc(struct bpf_object *bpfobj)
 	/* Create the TC hook */
 	tc_ctx.tc_hook = (struct bpf_tc_hook) {
 		.sz = sizeof(struct bpf_tc_hook),
-		.ifindex = context.ifindex,
+		.ifindex = bpf_req->ifindex,
 		.attach_point = BPF_TC_INGRESS,
 		.parent = 0,
 	};
@@ -281,9 +281,9 @@ int load_tc(struct bpf_object *bpfobj)
 	}
 
 	/* Attach TC program */
-	prog = bpf_object__find_program_by_name(bpfobj, context.bpf_prog[0]);
+	prog = bpf_object__find_program_by_name(bpfobj, bpf_req->prog_name);
 	if (!prog) {
-		ERROR("Failed to find the program %s\n", context.bpf_prog[0]);
+		ERROR("Failed to find the program %s\n", bpf_req->prog_name);
 		return 1;
 	}
 	prog_fd = bpf_program__fd(prog);
@@ -328,7 +328,9 @@ void detach_tc(void)
 int main(int argc, char *argv[])
 {
 	int ret;
+	int i;
 	struct bpf_object *bpfobj;
+	struct attach_request *bpf_req;
 
 	if (parse_args(argc, argv) != 0) {
 		return EXIT_FAILURE;
@@ -357,19 +359,22 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	switch(context.bpf_hook) {
-		case SK_SKB:
-			if (load_sk_skb(bpfobj) != 0) return EXIT_FAILURE;
-			break;
-		case XDP:
-			if (load_xdp(bpfobj) != 0) return EXIT_FAILURE;
-			break;
-		case TC:
-			if (load_tc(bpfobj) != 0) return EXIT_FAILURE;
-			break;
-		default:
-			ERROR("Unexpected value!");
-			return EXIT_FAILURE;
+	for (i = 0; i < context.count_prog; i++) {
+		bpf_req = &context.bpf_prog[i];
+		switch(bpf_req->bpf_hook) {
+			case SK_SKB:
+				if (load_sk_skb(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				break;
+			case XDP:
+				if (load_xdp(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				break;
+			case TC:
+				if (load_tc(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				break;
+			default:
+				ERROR("Unexpected value!");
+				return EXIT_FAILURE;
+		}
 	}
 
 	/* Wait for the user to SIGNAL the program */
@@ -382,19 +387,22 @@ int main(int argc, char *argv[])
 	}
 
 	/* Deattach programs */
-	switch(context.bpf_hook) {
-		case SK_SKB:
-			detach_sk_skb();
-			break;
-		case XDP:
-			detach_xdp();
-			break;
-		case TC:
-			detach_tc();
-			break;
-		default:
-			ERROR("Unexpected value!");
-			return EXIT_FAILURE;
+	for (i = 0; i < context.count_prog; i++) {
+		bpf_req = &context.bpf_prog[i];
+		switch(bpf_req->bpf_hook) {
+			case SK_SKB:
+				detach_sk_skb();
+				break;
+			case XDP:
+				detach_xdp(bpf_req);
+				break;
+			case TC:
+				detach_tc();
+				break;
+			default:
+				ERROR("Unexpected value!");
+				return EXIT_FAILURE;
+		}
 	}
 	bpf_object__close(bpfobj);
 

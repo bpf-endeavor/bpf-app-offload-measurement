@@ -15,10 +15,12 @@ void usage(void)
 	INFO("Options:\n");
 	INFO("  --help     -h:  path to bpf binary file\n");
 	INFO("  --bpf_bin  -b:  path to bpf binary file\n");
-	INFO("  --bpf_prog -p:  name of bpf program to load (can suply multiple)\n"); 
+	/* INFO("  --bpf_prog -p:  name of bpf program to load (can suply multiple)\n"); */ 
+	INFO("  --iface:   -i:  the interface to use for TC or XDP program\n");
 	INFO("  --port     -P:  the destination port (for connection monitor)\n");
 	INFO("  --xdp:          load XDP program on given interface\n");
 	INFO("  --tc:           load TC program on ingress of given interface\n");
+	INFO("  --skskb:        load SK_SKB program\n");
 }
 
 static int get_default_cgroup_fd(void)
@@ -34,22 +36,30 @@ static int get_default_cgroup_fd(void)
 
 int parse_args(int argc, char *argv[])
 {
+	int i;
 	int ret;
 	int count_prog = 0;
+	int ifindex = 0;
+	int ifindex_req_num = 0;
+	struct attach_request *req;
 	enum opts {
 		HELP = 500,
 		BPF_BIN,
-		BPF_PROG,
+		/* BPF_PROG, */
 		DEST_PORT,
 		XDP_FLAG,
 		TC_FLAG,
+		SKSKB_FLAG,
+		IFACE,
 	};
 
 	struct option long_opts[] = {
 		{"help",     no_argument,       NULL, HELP},        /* h */
 		{"bpf_bin",  required_argument, NULL, BPF_BIN},     /* b */
-		{"bpf_prog", required_argument, NULL, BPF_PROG},    /* p */
+		/* {"bpf_prog", required_argument, NULL, BPF_PROG},    /1* p *1/ */
 		{"port",     required_argument, NULL, DEST_PORT},   /* P */
+		{"iface",    required_argument, NULL, IFACE},       /* i */
+		{"skskb",    required_argument, NULL, SKSKB_FLAG},
 		{"xdp",      required_argument, NULL, XDP_FLAG},
 		{"tc",       required_argument, NULL, TC_FLAG},
 		/* End of option list ------------------- */
@@ -61,10 +71,9 @@ int parse_args(int argc, char *argv[])
 	context.port = 8080;
 	context.bpf_bin = NULL;
 	context.cgroup_fd = get_default_cgroup_fd();
-	context.bpf_hook = SK_SKB;
 
 	while(1) {
-		ret = getopt_long(argc, argv, "hb:p:P:", long_opts, NULL);
+		ret = getopt_long(argc, argv, "hb:p:P:i:", long_opts, NULL);
 		if (ret == -1)
 			break;
 		switch (ret) {
@@ -72,30 +81,45 @@ int parse_args(int argc, char *argv[])
 			case 'b':
 				context.bpf_bin = optarg;
 				break;
-			case BPF_PROG:
 			case 'p':
-				context.bpf_prog[count_prog] = optarg;
-				count_prog++;
-				break;
+				ERROR("Error: -p is depricated!\n");
+				return 1;
 			case DEST_PORT:
 			case 'P':
 				context.port = atoi(optarg);
 				break;
-			case XDP_FLAG:
-				context.bpf_hook = XDP;
-				context.ifindex = if_nametoindex(optarg);
-				if (context.ifindex == 0) {
+			case IFACE:
+			case 'i':
+				/* overwrite the last programs interface and
+				 * use for the next programs
+				 * */
+				ifindex = if_nametoindex(optarg);
+				if (ifindex == 0) {
 					ERROR("Failed to get interface index!\n");
 					return 1;
 				}
+				for (i = ifindex_req_num; i < count_prog; i++) {
+					context.bpf_prog[i].ifindex = ifindex;
+				}
+				ifindex_req_num = count_prog;
+				break;
+			case XDP_FLAG:
+				req = &context.bpf_prog[count_prog++];
+				req->prog_name = optarg;
+				req->bpf_hook = XDP;
+				req->ifindex = ifindex;
 				break;
 			case TC_FLAG:
-				context.bpf_hook = TC;
-				context.ifindex = if_nametoindex(optarg);
-				if (context.ifindex == 0) {
-					ERROR("Failed to get interface index!\n");
-					return 1;
-				}
+				req = &context.bpf_prog[count_prog++];
+				req->prog_name = optarg;
+				req->bpf_hook = TC;
+				req->ifindex = ifindex;
+				break;
+			case SKSKB_FLAG:
+				req = &context.bpf_prog[count_prog++];
+				req->prog_name = optarg;
+				req->bpf_hook = SK_SKB;
+				req->ifindex = ifindex;
 				break;
 			case HELP:
 			case 'h':
