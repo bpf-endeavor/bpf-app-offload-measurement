@@ -24,6 +24,7 @@ struct connection_state {
 /* NOTE: I am using a __u8 as index, if changing the value to larger than 255
  * update the code */
 #define BATCH_SIZE 5
+#define BATCH_TIME_OUT_NS 10000
 
 struct request {
 	int req_type;
@@ -45,20 +46,23 @@ struct package {
 	struct req_data data[BATCH_SIZE];
 } __attribute__((__packed__));
 
+struct batch_entry {
+	struct package pkg;
+	struct bpf_timer timer;
+};
+
 struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	/* NOTE: per cpu array is not supported for bpf_timer */
+	/* __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY); */
+	__uint(type, BPF_MAP_TYPE_ARRAY);
 	__type(key,   __u32);
-	__type(value, struct package);
+	__type(value, struct batch_entry);
 	__uint(max_entries, 2);
 } batching_map SEC(".maps");
-
-/* struct { */
-/* 	__uint(type, BPF_MAP_TYPE_BLOOM_FILTER); */
-/* 	__type(value, struct source_addr); */
-/* 	__uint(max_entries, MAX_CONN); */
-/* 	__uint(map_extra, 3); */
-/* } bloom_filter_map SEC(".maps"); */
 /* ---------------- */
+
+/* This the callback triggered when batch timer out occurs */
+static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val);
 
 SEC("sk_skb/stream_parser")
 int parser(struct __sk_buff *skb)
@@ -142,7 +146,7 @@ int verdict(struct __sk_buff *skb)
 	struct sock_context *sock_ctx;
 
 	const int zero = 0;
-	struct package *pkg;
+	struct batch_entry *entry;
 	__u8 index;
 
 	if (skb->sk == NULL) {
@@ -180,52 +184,54 @@ int verdict(struct __sk_buff *skb)
 				sock_ctx->sock_map_index, 0);
 	} else if (sock_ctx->state.req_type == 2) {
 		/* Batch request */
-		pkg = bpf_map_lookup_elem(&batching_map, &zero);
-		if (!pkg) {
-			bpf_printk("Failed to get the package (batch)!");
+		entry = bpf_map_lookup_elem(&batching_map, &zero);
+		if (!entry) {
+			bpf_printk("Failed to get the batch object!");
 			return SK_DROP;
 		}
-		index = pkg->count;
+		index = entry->pkg.count;
 		if (index >= BATCH_SIZE) {
 			bpf_printk("Batch size grow larger than expected!");
 			return SK_DROP;
 		}
 
 		/* Extract the packet source address */
-		pkg->data[index].src_addr.source_ip = skb->remote_ip4;
+		entry->pkg.data[index].src_addr.source_ip = skb->remote_ip4;
 		/* This is ridiculous! I should think about it a bit. Why such
 		 * a juggling is needed?
 		 * */
-		pkg->data[index].src_addr.source_port =
+		entry->pkg.data[index].src_addr.source_port =
 			bpf_ntohs((__u16)bpf_ntohl(skb->remote_port));
 		/* bpf_printk("receive: %x:%d", bpf_ntohl(pkg->data[index].source_ip), */
 		/* 		bpf_ntohs(pkg->data[index].source_port)); */
 
-		/* Check connection available */
-		/* if (bpf_map_peek_elem(&bloom_filter_map, &pkg->data[index].src_addr) != 0) { */
-		/* 	/1* This is the first time we see data from this source address *1/ */
-		/* } */
-
 		/* Mark this index as used */
-		pkg->count++;
-		pkg->data[index].hash = sock_ctx->state.hash;
+		entry->pkg.count++;
+		entry->pkg.data[index].hash = sock_ctx->state.hash;
 
-		if (pkg->count == BATCH_SIZE) {
-			__adjust_skb_size(skb, sizeof(*pkg));
+		if (entry->pkg.count == BATCH_SIZE) {
+			__adjust_skb_size(skb, sizeof(struct package));
 			data = (void *)(long)skb->data;
 			data_end = (void *)(long)skb->data_end;
 
-			if ((void *)data + sizeof(*pkg) > data_end) {
+			if ((void *)data + sizeof(struct package) > data_end) {
 				bpf_printk("Failed to copy hash value to the packet!");
 				return SK_DROP;
 			}
-			memcpy(data, pkg, sizeof(*pkg));
+			memcpy(data, &entry->pkg, sizeof(struct package));
 
 			/* Clear the package */
-			pkg->count = 0;
+			entry->pkg.count = 0;
+			bpf_timer_cancel(&entry->timer);
 
 			return SK_PASS;
 		} else {
+			if (entry->pkg.count == 1) {
+				/* Arm the timer */
+				bpf_timer_init(&entry->timer, &batching_map, 0);
+				bpf_timer_set_callback(&entry->timer, submit_batch_cb);
+				bpf_timer_start(&entry->timer, BATCH_TIME_OUT_NS, 0);
+			}
 			/* Batching: waiting for more request */
 			return SK_DROP;
 		}
@@ -233,6 +239,13 @@ int verdict(struct __sk_buff *skb)
 
 	bpf_printk("Unknown request type");
 	return SK_DROP;
+}
+
+static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val)
+{
+	bpf_printk("Timer went off");
+	/* Submit data to userspace */
+	return 0;
 }
 
 char _license[] SEC("license") = "GPL";
