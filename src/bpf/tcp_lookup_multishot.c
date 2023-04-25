@@ -82,7 +82,7 @@ int parser(struct __sk_buff *skb)
 	struct sock_context *sock_ctx;
 	__u32 hash;
 	__u8 *ptr;
-	__u32 len;
+	int len, proc_len;
 
 	/* Pull message data so that we can access it */
 	if (bpf_skb_pull_data(skb, skb->len) != 0) {
@@ -107,6 +107,7 @@ int parser(struct __sk_buff *skb)
 		hash = sock_ctx->state.hash;
 		ptr = data;
 		len = skb->len;
+		proc_len = 0;
 	} else {
 		/* A new request */
 		struct request *req = data;
@@ -124,7 +125,9 @@ int parser(struct __sk_buff *skb)
 		hash = FNV_OFFSET_BASIS_32;
 		ptr = (__u8 *)(req + 1);
 		len = skb->len - sizeof(struct request);
+		proc_len = sizeof(struct request);
 	}
+	len = len > sock_ctx->state.rem_bytes ? sock_ctx->state.rem_bytes : len;
 
 	if (fnv_hash(ptr, len, data_end, &hash) != 0) {
 		bpf_printk("Failed to perform the hashing!");
@@ -136,16 +139,17 @@ int parser(struct __sk_buff *skb)
 
 	if (sock_ctx->state.rem_bytes > 0) {
 		/* Discard the current bytes */
-		return skb->len;
+		return proc_len + len;
 	} else if (sock_ctx->state.rem_bytes < 0) {
-		bpf_printk("Unexpected request length !!");
-		return skb->len;
+		bpf_printk("Unexpected request length !! rem_bytes: %d, cur len: %d skb_len: %d",
+				sock_ctx->state.rem_bytes, len, skb->len);
+		return proc_len + len;
 	}
 
 	sock_ctx->state.old = 0;
 	sock_ctx->state.ready = 1;
 
-	return skb->len;
+	return proc_len + len;
 }
 
 SEC("sk_skb/stream_verdict")
