@@ -23,7 +23,7 @@ struct connection_state {
 #define OFFSET_MASK 0x7fff
 /* NOTE: I am using a __u8 as index, if changing the value to larger than 255
  * update the code */
-#define BATCH_SIZE 5
+#define BATCH_SIZE 32
 #define BATCH_TIME_OUT_NS 10000
 
 struct request {
@@ -199,7 +199,7 @@ int verdict(struct __sk_buff *skb)
 			bpf_printk("Failed to get the batch object!");
 			return SK_DROP;
 		}
-		index = entry->pkg.count;
+		index = entry->pkg.count & 0x1f;
 		if (index >= BATCH_SIZE) {
 			bpf_printk("Batch size grow larger than expected!");
 			return SK_DROP;
@@ -220,30 +220,34 @@ int verdict(struct __sk_buff *skb)
 		entry->pkg.data[index].hash = sock_ctx->state.hash;
 
 		if (entry->pkg.count == BATCH_SIZE) {
-			/* __adjust_skb_size(skb, sizeof(struct package)); */
-			/* data = (void *)(long)skb->data; */
-			/* data_end = (void *)(long)skb->data_end; */
+#if SEND_ON_PKT
+			__adjust_skb_size(skb, sizeof(struct package));
+			data = (void *)(long)skb->data;
+			data_end = (void *)(long)skb->data_end;
 
-			/* if ((void *)data + sizeof(struct package) > data_end) { */
-			/* 	bpf_printk("Failed to copy hash value to the packet!"); */
-			/* 	return SK_DROP; */
-			/* } */
-			/* memcpy(data, &entry->pkg, sizeof(struct package)); */
-
+			if ((void *)data + sizeof(struct package) > data_end) {
+				bpf_printk("Failed to copy hash value to the packet!");
+				return SK_DROP;
+			}
+			memcpy(data, &entry->pkg, sizeof(struct package));
+			entry->pkg.count = 0;
+			return SK_PASS;
+#else
 			submit_batch_to_userspace(&entry->pkg);
 			/* Clear the package */
 			entry->pkg.count = 0;
 			bpf_timer_cancel(&entry->timer);
-
 			return SK_DROP;
-			/* return SK_PASS; */
+#endif
 		} else {
+#ifndef SEND_ON_PKT
 			if (entry->pkg.count == 1) {
 				/* Arm the timer */
 				bpf_timer_init(&entry->timer, &batching_map, 0);
 				bpf_timer_set_callback(&entry->timer, submit_batch_cb);
 				bpf_timer_start(&entry->timer, BATCH_TIME_OUT_NS, 0);
 			}
+#endif
 			/* Batching: waiting for more request */
 			return SK_DROP;
 		}
@@ -255,8 +259,9 @@ int verdict(struct __sk_buff *skb)
 
 static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val)
 {
-	bpf_printk("Timer went off");
-	/* submit_batch_to_userspace(&val->pkg); */
+	submit_batch_to_userspace(&val->pkg);
+	/* Clear the package */
+	val->pkg.count = 0;
 	return 0;
 }
 

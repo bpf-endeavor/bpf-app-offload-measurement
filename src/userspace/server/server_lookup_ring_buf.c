@@ -53,7 +53,7 @@ struct req_data {
 
 struct package {
 	unsigned int count;
-	struct req_data data[5];
+	struct req_data data[32];
 } __attribute__((__packed__));
 
 /* Some helpers */
@@ -136,7 +136,7 @@ void add_sock_to_table(int sockfd)
 {
 	struct sockaddr_in _addr;
 	socklen_t _addrlen;
-	struct source_addr *addr = malloc(sizeof(struct source_addr));
+	struct source_addr *addr = calloc(1, sizeof(struct source_addr));
 
 	_addrlen = sizeof(_addr);
 	if (getpeername(sockfd, (struct sockaddr *)&_addr, &_addrlen) != 0) {
@@ -145,11 +145,11 @@ void add_sock_to_table(int sockfd)
 	}
 
 	/* I expect the address to be in network byte order */
-	addr-> source_ip = _addr.sin_addr.s_addr;
+	addr->source_ip = _addr.sin_addr.s_addr;
 	addr->source_port = _addr.sin_port;
 
 	/* NOTE: The keys should not be freed while hashmap is using them! */
-	hashmap_set(tcp_connection_table, addr, sizeof(*addr), sockfd);
+	hashmap_set(tcp_connection_table, addr, sizeof(struct source_addr), sockfd);
 	/* INFO("Add connection: %x:%d\n", ntohl(addr->source_ip), ntohs(addr->source_port)); */
 }
 
