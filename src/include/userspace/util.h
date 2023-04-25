@@ -1,8 +1,9 @@
 #ifndef _UTIL_H
 #define _UTIL_H
+
+#include <unistd.h>
 #include <sys/time.h>
 #include <string.h>
-#include <pthread.h>
 
 #include <bpf/libbpf.h> // bpf_get_link_xdp_id
 #include <bpf/bpf.h> // bpf_prog_get_fd_by_id, bpf_obj_get_info_by_fd, ...

@@ -365,28 +365,14 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 /* Connection table */
 static hashmap *tcp_connection_table;
 
-int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
+static inline int _tcp_multishot(struct package *pkg, char *buf)
 {
-	int ret, len;
-	char buf[BUFSIZE];
+	int i, ret;
 	unsigned int message_length;
-
-	struct package pkg;
-	int i;
 	long long int real_client_fd;
-
-	/* Receive message and check the return value */
-	RECV(client_fd, buf, BUFSIZE, 0);
-	len = ret;
-
-	/* buf[ret] = '\0'; */
-	/* INFO("recv! len = %d %s\n", len, buf); */
-
-	pkg = *(struct package *)buf;
 	/* INFO("Receive a package: count: %d\n", pkg.count); */
-
 	int sent = 0;
-	for (i = 0; i < pkg.count; i++) {
+	for (i = 0; i < pkg->count; i++) {
 		/* Hash value */
 		/* hash = pkg.data[i].hash; */
 
@@ -398,13 +384,13 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 		}
 		/* Lookup the socket */
 		if (!hashmap_get(tcp_connection_table,
-					(void *)&pkg.data[i].src_addr,
+					(void *)&pkg->data[i].src_addr,
 					sizeof(struct source_addr),
 					(uintptr_t *)&real_client_fd)) {
 			/* Failed to find the connection */
 			ERROR("Connection not found %x:%d\n",
-					ntohl(pkg.data[i].src_addr.source_ip),
-					ntohs(pkg.data[i].src_addr.source_port));
+					ntohl(pkg->data[i].src_addr.source_ip),
+					ntohs(pkg->data[i].src_addr.source_port));
 			continue;
 			/* I should not terminate this connection because it is
 			 * not the real connection ! */
@@ -419,7 +405,25 @@ int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
 			/* INFO("SEND\n"); */
 		}
 	}
-	/* INFO("sent: %d\n", sent); */
+	return 0;
+}
+
+int handle_client_bpf_multishot_tcp(int client_fd, struct client_ctx *ctx)
+{
+	int ret, len;
+	char buf[BUFSIZE];
+
+	struct package pkg;
+
+	/* Receive message and check the return value */
+	RECV(client_fd, buf, BUFSIZE, 0);
+	len = ret;
+
+	/* buf[ret] = '\0'; */
+	/* INFO("recv! len = %d %s\n", len, buf); */
+
+	pkg = *(struct package *)buf;
+	_tcp_multishot(&pkg, buf);
 
 	return 0;
 }
@@ -548,11 +552,10 @@ int main(int argc, char *argv[])
 			break;
 		case BPF_MULTI_SHOT_TCP:
 			INFO("Mode: Batch: bpf + userspace (TCP)\n");
+			tcp_connection_table = hashmap_create();
 			app.sock_handler = handle_client_bpf_multishot_tcp;
 			app.on_sockready = add_sock_to_table;
 			/* app.on_sockclose = remove_sock_from_table; */
-
-			tcp_connection_table = hashmap_create();
 			break;
 		default:
 			ERROR("Unexpected value for application mode!\n");
