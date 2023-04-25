@@ -86,6 +86,9 @@ static inline int prepare_type2_response(char *buf,
 	/* Prepare the response (END is need for notifying end of response) */
 	strcpy(buf + 8, "Done,END\r\n");
 	*message_length = sizeof("Done,END\r\n") - 1 + 8;
+
+	/* strcpy(buf, "Done,END\r\n"); */
+	/* *message_length = sizeof("Done,END\r\n") - 1; */
 	return 0;
 }
 

@@ -20,6 +20,19 @@
 #include "userspace/log.h"
 #include "userspace/util.h"
 
+#define ADD_SOCKET_TO_POLL_LIST(sd, list, index) {        \
+		list[index].fd = sd;                      \
+		list[index].events = POLLIN;              \
+		index++;                                  \
+}
+
+#define TERMINATE(i, list) {                              \
+	close(list[i].fd);                                \
+	list[i].fd = -1;                                  \
+	list[i].events = 0;                               \
+	compress_array = 1;                               \
+}
+
 #define MAX_CONN 1024
 #define BUFSIZE 2048
 #define RING_BUFFER_MAP_NAME "ring_map"
@@ -28,21 +41,26 @@ pthread_spinlock_t table_lock;
 static hashmap *tcp_connection_table;
 
 /* Internal structure */
+struct worker_arg {
+	int running;
+	pthread_t thread;
+	struct pollfd *list;
+	int count_conn;
+	pthread_spinlock_t lock;
+	int core;
+	struct ring_buffer *rbuf;
+};
+
 struct server_conf {
 	char *ip;
 	short port;
 	int core;
-};
-
-struct worker_arg {
-	int running;
-	pthread_t thread;
-	int core;
-	struct ring_buffer *rbuf;
+	struct worker_arg **workers;
 };
 /* -------------- */
 
 /* NOTE: this struct is duplicated in the XDP program */
+#define BATCH_SIZE 5
 struct source_addr {
 	unsigned int source_ip;
 	unsigned short source_port;
@@ -54,7 +72,7 @@ struct req_data {
 
 struct package {
 	unsigned int count;
-	struct req_data data[32];
+	struct req_data data[BATCH_SIZE];
 } __attribute__((__packed__));
 
 /* Some helpers */
@@ -126,6 +144,9 @@ static inline int prepare_type2_response(char *buf,
 	/* Prepare the response (END is need for notifying end of response) */
 	strcpy(buf + 8, "Done,END\r\n");
 	*message_length = sizeof("Done,END\r\n") - 1 + 8;
+
+	/* strcpy(buf, "Done,END\r\n"); */
+	/* *message_length = sizeof("Done,END\r\n") - 1; */
 	return 0;
 }
 
@@ -208,6 +229,7 @@ static int tcp_multishot_ring_buffer(void *ctx, void *data, size_t size)
 	struct package *pkg = data;
 
 	/* assert size == sizeof(struct package) */
+	/* assert pkg->count <= BATCH_SIZE */
 	/* INFO("recv package: size = %d\n", pkg->count); */
 
 	_tcp_multishot(pkg, buf);
@@ -225,14 +247,68 @@ static struct ring_buffer *configure_ring_buffer()
 
 static void *worker_entry(void *_arg)
 {
+	int i, j;
+	int num_event, count_conn;
+	int compress_array;
 	struct worker_arg *arg = _arg;
+
 	if (set_core_affinity(arg->core)) {
 		ERROR("Failed to set CPU core affinity!\n");
 		return (void *)-1;
 	}
 	INFO("Worker running on core %d\n", arg->core);
+
+	char buf[1024];
+	int ret;
+	compress_array = 0;
 	while (arg->running) {
 		ring_buffer__poll(arg->rbuf, 1000);
+		/* Check if there is any socket to close. does not block */
+		count_conn = arg->count_conn;
+		num_event = poll(arg->list, count_conn, 0);
+		if (num_event > 0) {
+			for (i = 0; i < count_conn; i++) {
+				if (arg->list[i].revents & POLLHUP ||
+					arg->list[i].revents & POLLERR ||
+					arg->list[i].revents & POLLNVAL) {
+						TERMINATE(i, arg->list);
+						continue;
+				}
+				if(arg->list[i].revents & POLLIN) {
+					ret = recv(arg->list[i].fd, buf, 1023, 0);
+					if (ret == 0) {
+						TERMINATE(i, arg->list);
+					} else if (ret < 0) {
+						if (ret != EWOULDBLOCK)
+							TERMINATE(i, arg->list);
+					}
+				}
+			}
+
+			/* update number of connections */
+			pthread_spin_lock(&arg->lock);
+			count_conn = arg->count_conn;
+			if (compress_array)
+			{
+				compress_array = 0;
+				for (i = 0; i < count_conn; i++)
+				{
+					if (arg->list[i].fd == -1)
+					{
+						for(j = i; j < count_conn; j++)
+						{
+							arg->list[j].fd = arg->list[j+1].fd;
+							arg->list[j].events = arg->list[j+1].events;
+						}
+						i--;
+						count_conn--;
+					}
+				}
+				/* This function only reduce the size */
+				arg->count_conn = count_conn;
+			}
+			pthread_spin_unlock(&arg->lock);
+		}
 	}
 	return NULL;
 }
@@ -277,10 +353,14 @@ static int start_server(struct server_conf *conf)
 		/* The listening server socket is blocking */
 		client_fd = accept(sk_fd, (struct sockaddr *)&peer_addr, &peer_addr_size);
 		if (client_fd < 0) {
-			ERROR("Error: accepting new connection\n");
+			ERROR("Error: accepting new connection (%s)\n", strerror(errno));
 			return 1;
 		}
 		set_client_sock_opt(client_fd);
+
+		pthread_spin_lock(&conf->workers[0]->lock);
+		ADD_SOCKET_TO_POLL_LIST(client_fd, conf->workers[0]->list, conf->workers[0]->count_conn);
+		pthread_spin_unlock(&conf->workers[0]->lock);
 
 		add_sock_to_table(client_fd);
 	}
@@ -298,6 +378,9 @@ struct worker_arg *launch_worker(int core)
 	arg->core = core;
 	arg->running = 1;
 	arg->rbuf = configure_ring_buffer();
+	arg->list = (struct pollfd *)calloc(MAX_CONN + 1, sizeof(struct pollfd));
+	pthread_spin_init(&arg->lock, PTHREAD_PROCESS_PRIVATE);
+	arg->count_conn = 0;
 	/* Prepare the ring buffer channel */
 	if (arg->rbuf == NULL) {
 		ERROR("Failed to configure the ring buffer\n");
@@ -317,12 +400,14 @@ int main(int argc, char *argv[])
 	int ret;
 	struct worker_arg *worker;
 	const int core_listener = 0;
+	const int count_workers = 1;
 
 	int worker_core = 7;
 	struct server_conf conf = {
 		.ip = "192.168.1.1",
 		.port = 8080,
-		.core = core_listener
+		.core = core_listener,
+		.workers = calloc(count_workers, sizeof(struct worker_arg *)),
 	};
 
 	if (set_core_affinity(core_listener)) {
@@ -333,13 +418,14 @@ int main(int argc, char *argv[])
 
 	/* Prepare connection table */
 	tcp_connection_table = hashmap_create();
-	pthread_spin_init(&table_lock, 0);
+	pthread_spin_init(&table_lock, PTHREAD_PROCESS_PRIVATE);
 
 	/* Start a worker thread */
 	worker = launch_worker(worker_core);
 	if (worker == NULL) {
 		return 1;
 	}
+	conf.workers[0] = worker;
 
 	ret = start_server(&conf);
 

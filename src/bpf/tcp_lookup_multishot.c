@@ -23,8 +23,8 @@ struct connection_state {
 #define OFFSET_MASK 0x7fff
 /* NOTE: I am using a __u8 as index, if changing the value to larger than 255
  * update the code */
-#define BATCH_SIZE 32
-#define BATCH_TIME_OUT_NS 10000
+#define BATCH_SIZE 5
+#define BATCH_TIME_OUT_NS 2000
 
 struct request {
 	int req_type;
