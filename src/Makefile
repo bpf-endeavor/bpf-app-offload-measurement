@@ -19,7 +19,8 @@ USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 # The server binaries that should be built
 SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_summarize \
-			  ${OUTPUT_DIR}/server_lookup
+			  ${OUTPUT_DIR}/server_lookup \
+			  ${OUTPUT_DIR}/server_lookup_ring_buf
 SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF

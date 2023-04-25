@@ -51,6 +51,14 @@ struct batch_entry {
 	struct bpf_timer timer;
 };
 
+/* Maps ------------ */
+struct {
+	/* Key and Value size MUST be zero */
+	__uint(type, BPF_MAP_TYPE_RINGBUF);
+	/* max_entries MUST be a power of two */
+	__uint(max_entries, 4 * 1024 * 1024);
+} ring_map SEC(".maps");
+
 struct {
 	/* NOTE: per cpu array is not supported for bpf_timer */
 	/* __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY); */
@@ -63,6 +71,8 @@ struct {
 
 /* This the callback triggered when batch timer out occurs */
 static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val);
+/* This is a helper function for sending batch to userspace */
+static inline int submit_batch_to_userspace();
 
 SEC("sk_skb/stream_parser")
 int parser(struct __sk_buff *skb)
@@ -210,21 +220,23 @@ int verdict(struct __sk_buff *skb)
 		entry->pkg.data[index].hash = sock_ctx->state.hash;
 
 		if (entry->pkg.count == BATCH_SIZE) {
-			__adjust_skb_size(skb, sizeof(struct package));
-			data = (void *)(long)skb->data;
-			data_end = (void *)(long)skb->data_end;
+			/* __adjust_skb_size(skb, sizeof(struct package)); */
+			/* data = (void *)(long)skb->data; */
+			/* data_end = (void *)(long)skb->data_end; */
 
-			if ((void *)data + sizeof(struct package) > data_end) {
-				bpf_printk("Failed to copy hash value to the packet!");
-				return SK_DROP;
-			}
-			memcpy(data, &entry->pkg, sizeof(struct package));
+			/* if ((void *)data + sizeof(struct package) > data_end) { */
+			/* 	bpf_printk("Failed to copy hash value to the packet!"); */
+			/* 	return SK_DROP; */
+			/* } */
+			/* memcpy(data, &entry->pkg, sizeof(struct package)); */
 
+			submit_batch_to_userspace(&entry->pkg);
 			/* Clear the package */
 			entry->pkg.count = 0;
 			bpf_timer_cancel(&entry->timer);
 
-			return SK_PASS;
+			return SK_DROP;
+			/* return SK_PASS; */
 		} else {
 			if (entry->pkg.count == 1) {
 				/* Arm the timer */
@@ -244,7 +256,16 @@ int verdict(struct __sk_buff *skb)
 static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val)
 {
 	bpf_printk("Timer went off");
-	/* Submit data to userspace */
+	/* submit_batch_to_userspace(&val->pkg); */
+	return 0;
+}
+
+static inline int submit_batch_to_userspace(struct package *pkg)
+{
+	struct bpf_dynptr ptr;
+	bpf_ringbuf_reserve_dynptr(&ring_map, sizeof(struct package), 0, &ptr);
+	bpf_dynptr_write(&ptr, 0, pkg, sizeof(struct package), 0);
+	bpf_ringbuf_submit_dynptr(&ptr, 0);
 	return 0;
 }
 
