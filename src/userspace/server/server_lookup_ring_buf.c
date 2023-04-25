@@ -24,6 +24,7 @@
 #define BUFSIZE 2048
 #define RING_BUFFER_MAP_NAME "ring_map"
 
+pthread_spinlock_t table_lock;
 static hashmap *tcp_connection_table;
 
 /* Internal structure */
@@ -148,8 +149,10 @@ void add_sock_to_table(int sockfd)
 	addr->source_ip = _addr.sin_addr.s_addr;
 	addr->source_port = _addr.sin_port;
 
+	pthread_spin_lock(&table_lock);
 	/* NOTE: The keys should not be freed while hashmap is using them! */
 	hashmap_set(tcp_connection_table, addr, sizeof(struct source_addr), sockfd);
+	pthread_spin_unlock(&table_lock);
 	/* INFO("Add connection: %x:%d\n", ntohl(addr->source_ip), ntohs(addr->source_port)); */
 }
 
@@ -171,10 +174,13 @@ static inline int _tcp_multishot(struct package *pkg, char *buf)
 			return 1;
 		}
 		/* Lookup the socket */
-		if (!hashmap_get(tcp_connection_table,
-					(void *)&pkg->data[i].src_addr,
-					sizeof(struct source_addr),
-					(uintptr_t *)&real_client_fd)) {
+		pthread_spin_lock(&table_lock);
+		ret = hashmap_get(tcp_connection_table,
+				(void *)&pkg->data[i].src_addr,
+				sizeof(struct source_addr),
+				(uintptr_t *)&real_client_fd);
+		pthread_spin_unlock(&table_lock);
+		if (!ret) {
 			/* Failed to find the connection */
 			ERROR("Connection not found %x:%d\n",
 					ntohl(pkg->data[i].src_addr.source_ip),
@@ -308,6 +314,7 @@ struct worker_arg *launch_worker(int core)
 
 int main(int argc, char *argv[])
 {
+	int ret;
 	struct worker_arg *worker;
 	const int core_listener = 0;
 
@@ -326,6 +333,7 @@ int main(int argc, char *argv[])
 
 	/* Prepare connection table */
 	tcp_connection_table = hashmap_create();
+	pthread_spin_init(&table_lock, 0);
 
 	/* Start a worker thread */
 	worker = launch_worker(worker_core);
@@ -333,5 +341,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	return start_server(&conf);
+	ret = start_server(&conf);
+
+	pthread_spin_destroy(&table_lock);
+	return ret;
 }
