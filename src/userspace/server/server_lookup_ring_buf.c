@@ -22,9 +22,9 @@
 
 #define MAX_CONN 1024
 #define BUFSIZE 2048
+#define RING_BUFFER_MAP_NAME "ring_map"
 
 static hashmap *tcp_connection_table;
-static struct ring_buffer *rbuf;
 
 /* Internal structure */
 struct server_conf {
@@ -34,8 +34,10 @@ struct server_conf {
 };
 
 struct worker_arg {
+	int running;
 	pthread_t thread;
 	int core;
+	struct ring_buffer *rbuf;
 };
 /* -------------- */
 
@@ -138,7 +140,7 @@ void add_sock_to_table(int sockfd)
 
 	_addrlen = sizeof(_addr);
 	if (getpeername(sockfd, (struct sockaddr *)&_addr, &_addrlen) != 0) {
-		ERROR("Failed to get socket peer address\n");
+		WARN("Failed to get socket peer address\n");
 		return;
 	}
 
@@ -197,25 +199,35 @@ static inline int _tcp_multishot(struct package *pkg, char *buf)
 static int tcp_multishot_ring_buffer(void *ctx, void *data, size_t size)
 {
 	char buf[BUFSIZE];
+	struct package *pkg = data;
 
 	/* assert size == sizeof(struct package) */
-	_tcp_multishot((struct package *)data, buf);
+	/* INFO("recv package: size = %d\n", pkg->count); */
+
+	_tcp_multishot(pkg, buf);
 	return 0;
 }
 
-static int configure_ring_buffer()
+static struct ring_buffer *configure_ring_buffer()
 {
 	int map_fd;
-
-	rbuf = ring_buffer__new(map_fd, tcp_multishot_ring_buffer, NULL, NULL);
-	if (rbuf == NULL)
-		return 1;
-	return 0;
+	map_fd = find_map(RING_BUFFER_MAP_NAME);
+	if (map_fd < 1)
+		return NULL;
+	return ring_buffer__new(map_fd, tcp_multishot_ring_buffer, NULL, NULL);
 }
 
 static void *worker_entry(void *_arg)
 {
 	struct worker_arg *arg = _arg;
+	if (set_core_affinity(arg->core)) {
+		ERROR("Failed to set CPU core affinity!\n");
+		return (void *)-1;
+	}
+	INFO("Worker running on core %d\n", arg->core);
+	while (arg->running) {
+		ring_buffer__poll(arg->rbuf, 1000);
+	}
 	return NULL;
 }
 
@@ -273,12 +285,19 @@ static int start_server(struct server_conf *conf)
 struct worker_arg *launch_worker(int core)
 {
 	int ret;
-	int fd;
 	struct worker_arg *arg = malloc(sizeof(struct worker_arg));
 	if (!arg)
 		return NULL;
 
 	arg->core = core;
+	arg->running = 1;
+	arg->rbuf = configure_ring_buffer();
+	/* Prepare the ring buffer channel */
+	if (arg->rbuf == NULL) {
+		ERROR("Failed to configure the ring buffer\n");
+		return NULL;
+	}
+
 	ret = pthread_create(&arg->thread, NULL, worker_entry, arg);
 	if (ret) {
 		free(arg);
@@ -289,12 +308,12 @@ struct worker_arg *launch_worker(int core)
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	struct worker_arg *worker;
 	const int core_listener = 0;
 
-	int worker_core = 1;
+	int worker_core = 7;
 	struct server_conf conf = {
-		.ip = "127.0.0.1",
+		.ip = "192.168.1.1",
 		.port = 8080,
 		.core = core_listener
 	};
@@ -307,14 +326,12 @@ int main(int argc, char *argv[])
 
 	/* Prepare connection table */
 	tcp_connection_table = hashmap_create();
-	/* Prepare the ring buffer channel */
-	if (configure_ring_buffer()) {
-		ERROR("Failed to configure the ring buffer\n");
-		return 1;
-	}
 
 	/* Start a worker thread */
-	launch_worker(worker_core);
+	worker = launch_worker(worker_core);
+	if (worker == NULL) {
+		return 1;
+	}
 
 	return start_server(&conf);
 }

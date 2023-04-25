@@ -84,7 +84,7 @@ int find_map(char *name)
 		if (ret) {
 			if (errno == ENOENT)
 				break;
-			printf("can't get next map: %s%s", strerror(errno),
+			printf("can't get next map: %s%s\n", strerror(errno),
 				errno == EINVAL ? " -- kernel too old?" : "");
 			break;
 		}
