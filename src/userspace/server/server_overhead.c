@@ -1,13 +1,5 @@
 #define _GNU_SOURCE
-
-static int instructions;
-
-/* If a value should be shared across multiple message of a socket place it in
- * this struct */
-struct client_ctx {
-	int old;
-	int value;
-};
+struct client_ctx { };
 
 #include "userspace/log.h"
 #include "userspace/sock_app.h"
@@ -26,7 +18,31 @@ struct client_ctx {
 	}                                             \
 }
 
-#define ASCII_LETTER(val) ((val % 26) + 'a')
+
+
+#define MAXIMUM 100000000
+unsigned long long int current_ts;
+size_t ts_index;
+unsigned long long int parser_ts[MAXIMUM];
+unsigned long long int verdict_ts[MAXIMUM];
+
+struct timestamp {
+	__u64 parser_ts;
+	__u64 verdict_ts;
+} __attribute__((__packed__));
+
+
+/*
+ * Update the current timestamp when we receive some events (requests)
+ * This is to avoid reading the clock for each request in cases we have
+ * received a batch of requests.
+ * */
+void measure_time(void) {
+	struct timespec tp = {};
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	current_ts = tp.tv_nsec + (tp.tv_sec * 1000000000L);
+}
+
 
 /* Handle a socket message
  * Return value:
@@ -35,52 +51,25 @@ struct client_ctx {
  * */
 int handle_client(int client_fd, struct client_ctx *ctx)
 {
-	int ret, len, i;
-	unsigned int value;
+	int ret, len;
 	char buf[BUFSIZE];
-	int end_of_req = 0;
-
-	/* Receive message and check the return value */
+	struct timestamp *ts;
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
 
-	if (ctx->old) {
-		/* Load the previousely calculated value */
-		value = ctx->value;
-	} else {
-		/* Initialize the value, read 4 bytes of message */
-		value = *((int *)buf);
-		ctx->old = 1;
-	}
-
-	/* Determinze if the end of request is on this segment */
-	if (buf[len-3] == 'E' && buf[len-2] == 'N' && buf[len-1] == 'D') {
-		end_of_req = 1;
-	}
-
-	/* Do some processing if needed */
-	for (i = 0; i < instructions; i++) {
-		value += ((unsigned char *)buf)[i % len];
-	}
-
-	if (end_of_req == 0) {
-		/* The request is not received completly yet */
-		return 0; /* Returning zero means keep connection open for more
-			     data */
-	}
-
-	/* Next line exists just so that the calculated value has been used
-	 * somewhere */
-	*(buf) = ASCII_LETTER(value);
+	ts = (void *)&buf;
+	parser_ts[ts_index] = current_ts - ts->parser_ts;
+	verdict_ts[ts_index] = current_ts - ts->verdict_ts;
+	ts_index++;
 
 	/* Prepare the response (END is need for notifying end of response) */
 	strcpy(buf, "Done,END\r\n\0");
-
 	/* Send a reply */
 	ret = send(client_fd, buf, sizeof("Done,END\r\n"), 0);
 
 	return 0;
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -88,8 +77,8 @@ int main(int argc, char *argv[])
 	struct socket_app app = {};
 
 	/* parse args */
-	if (argc < 4) {
-		INFO("usage: prog <core> <ip> <num insts>\n");
+	if (argc < 3) {
+		INFO("usage: prog <core> <ip>\n");
 		return 1;
 	}
 	app.core_listener = 0;
@@ -100,10 +89,7 @@ int main(int argc, char *argv[])
 	app.sock_handler = handle_client;
 	app.on_sockready = NULL;
 	app.on_sockclose = NULL;
-	app.on_events = NULL;
-
-	/* How many instructions to spend per packet */
-	instructions = atoi(argv[3]);
+	app.on_events = measure_time;
 
 	ret = run_server(&app);
 	if (ret != 0) {
@@ -111,5 +97,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	/* Report the results */
+	INFO("Some measurements\n");
+	INFO("parser->userspace,verdict->userspace\n");
+	for (size_t i = 0; i < ts_index; i++) {
+		INFO("%ld,%ld\n", parser_ts[i], verdict_ts[i]);
+	}
+	INFO("------------------\n");
 	return 0;
 }

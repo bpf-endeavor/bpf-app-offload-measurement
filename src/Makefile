@@ -20,7 +20,8 @@ USERSPACE_HEADERS =  $(wildcard ./include/userspace/*.h)
 SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_summarize \
 			  ${OUTPUT_DIR}/server_lookup \
-			  ${OUTPUT_DIR}/server_lookup_ring_buf
+			  ${OUTPUT_DIR}/server_lookup_ring_buf \
+			  ${OUTPUT_DIR}/server_overhead
 SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF
@@ -31,7 +32,8 @@ KERN_OBJECTS := bpf_inst.o \
 	xdp_lookup_multishot.o \
 	tc_lookup_multishot.o \
 	skskb_lookup_multishot.o \
-	tcp_lookup_multishot.o
+	tcp_lookup_multishot.o \
+	bpf_overhead.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/

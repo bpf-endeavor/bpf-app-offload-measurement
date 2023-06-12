@@ -26,6 +26,7 @@
 
 #include <sched.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "userspace/log.h"
 
@@ -47,6 +48,7 @@
 	cctx[i] = (struct client_ctx) {};                 \
 }
 
+char running;
 struct client_ctx;
 typedef int (*sock_handler_fn)(int fd, struct client_ctx *ctx);
 
@@ -62,6 +64,7 @@ struct socket_app {
 
 	void (* on_sockready)(int fd);
 	void (* on_sockclose)(int fd);
+	void (* on_events)(void);
 };
 
 /* Argument of a worker thread. The sockets are passed to each worker through
@@ -76,6 +79,7 @@ struct worker_arg {
 	sock_handler_fn sock_handler;
 
 	void (* on_sockclose)(int fd);
+	void (*on_events)(void);
 };
 
 static int set_core_affinity(int core)
@@ -137,11 +141,15 @@ static void *worker_entry(void *_arg)
 	long long int u;
 	set_core_affinity(arg->core);
 	INFO("Worker started (pid = %d) (core = %d)\n", getpid(), arg->core);
-	while (1) {
+	while (running) {
 		num_event = poll(arg->list, num_conn, -1);
 		if (num_event < 0) {
 			ERROR("Polling failed! (%s)\n", strerror(errno));
 			pthread_exit((void *)1);
+		}
+
+		if (arg->on_events) {
+			arg->on_events();
 		}
 
 		for (i = 0; i < num_conn; i++) {
@@ -197,7 +205,7 @@ static void *worker_entry(void *_arg)
 }
 
 struct worker_arg *launch_workers(sock_handler_fn handler,
-		unsigned int core_worker, void (*on_close)(int))
+		unsigned int core_worker, struct socket_app *app)
 {
 	int ret;
 	int fd;
@@ -217,7 +225,8 @@ struct worker_arg *launch_workers(sock_handler_fn handler,
 	arg->sock_handler = handler;
 	arg->core = core_worker;
 
-	arg->on_sockclose = on_close;
+	arg->on_sockclose = app->on_sockclose;
+	arg->on_events = app->on_events;
 
 	pthread_spin_init(&arg->lock, PTHREAD_PROCESS_PRIVATE);
 
@@ -229,10 +238,18 @@ struct worker_arg *launch_workers(sock_handler_fn handler,
 	return arg;
 }
 
+int sk_fd;
+/* Stop the server and its workers */
+void handle_int(int sig) { 
+	running = 0;
+	shutdown(sk_fd, SHUT_RDWR);
+	close(sk_fd);
+	INFO("Server will terminate!\n");
+}
+
 int run_server(struct socket_app *app)
 {
 	int ret;
-	int sk_fd;
 	int client_fd;
 	struct sockaddr_in sk_addr;
 	struct sockaddr_in peer_addr;
@@ -271,8 +288,12 @@ int run_server(struct socket_app *app)
 		return 1;
 	}
 
+	running = 1;
+	signal(SIGTERM, handle_int);
+	signal(SIGINT, handle_int);
+
 	/* Start a worker thread */
-	worker_context = launch_workers(app->sock_handler, app->core_worker, app->on_sockclose);
+	worker_context = launch_workers(app->sock_handler, app->core_worker, app);
 	if (!worker_context) {
 		ERROR("Failed to launch a worker\n");
 		return 1;
@@ -288,11 +309,12 @@ int run_server(struct socket_app *app)
 	if (app->on_sockready != NULL)
 		app->on_sockready(sk_fd);
 
-	while (1) {
+	while (running) {
 		/* The listening server socket is blocking */
 		client_fd = accept(sk_fd, (struct sockaddr *)&peer_addr, &peer_addr_size);
 		if (client_fd < 0) {
 			ERROR("Error: accepting new connection\n");
+			if (!running) break; // TODO: this is not a clean idea
 			return 1;
 		}
 		set_client_sock_opt(client_fd);
@@ -311,5 +333,8 @@ int run_server(struct socket_app *app)
 
 		/* DEBUG("[%f] new connection %d -> %d\n", get_time(), client_fd, worker_context->count_conn - 1); */
 	}
+	/* Wake up the worker so that it can exit */
+	write(worker_context->list[0].fd, &u, sizeof(u));
+	return 0;
 }
 #endif
