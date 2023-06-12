@@ -30,13 +30,18 @@ int parser(struct __sk_buff *skb)
 	struct timestamp *ts;
 	__u64 now;
 
+	if (bpf_skb_pull_data(skb, sizeof(struct timestamp)) != 0) {
+		bpf_printk("Parser: Failed to load message data");
+		return 0;
+	}
+
 	data = (void *)(__u64)skb->data;
 	data_end = (void *)(__u64)skb->data_end;
 	ts = data;
 	now = bpf_ktime_get_ns();
 
 	if ((void *)(ts + 1) > data_end) {
-		bpf_printk("Not enough space for timestamp");
+		bpf_printk("Not enough space for timestamp (pkt size:%d need: %d)", skb->len, sizeof(*ts));
 		return skb->len;
 	}
 
@@ -54,13 +59,18 @@ int verdict(struct __sk_buff *skb)
 	struct timestamp *ts;
 	__u64 now;
 
+	if (bpf_skb_pull_data(skb, sizeof(struct timestamp)) != 0) {
+		bpf_printk("Parser: Failed to load message data");
+		return 0;
+	}
+
 	data = (void *)(__u64)skb->data;
 	data_end = (void *)(__u64)skb->data_end;
 	ts = data;
 	now = bpf_ktime_get_ns();
 
 	if ((void *)(ts + 1) > data_end) {
-		bpf_printk("Not enough space for timestamp");
+		bpf_printk("Not enough space for timestamp (pkt size:%d need: %d)", skb->len, sizeof(*ts));
 		return SKB_DROP;
 	}
 
