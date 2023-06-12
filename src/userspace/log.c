@@ -3,6 +3,7 @@
 
 /* stdout is the default output stream */
 int _output_log_fd = 1;
+int _output_log_err_fd = 2;
 
 void msg(enum log_level level, const char *func, const char *file, int line,
     const char *fmt, ...) {
@@ -26,9 +27,9 @@ void msg(enum log_level level, const char *func, const char *file, int line,
     dprintf(_output_log_fd, "\033[0m");
   } else {
     str_lvl = "ERROR";
-    dprintf(_output_log_fd, "\033[0;31;49m");
-    dprintf(_output_log_fd, "[%s] %s(%s:%d): %s", str_lvl, func, file, line, (char *)message);
-    dprintf(_output_log_fd, "\033[0m");
+    dprintf(_output_log_err_fd, "\033[0;31;49m");
+    dprintf(_output_log_err_fd, "[%s] %s(%s:%d): %s", str_lvl, func, file, line, (char *)message);
+    dprintf(_output_log_err_fd, "\033[0m");
   }
   va_end(args);
 }
