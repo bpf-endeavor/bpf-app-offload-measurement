@@ -19,7 +19,7 @@ struct timestamp {
 } __attribute__((__packed__));
 
 #define MEASURE_PARSER_TO_USERSPACE 1
-/* #define MEASURE_VERDICT_TO_USERSPACE 1 */
+#define MEASURE_VERDICT_TO_USERSPACE 1
 
 
 SEC("sk_skb/stream_parser")
@@ -71,7 +71,7 @@ int verdict(struct __sk_buff *skb)
 
 	if ((void *)(ts + 1) > data_end) {
 		bpf_printk("Not enough space for timestamp (pkt size:%d need: %d)", skb->len, sizeof(*ts));
-		return SKB_DROP;
+		return SK_DROP;
 	}
 
 	/* put the timestamp on the request */
