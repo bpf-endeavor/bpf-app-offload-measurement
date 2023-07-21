@@ -21,7 +21,8 @@ SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_summarize \
 			  ${OUTPUT_DIR}/server_lookup \
 			  ${OUTPUT_DIR}/server_lookup_ring_buf \
-			  ${OUTPUT_DIR}/server_overhead
+			  ${OUTPUT_DIR}/server_overhead \
+			  ${OUTPUT_DIR}/server_bounce
 SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF
