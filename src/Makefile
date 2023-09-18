@@ -1,7 +1,7 @@
-CC = clang-12
-LLC = llc-12
+CC = clang
+LLC = llc
 INCLUDES = -I ./include/ -I ../deps/usr/include/
-CFLAGS = -g -O2 -Wall -Werror
+CFLAGS = -g -O2 -Wall
 
 # Output directory (executables are in this dir)
 OUTPUT_DIR = ./build/

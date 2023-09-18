@@ -69,10 +69,25 @@ struct {
 } batching_map SEC(".maps");
 /* ---------------- */
 
-/* This the callback triggered when batch timer out occurs */
-static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val);
 /* This is a helper function for sending batch to userspace */
-static inline int submit_batch_to_userspace();
+static inline int submit_batch_to_userspace(struct package *pkg)
+{
+	struct bpf_dynptr ptr;
+	bpf_ringbuf_reserve_dynptr(&ring_map, sizeof(struct package), 0, &ptr);
+	bpf_dynptr_write(&ptr, 0, pkg, sizeof(struct package), 0);
+	bpf_ringbuf_submit_dynptr(&ptr, 0);
+	return 0;
+}
+
+/* This the callback triggered when batch timer out occurs */
+static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val)
+{
+	submit_batch_to_userspace(&val->pkg);
+	/* Clear the package */
+	val->pkg.count = 0;
+	return 0;
+}
+
 
 SEC("sk_skb/stream_parser")
 int parser(struct __sk_buff *skb)
@@ -259,23 +274,6 @@ int verdict(struct __sk_buff *skb)
 
 	bpf_printk("Unknown request type");
 	return SK_DROP;
-}
-
-static int submit_batch_cb(void *map, __u32 *key, struct batch_entry *val)
-{
-	submit_batch_to_userspace(&val->pkg);
-	/* Clear the package */
-	val->pkg.count = 0;
-	return 0;
-}
-
-static inline int submit_batch_to_userspace(struct package *pkg)
-{
-	struct bpf_dynptr ptr;
-	bpf_ringbuf_reserve_dynptr(&ring_map, sizeof(struct package), 0, &ptr);
-	bpf_dynptr_write(&ptr, 0, pkg, sizeof(struct package), 0);
-	bpf_ringbuf_submit_dynptr(&ptr, 0);
-	return 0;
 }
 
 char _license[] SEC("license") = "GPL";
