@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 
+#include <stdlib.h>
+
 /* If a value should be shared across multiple message of a socket place it in
  * this struct */
 struct client_ctx { };
@@ -35,6 +37,8 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
+	if (len == 0)
+		return 1;
 
 	/* Send a reply */
 	ret = send(client_fd, buf, len, 0);
@@ -79,10 +83,19 @@ int main(int argc, char *argv[])
 	struct socket_app app = {};
 
 	/* parse args */
-	if (argc < 4) {
-		INFO("usage: prog <core> <ip> port\n");
+	if (argc < 5) {
+		INFO("usage: prog <core> <ip> <port> <mode>\n"
+		"  * mode: 0: UDP    1: TCP\n");
 		return 1;
 	}
+
+	if (atoi(argv[4]) == 1) {
+		udp = 0;
+		printf("Running server in TCP mode.\n");
+	} else {
+		printf("Running server in UDP mode.\n");
+	}
+
 	app.core_listener = 0;
 	app.core_worker = atoi(argv[1]);
 	app.ip = argv[2];
