@@ -3,15 +3,17 @@
 /* Do not perform map lookup to fine the index of the socket.
  * It is a very small optimization.
  * */
-#define USE_SELF_REDIRECT 1
+/* #define USE_SELF_REDIRECT 1 */
 
 /* Modify and resize the packet and reply with some constant string.
  * */
-/* #define CONSTANT_REPLY    1 */
+#define CONSTANT_REPLY    1
 
 /* Only use stream_verdict program (remove stream_parser)
  * */
-#define SK_SKB_VERDICT
+/* #define SK_SKB_VERDICT */
+
+/* #define STREAM_PARSER_TOUCH_SKB */
 
 /* ------------------------------------ */
 
@@ -53,6 +55,13 @@ struct connection_state {};
 SEC("sk_skb/stream_parser")
 int parser(struct __sk_buff *skb)
 {
+#ifdef STREAM_PARSER_TOUCH_SKB
+	/* Pull message data so that we can access it */
+	if (bpf_skb_pull_data(skb, skb->len) != 0) {
+		bpf_printk("Parser: Failed to load message data");
+		return 0;
+	}
+#endif
 	return skb->len;
 }
 #endif
