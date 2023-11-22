@@ -151,6 +151,7 @@ static void *worker_entry(void *_arg)
 		if (arg->on_events) {
 			arg->on_events();
 		}
+		/* DEBUG("user space program is awake. number of events %d\n", num_event); */
 
 		for (i = 0; i < num_conn; i++) {
 			if(arg->list[i].revents == 0) {
@@ -170,6 +171,7 @@ static void *worker_entry(void *_arg)
 					continue;
 			}
 
+			/* DEBUG("Event %d: event mask: %x  sockfd: %d\n", i, arg->list[i].revents, arg->list[i].fd); */
 			/* Data ready, handle the socket data */
 			ret = arg->sock_handler(arg->list[i].fd, &cctx[i]);
 			if (ret == 1) {
@@ -317,6 +319,7 @@ int run_server(struct socket_app *app)
 			if (!running) break; // TODO: this is not a clean idea
 			return 1;
 		}
+		DEBUG("New connect fd: %d\n", client_fd);
 		set_client_sock_opt(client_fd);
 
 		if (app->on_sockready != NULL) {

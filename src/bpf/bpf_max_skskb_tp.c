@@ -3,7 +3,7 @@
 /* Do not perform map lookup to fine the index of the socket.
  * It is a very small optimization.
  * */
-#define USE_SELF_REDIRECT 1
+/* #define USE_SELF_REDIRECT 1 */
 
 /* Modify and resize the packet and reply with some constant string.
  * */

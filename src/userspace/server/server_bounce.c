@@ -37,8 +37,8 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	/* Receive message and check the return value */
 	RECV(client_fd, buf, BUFSIZE, 0);
 	len = ret;
-	if (len == 0)
-		return 1;
+	/* if (len == 0) */
+	/* 	return 1; */
 
 	/* Send a reply */
 	ret = send(client_fd, buf, len, 0);
