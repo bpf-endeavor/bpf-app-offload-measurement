@@ -1,0 +1,8 @@
+entry: main
+main: './main.c'
+hook: xdp
+framework: poll
+sources: [ ]
+out_bpf: './bpf/bpf.c'
+out_user: './bpf/user.c'
+cflags: ''
