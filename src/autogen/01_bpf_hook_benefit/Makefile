@@ -5,11 +5,11 @@ SOURCE = main.c
 BPF_BINARY = ./bpf/bpf.o
 BPF_SOURCE = ./bpf/bpf.c
 
-LOADER=./loader
+LOADER=../../build/loader
 TESTER=./tester
 
 ifndef KASHK_DIR
-	$(error the KASHK_DIR variable is not set)
+$(error the KASHK_DIR variable is not set)
 endif
 # $(info expect ${KASHK_DIR})
 
@@ -22,6 +22,18 @@ BPF_COMPILE_SCRIPT=$(BPF_GEN_DIR)/compile_scripts/compile_bpf_source.sh
 # $(info ${YAML})
 
 # BPF_CFLAGS =
+
+HOOK=$(shell cat $(YAML) | grep hook | cut -d ' ' -f 2)
+ifeq ($(HOOK), xdp)
+TARGET_BPF_PROG=--xdp xdp_prog
+else
+ifeq ($(HOOK), sk_skb)
+TARGET_BPF_PROG=--skskb verdict
+else
+$(error unexpected value for the target hook in the yaml file)
+endif
+endif
+# $(info target hook is ${HOOK} and running $(TARGET_BPF_PROG))
 
 .PHONY: default bpf_gen bpf_comp bpf_load bpf_run bpf_test clean
 
@@ -44,10 +56,11 @@ bpf_comp: $(BPF_SOURCE)
 bpf_load: $(BPF_BINARY)
 	bash $(BPF_GEN_DIR)/compile_scripts/load.sh ./bpf/bpf.o
 
-# Run the gold program
+
+# Run the bpf program
 bpf_run: gold_clean gold
 	if [ -z "${NET_IFACE}" ]; then echo "\"NET_IFACE\" is not set"; exit 1; fi
-	sudo $(LOADER) -b $(BPF_BINARY) -i ${NET_IFACE}
+	sudo $(LOADER) -b $(BPF_BINARY) -i ${NET_IFACE} $(TARGET_BPF_PROG)
 
 bpf_test: gold_clean gold $(TESTER)
 	sudo $(TESTER) -b $(BPF_BINARY)
