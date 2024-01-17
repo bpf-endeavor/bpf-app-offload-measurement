@@ -56,17 +56,16 @@ bpf_comp: $(BPF_SOURCE)
 bpf_load: $(BPF_BINARY)
 	bash $(BPF_GEN_DIR)/compile_scripts/load.sh ./bpf/bpf.o
 
-
 # Run the bpf program
-bpf_run: gold_clean gold
+bpf_run: clean bpf_comp $(LOADER)
 	if [ -z "${NET_IFACE}" ]; then echo "\"NET_IFACE\" is not set"; exit 1; fi
 	sudo $(LOADER) -b $(BPF_BINARY) -i ${NET_IFACE} $(TARGET_BPF_PROG)
 
-bpf_test: gold_clean gold $(TESTER)
+bpf_test: clean bpf_comp $(TESTER)
 	sudo $(TESTER) -b $(BPF_BINARY)
 
 # Clean the gold sub-dir
 clean:
-	echo !!!
+	rm $(BPF_BINARY)
 
 .SILENT:
