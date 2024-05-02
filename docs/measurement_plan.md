@@ -48,6 +48,9 @@
 
 - Overhead of running eBPF Program: When invoking eBPF runtime how much overhead we add
     + For different hooks (XDP, TC, SK_SKB)
+        + XDP: ?
+        + SK_SKB: ?
+        + TC: 55 (ns)
     + For different version of kernel
 - How much does early exit path benefit from offload
     + XDP: UDP

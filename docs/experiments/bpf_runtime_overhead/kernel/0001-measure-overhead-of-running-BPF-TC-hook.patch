@@ -1,0 +1,156 @@
+From e63a6661a11b37e1004cf7b79cc4ccf5ec61e519 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 2 May 2024 16:29:59 +0000
+Subject: [PATCH] measure overhead of running BPF TC hook
+
+---
+ include/linux/test_timer.h | 78 ++++++++++++++++++++++++++++++++++++++
+ net/sched/cls_bpf.c        | 25 ++++++++++++
+ 2 files changed, 103 insertions(+)
+ create mode 100644 include/linux/test_timer.h
+
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+new file mode 100644
+index 000000000000..515a43035581
+--- /dev/null
++++ b/include/linux/test_timer.h
+@@ -0,0 +1,78 @@
++// SPDX-License-Identifier: GPL-2.0-only
++#ifndef __TEST_TIMER_H
++#define __TEST_TIMER_H
++
++#include <linux/rcupdate_trace.h>
++#include <asm/timex.h>
++#include <linux/timekeeping.h>
++
++struct test_timer {
++	enum { NO_PREEMPT, NO_MIGRATE } mode;
++	u32 i;
++	u64 time_start, time_spent;
++};
++
++static void test_timer_enter(struct test_timer *t)
++__acquires(rcu)
++{
++	rcu_read_lock();
++	if (t->mode == NO_PREEMPT)
++		preempt_disable();
++	else
++		migrate_disable();
++
++	t->time_start = ktime_get_ns();
++	/* t->time_start = get_cycles(); */
++}
++
++static void test_timer_leave(struct test_timer *t)
++__releases(rcu)
++{
++	t->time_start = 0;
++
++	if (t->mode == NO_PREEMPT)
++		preempt_enable();
++	else
++		migrate_enable();
++	rcu_read_unlock();
++}
++
++static bool test_timer_continue(struct test_timer *t, int iterations,
++		u32 repeat, int *err, u32 *duration)
++__must_hold(rcu)
++{
++	__u32 delta;
++	t->i += iterations;
++	delta = ktime_get_ns() - t->time_start;
++	/* delta = get_cycles() - t->time_start; */
++	t->time_spent += delta;
++
++	if (t->i >= repeat) {
++		/* We're done. */
++		do_div(t->time_spent, t->i);
++		*duration = t->time_spent > U32_MAX ? U32_MAX : (u32)t->time_spent;
++		*err = 0;
++		goto reset;
++	}
++
++	if (signal_pending(current)) {
++		/* During iteration: we've been cancelled, abort. */
++		*err = -EINTR;
++		goto reset;
++	}
++
++	if (need_resched()) {
++		/* During iteration: we need to reschedule between runs. */
++		test_timer_leave(t);
++		cond_resched();
++		test_timer_enter(t);
++	}
++
++	/* Do another round. */
++	return true;
++
++reset:
++	t->i = 0;
++	return false;
++}
++#endif /* __TEST_TIMER_H */
+diff --git a/net/sched/cls_bpf.c b/net/sched/cls_bpf.c
+index 382c7a71f81f..160b1f62b318 100644
+--- a/net/sched/cls_bpf.c
++++ b/net/sched/cls_bpf.c
+@@ -21,6 +21,7 @@
+ #include <net/sock.h>
+ #include <net/tc_wrapper.h>
+ 
++
+ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Daniel Borkmann <dborkman@redhat.com>");
+ MODULE_DESCRIPTION("TC BPF based classifier");
+@@ -29,6 +30,8 @@ MODULE_DESCRIPTION("TC BPF based classifier");
+ #define CLS_BPF_SUPPORTED_GEN_FLAGS		\
+ 	(TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW)
+ 
++#include <linux/test_timer.h>
++
+ struct cls_bpf_head {
+ 	struct list_head plist;
+ 	struct idr handle_idr;
+@@ -87,7 +90,17 @@ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 	struct cls_bpf_prog *prog;
+ 	int ret = -1;
+ 
++	static struct test_timer t = { NO_MIGRATE };
++#define SAMPLE_COUNT 1000000
++	int tmp_err = 0;
++	u32 tmp_count = 0;
++	u32 tmp_res = 0;
++	bool tmp_need_more_sample = true;
++
++	test_timer_enter(&t);
++
+ 	list_for_each_entry_rcu(prog, &head->plist, link) {
++		tmp_count += 1;
+ 		int filter_res;
+ 
+ 		qdisc_skb_cb(skb)->tc_classid = prog->res.classid;
+@@ -134,6 +147,18 @@ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 		break;
+ 	}
+ 
++	tmp_need_more_sample = test_timer_continue(&t, tmp_count, SAMPLE_COUNT, &tmp_err, &tmp_res);
++	if (!tmp_need_more_sample) {
++		if (tmp_err == 0) {
++			/* Report the experiment result */
++			printk(KERN_INFO"Farbod: on average invoking BPF TC ingress takes: %d (ns)\n", tmp_res);
++		}
++		/* Reset the experiment */
++		memset(&t, 0, sizeof(struct test_timer));
++		t.mode = NO_MIGRATE;
++	}
++	test_timer_leave(&t);
++
+ 	return ret;
+ }
+ 
+-- 
+2.34.1
+
