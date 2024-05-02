@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -141,6 +142,18 @@ int parse_args(int argc, char *argv[])
 	if (count_prog < 1) {
 		ERROR("Should provided at least one program (--bpf_prog)\n");
 		return 1;
+	}
+
+	for (uint32_t i = 0; i < count_prog; i++) {
+		req = &context.bpf_prog[i];
+		if (req->bpf_hook == SK_SKB) {
+			/* SK_SKB does not require an interface */
+			continue;
+		}
+		if (req->ifindex <= 0) {
+			ERROR("You need to specify the target network interface (--iface)\n");
+			return 1;
+		}
 	}
 	return 0;
 }
