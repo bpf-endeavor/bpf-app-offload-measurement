@@ -25,6 +25,8 @@
 - What type of machines do I need?
     + Bare-metal experiments
     + Running in containers --> The applications run in containers, what are the support what is missing How it affects the measurements?
+    + Running inside a VM:
+        + I run some test on my laptop inside a VM using KVM [kernel version v6.8.7]
 
 - How off is the BPF helper for getting the timer, what is the resolution?
     + Can I trust this timer or do I need to add my own?
