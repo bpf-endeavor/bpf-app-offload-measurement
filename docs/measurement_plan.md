@@ -54,6 +54,10 @@
         + SK_SKB: ?
         + TC: 55 (ns)
     + For different version of kernel
+- What percentage of overhead (cycles) are spent on what type of operation (getting a lock, copying packet, preparing BPF stack, ...)
+    + XDP: ...
+    + SK_SKB: ...
+    + TC: ...
 - How much does early exit path benefit from offload
     + XDP: UDP
     + TC: UDP
