@@ -51,7 +51,8 @@
 - Overhead of running eBPF Program: When invoking eBPF runtime how much overhead we add
     + For different hooks (XDP, TC, SK_SKB)
         + XDP: ?
-        + SK_SKB: ?
+        + SK_SKB (parser + verdict): ?
+        + SK_SKB (verdict): 1020 - 1100 (ns)
         + TC: 55 (ns)
     + For different version of kernel
 - What percentage of overhead (cycles) are spent on what type of operation (getting a lock, copying packet, preparing BPF stack, ...)

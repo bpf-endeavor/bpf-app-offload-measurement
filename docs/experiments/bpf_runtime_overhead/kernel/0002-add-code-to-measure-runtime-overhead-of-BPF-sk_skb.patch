@@ -1,0 +1,111 @@
+From f9acfb1ef5c684547437efbac4990b2d7d48a861 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 2 May 2024 22:28:40 +0000
+Subject: [PATCH 2/2] add code to measure runtime overhead of BPF sk_skb
+
+---
+ net/core/skmsg.c          | 24 ++++++++++++++++++++++++
+ net/strparser/strparser.c | 26 +++++++++++++++++++++++++-
+ 2 files changed, 49 insertions(+), 1 deletion(-)
+
+diff --git a/net/core/skmsg.c b/net/core/skmsg.c
+index 4d75ef9d24bf..20f85b16c653 100644
+--- a/net/core/skmsg.c
++++ b/net/core/skmsg.c
+@@ -10,6 +10,8 @@
+ #include <net/tls.h>
+ #include <trace/events/sock.h>
+ 
++#include <linux/test_timer.h>
++
+ static bool sk_msg_try_coalesce_ok(struct sk_msg *msg, int elem_first_coalesce)
+ {
+ 	if (msg->sg.end > msg->sg.start &&
+@@ -1182,7 +1184,16 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 	int ret = __SK_DROP;
+ 	int len = skb->len;
+ 
++	static struct test_timer t = { NO_MIGRATE };
++	const u32 sample_count = 1000000;
++	int tmp_err = 0;
++	u32 tmp_res = 0;
++	bool tmp_need_more_sample = true;
++
++
+ 	rcu_read_lock();
++	test_timer_enter(&t);
++
+ 	psock = sk_psock(sk);
+ 	if (unlikely(!psock)) {
+ 		len = 0;
+@@ -1202,7 +1213,20 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 	ret = sk_psock_verdict_apply(psock, skb, ret);
+ 	if (ret < 0)
+ 		len = ret;
++
++	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
++	if (!tmp_need_more_sample) {
++		if (tmp_err == 0) {
++			/* Report the experiment result */
++			printk(KERN_INFO"Farbod: on average invoking BPF sk_verdict takes: %d (ns)\n", tmp_res);
++		}
++		/* Reset the experiment */
++		memset(&t, 0, sizeof(struct test_timer));
++		t.mode = NO_MIGRATE;
++	}
++
+ out:
++	test_timer_leave(&t);
+ 	rcu_read_unlock();
+ 	return len;
+ }
+diff --git a/net/strparser/strparser.c b/net/strparser/strparser.c
+index 8299ceb3e373..52c721afda4b 100644
+--- a/net/strparser/strparser.c
++++ b/net/strparser/strparser.c
+@@ -25,6 +25,8 @@
+ #include <net/netns/generic.h>
+ #include <net/sock.h>
+ 
++#include <linux/test_timer.h>
++
+ static struct workqueue_struct *strp_wq;
+ 
+ static inline struct _strp_msg *_strp_msg(struct sk_buff *skb)
+@@ -330,10 +332,32 @@ EXPORT_SYMBOL_GPL(strp_process);
+ static int strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
+ 		     unsigned int orig_offset, size_t orig_len)
+ {
++
++	static struct test_timer t = { NO_MIGRATE };
++	const u32 sample_count = 1000000;
++	int tmp_err = 0;
++	u32 tmp_res = 0;
++	bool tmp_need_more_sample = true;
++	test_timer_enter(&t);
++
+ 	struct strparser *strp = (struct strparser *)desc->arg.data;
+ 
+-	return __strp_recv(desc, orig_skb, orig_offset, orig_len,
++	int ret = __strp_recv(desc, orig_skb, orig_offset, orig_len,
+ 			   strp->sk->sk_rcvbuf, strp->sk->sk_rcvtimeo);
++
++	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
++	if (!tmp_need_more_sample) {
++		if (tmp_err == 0) {
++			/* Report the experiment result */
++			printk(KERN_INFO"Farbod: on average invoking SK_SKB (parser + verdict) takes: %d (ns)\n", tmp_res);
++		}
++		/* Reset the experiment */
++		memset(&t, 0, sizeof(struct test_timer));
++		t.mode = NO_MIGRATE;
++	}
++	test_timer_leave(&t);
++
++	return ret;
+ }
+ 
+ static int default_read_sock_done(struct strparser *strp, int err)
+-- 
+2.34.1
+

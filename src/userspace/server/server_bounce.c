@@ -39,6 +39,8 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	len = ret;
 	/* if (len == 0) */
 	/* 	return 1; */
+	/* buf[len] = 0; */
+	/* printf("recv: (%d)\n%s", len, buf); */
 
 	/* Send a reply */
 	ret = send(client_fd, buf, len, 0);
