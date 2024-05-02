@@ -35,7 +35,8 @@ KERN_OBJECTS := bpf_inst.o \
 	skskb_lookup_multishot.o \
 	tcp_lookup_multishot.o \
 	bpf_overhead.o \
-	bpf_max_skskb_tp.o
+	bpf_max_skskb_tp.o \
+	bpf_ktime_err.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
