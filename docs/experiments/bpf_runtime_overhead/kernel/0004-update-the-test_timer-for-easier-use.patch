@@ -1,0 +1,242 @@
+From 0a41ae2fd179ab997c15f34fb6f6505e167f614b Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 3 May 2024 15:05:54 +0000
+Subject: [PATCH 4/4] update the test_timer for easier use
+
+---
+ drivers/net/virtio_net.c   | 32 +++++++++++++-------------------
+ include/linux/test_timer.h | 28 ++++++++++++++++++++++++++++
+ net/core/skmsg.c           | 34 ++++++++++++++--------------------
+ net/sched/cls_bpf.c        | 30 ++++++++++++------------------
+ 4 files changed, 67 insertions(+), 57 deletions(-)
+
+diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
+index b5cb0f2190c8..1c9aa34ee317 100644
+--- a/drivers/net/virtio_net.c
++++ b/drivers/net/virtio_net.c
+@@ -1035,6 +1035,15 @@ static void put_xdp_frags(struct xdp_buff *xdp)
+ 	}
+ }
+ 
++/* #define MEASURE_VIRTIO_XDP_OVERHEAD 1 */
++#ifndef MEASURE_VIRTIO_XDP_OVERHEAD
++#undef TEST_TIMER_BEGIN
++#define TEST_TIMER_BEGIN()
++#undef TEST_TIMER_MEASURE
++#define TEST_TIMER_MEASURE(a, b)
++#undef TEST_TIMER_END
++#define TEST_TIMER_END()
++#endif
+ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 			       struct net_device *dev,
+ 			       unsigned int *xdp_xmit,
+@@ -1044,27 +1053,12 @@ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 	int err;
+ 	u32 act;
+ 
+-	static struct test_timer t = { NO_MIGRATE };
+-	const u32 sample_count = 1000000;
+-	int tmp_err = 0;
+-	u32 tmp_res = 0;
+-	bool tmp_need_more_sample = true;
+-
+-
+-	test_timer_enter(&t);
++	TEST_TIMER_BEGIN();
+ 	act = bpf_prog_run_xdp(xdp_prog, xdp);
+ 
+-	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
+-	if (!tmp_need_more_sample) {
+-		if (tmp_err == 0) {
+-			/* Report the experiment result */
+-			printk(KERN_INFO"Farbod: on average invoking BPF XDP takes: %d (ns)\n", tmp_res);
+-		}
+-		/* Reset the experiment */
+-		memset(&t, 0, sizeof(struct test_timer));
+-		t.mode = NO_MIGRATE;
+-	}
+-	test_timer_leave(&t);
++	TEST_TIMER_MEASURE("BPF XDP", 1);
++	TEST_TIMER_END();
++
+ 	u64_stats_inc(&stats->xdp_packets);
+ 
+ 	switch (act) {
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index 515a43035581..c39e558c76ea 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -12,6 +12,7 @@ struct test_timer {
+ 	u64 time_start, time_spent;
+ };
+ 
++__attribute__((unused))
+ static void test_timer_enter(struct test_timer *t)
+ __acquires(rcu)
+ {
+@@ -25,6 +26,7 @@ __acquires(rcu)
+ 	/* t->time_start = get_cycles(); */
+ }
+ 
++__attribute__((unused))
+ static void test_timer_leave(struct test_timer *t)
+ __releases(rcu)
+ {
+@@ -37,6 +39,7 @@ __releases(rcu)
+ 	rcu_read_unlock();
+ }
+ 
++__attribute__((unused))
+ static bool test_timer_continue(struct test_timer *t, int iterations,
+ 		u32 repeat, int *err, u32 *duration)
+ __must_hold(rcu)
+@@ -75,4 +78,29 @@ __must_hold(rcu)
+ 	t->i = 0;
+ 	return false;
+ }
++
++/* macros for easier use of test timer */
++#define TEST_TIMER_BEGIN() \
++	static struct test_timer t = { NO_MIGRATE }; \
++	const u32 sample_count = 1000000; \
++	int tmp_err = 0; \
++	u32 tmp_res = 0; \
++	bool tmp_need_more_sample = true; \
++	test_timer_enter(&t);
++
++#define TEST_TIMER_MEASURE(label, repeat) \
++	tmp_need_more_sample = test_timer_continue(&t, repeat, sample_count, &tmp_err, &tmp_res); \
++	if (!tmp_need_more_sample) { \
++		if (tmp_err == 0) { \
++			/* Report the experiment result */ \
++			printk(KERN_INFO"Farbod: on average invoking %s takes: %d (ns)\n", label, tmp_res); \
++		} \
++		/* Reset the experiment */ \
++		memset(&t, 0, sizeof(struct test_timer)); \
++		t.mode = NO_MIGRATE; \
++	}
++
++#define TEST_TIMER_END() \
++	test_timer_leave(&t)
++
+ #endif /* __TEST_TIMER_H */
+diff --git a/net/core/skmsg.c b/net/core/skmsg.c
+index 20f85b16c653..792368213288 100644
+--- a/net/core/skmsg.c
++++ b/net/core/skmsg.c
+@@ -1177,6 +1177,16 @@ static void sk_psock_done_strp(struct sk_psock *psock)
+ }
+ #endif /* CONFIG_BPF_STREAM_PARSER */
+ 
++
++/* #define MEASURE_STREAM_VERDICT_OVERHEAD 1 */
++#ifndef MEASURE_STREAM_VERDICT_OVERHEAD
++#undef TEST_TIMER_BEGIN
++#define TEST_TIMER_BEGIN()
++#undef TEST_TIMER_MEASURE
++#define TEST_TIMER_MEASURE(a, b)
++#undef TEST_TIMER_END
++#define TEST_TIMER_END()
++#endif
+ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ {
+ 	struct sk_psock *psock;
+@@ -1184,15 +1194,9 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 	int ret = __SK_DROP;
+ 	int len = skb->len;
+ 
+-	static struct test_timer t = { NO_MIGRATE };
+-	const u32 sample_count = 1000000;
+-	int tmp_err = 0;
+-	u32 tmp_res = 0;
+-	bool tmp_need_more_sample = true;
+-
+-
+ 	rcu_read_lock();
+-	test_timer_enter(&t);
++
++	TEST_TIMER_BEGIN();
+ 
+ 	psock = sk_psock(sk);
+ 	if (unlikely(!psock)) {
+@@ -1214,19 +1218,9 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 	if (ret < 0)
+ 		len = ret;
+ 
+-	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
+-	if (!tmp_need_more_sample) {
+-		if (tmp_err == 0) {
+-			/* Report the experiment result */
+-			printk(KERN_INFO"Farbod: on average invoking BPF sk_verdict takes: %d (ns)\n", tmp_res);
+-		}
+-		/* Reset the experiment */
+-		memset(&t, 0, sizeof(struct test_timer));
+-		t.mode = NO_MIGRATE;
+-	}
+-
++	TEST_TIMER_MEASURE("BPF sk_verdict", 1);
+ out:
+-	test_timer_leave(&t);
++	TEST_TIMER_END();
+ 	rcu_read_unlock();
+ 	return len;
+ }
+diff --git a/net/sched/cls_bpf.c b/net/sched/cls_bpf.c
+index 160b1f62b318..e5077f241515 100644
+--- a/net/sched/cls_bpf.c
++++ b/net/sched/cls_bpf.c
+@@ -81,6 +81,15 @@ static int cls_bpf_exec_opcode(int code)
+ 	}
+ }
+ 
++/* #define MEASURE_TC_OVERHEAD 1 */
++#ifndef MEASURE_TC_OVERHEAD 
++#undef TEST_TIMER_BEGIN
++#define TEST_TIMER_BEGIN()
++#undef TEST_TIMER_MEASURE 
++#define TEST_TIMER_MEASURE(a, b)
++#undef TEST_TIMER_END
++#define TEST_TIMER_END()
++#endif
+ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 				       const struct tcf_proto *tp,
+ 				       struct tcf_result *res)
+@@ -90,14 +99,8 @@ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 	struct cls_bpf_prog *prog;
+ 	int ret = -1;
+ 
+-	static struct test_timer t = { NO_MIGRATE };
+-#define SAMPLE_COUNT 1000000
+-	int tmp_err = 0;
+ 	u32 tmp_count = 0;
+-	u32 tmp_res = 0;
+-	bool tmp_need_more_sample = true;
+-
+-	test_timer_enter(&t);
++	TEST_TIMER_BEGIN()
+ 
+ 	list_for_each_entry_rcu(prog, &head->plist, link) {
+ 		tmp_count += 1;
+@@ -147,17 +150,8 @@ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 		break;
+ 	}
+ 
+-	tmp_need_more_sample = test_timer_continue(&t, tmp_count, SAMPLE_COUNT, &tmp_err, &tmp_res);
+-	if (!tmp_need_more_sample) {
+-		if (tmp_err == 0) {
+-			/* Report the experiment result */
+-			printk(KERN_INFO"Farbod: on average invoking BPF TC ingress takes: %d (ns)\n", tmp_res);
+-		}
+-		/* Reset the experiment */
+-		memset(&t, 0, sizeof(struct test_timer));
+-		t.mode = NO_MIGRATE;
+-	}
+-	test_timer_leave(&t);
++	TEST_TIMER_MEASURE("BPF TC", tmp_count);
++	TEST_TIMER_END();
+ 
+ 	return ret;
+ }
+-- 
+2.34.1
+
