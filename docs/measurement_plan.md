@@ -51,7 +51,7 @@
 - Overhead of running eBPF Program: When invoking eBPF runtime how much overhead we add
     + For different hooks (XDP, TC, SK_SKB)
         + XDP: ?
-        + SK_SKB (parser + verdict): ?
+        + SK_SKB (parser + verdict): `error` -  The packets get stucked for some reason
         + SK_SKB (verdict): 1020 - 1100 (ns)
         + TC: 55 (ns)
     + For different version of kernel
