@@ -60,10 +60,12 @@
     + SK_SKB: ...
     + TC: ...
 - How much does early exit path benefit from offload
-    + XDP: UDP
-    + TC: UDP
-    + SK_SKB: UDP
-    + SK_SKB: TCP
+    + UDP Socket (share irq):     mean: 14614 (pps)
+    + UDP Socket (not share irq): mean: 287592 (pps)
+    + XDP:                        mean: 1230702 (pps)
+    + TC:                         mean: 1110772 (pps)
+    + stream_verdict: ?
+    + stream_parser+verdict: ?
         + There are different cases with parser, without parser, different versions of Linux kernel.
 - Is data summarization beneficial?
     + Throughput benchmark if we do not share any state

@@ -18,6 +18,7 @@ Run `make` in the root directory
 
 ## How is the Repo Structured
 
+* `kernel/`: some kernel patches helping with benchmarks
 * `src/bpf/`: it has the bpf programs used in benchmarks
 * `src/userspace/server`: has userspace part of the benchmarks
 * `src/userspace/loader`: has a bpf loader
