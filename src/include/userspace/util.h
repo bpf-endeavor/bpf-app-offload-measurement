@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <string.h>
+#include <time.h>
 
 #include <bpf/libbpf.h> // bpf_get_link_xdp_id
 #include <bpf/bpf.h> // bpf_prog_get_fd_by_id, bpf_obj_get_info_by_fd, ...
@@ -40,6 +41,13 @@ double get_time(void)
 	if (ret)
 		return 0;
 	return (double)t.tv_usec/1000000.0 + (double)t.tv_sec;
+}
+
+static inline unsigned long int get_ns(void) {
+	struct timespec spec = {};
+	clock_gettime(CLOCK_MONOTONIC, &spec);
+	unsigned long int rprt_ts = spec.tv_sec * 1000000000LL + spec.tv_nsec;
+	return rprt_ts;
 }
 
 int send_http_reply(int fd, char *str)
