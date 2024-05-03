@@ -1,0 +1,53 @@
+From 9c05add4816547226656a2ae8ff657e546ada268 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 3 May 2024 12:37:49 +0000
+Subject: [PATCH 3/3] measure overhead of running xdp programs in virtio driver
+
+---
+ drivers/net/virtio_net.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
+index d7ce4a1011ea..b5cb0f2190c8 100644
+--- a/drivers/net/virtio_net.c
++++ b/drivers/net/virtio_net.c
+@@ -25,6 +25,8 @@
+ #include <net/net_failover.h>
+ #include <net/netdev_rx_queue.h>
+ 
++#include <linux/test_timer.h>
++
+ static int napi_weight = NAPI_POLL_WEIGHT;
+ module_param(napi_weight, int, 0444);
+ 
+@@ -1042,7 +1044,27 @@ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 	int err;
+ 	u32 act;
+ 
++	static struct test_timer t = { NO_MIGRATE };
++	const u32 sample_count = 1000000;
++	int tmp_err = 0;
++	u32 tmp_res = 0;
++	bool tmp_need_more_sample = true;
++
++
++	test_timer_enter(&t);
+ 	act = bpf_prog_run_xdp(xdp_prog, xdp);
++
++	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
++	if (!tmp_need_more_sample) {
++		if (tmp_err == 0) {
++			/* Report the experiment result */
++			printk(KERN_INFO"Farbod: on average invoking BPF XDP takes: %d (ns)\n", tmp_res);
++		}
++		/* Reset the experiment */
++		memset(&t, 0, sizeof(struct test_timer));
++		t.mode = NO_MIGRATE;
++	}
++	test_timer_leave(&t);
+ 	u64_stats_inc(&stats->xdp_packets);
+ 
+ 	switch (act) {
+-- 
+2.34.1
+

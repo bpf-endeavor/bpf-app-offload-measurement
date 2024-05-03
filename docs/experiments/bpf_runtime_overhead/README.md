@@ -12,7 +12,8 @@ Experiment were performed on my laptop in a VM.
 
 | Hook | Overhead (nanoseconds) |
 |:----:|:----------------------:|
+| XDP  | 37                     |
 | TC   | 55                     |
-| SK_SKB(verdict)| 1020 - 1100  |
-| SK_SKB(parser+verdict) | Error |
+| stream_verdict | 1020 - 1100  |
+| stream_parser+verdict | Error |
 
