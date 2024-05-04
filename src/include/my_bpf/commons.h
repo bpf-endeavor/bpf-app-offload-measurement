@@ -1,5 +1,11 @@
 #ifndef __MY_BPF_COMMONS
 #define __MY_BPF_COMMONS
+
+#include <linux/if_ether.h>
+#include <linux/udp.h>
+#include <linux/ip.h>
+#include "my_bpf/csum_helpers.h"
+
 /* Make sure these types are defined */
 #ifndef __u32
 typedef unsigned char        __u8;
@@ -49,6 +55,33 @@ int __adjust_skb_size(struct __sk_buff *skb, __u16 new_size)
 		bpf_printk("prev: %d new: %d", prev_size, new_size);
 		return -1;
 	}
+	return 0;
+}
+
+static inline int
+__prepare_headers_before_pass(struct xdp_md *xdp)
+{
+	struct ethhdr *eth = (void *)(__u64)xdp->data;
+	struct iphdr *ip = (struct iphdr *)(eth + 1);
+	struct udphdr *udp = (struct udphdr *)(ip + 1);
+	if ((void *)(udp + 1) > (void *)(__u64)xdp->data_end)
+		return -1;
+	const __u32 new_packet_len = ((__u64)xdp->data_end - (__u64)xdp->data);
+	const __u32 new_ip_len  = new_packet_len - sizeof(struct ethhdr);
+	const __u32 new_udp_len = new_ip_len - sizeof(struct iphdr);
+	__u64 csum;
+	/* IP fields */
+	ip->tot_len = bpf_htons(new_ip_len);
+	ip->ttl = 64;
+	ip->frag_off = 0;
+	ip->check = 0;
+	csum = 0;
+	ipv4_csum_inline(ip, &csum);
+	ip->check = bpf_htons(csum);
+
+	/* UDP  fields */
+	udp->len = bpf_htons(new_udp_len);
+	udp->check = 0;
 	return 0;
 }
 #endif
