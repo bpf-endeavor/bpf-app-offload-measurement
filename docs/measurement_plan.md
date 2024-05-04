@@ -30,7 +30,7 @@
 
 - How off is the BPF helper for getting the timer, what is the resolution?
     + Can I trust this timer or do I need to add my own?
-        + I did an experiment: the `bpf_ktime_get_ns` is off by 70 ns (at median) this is not a good resolution for performing micro-benchmarks. (Running a BPF program is considerd to have 20ns overhead).
+        + I did an experiment: the `bpf_ktime_get_ns` is off by 45 ns in average. this is not a good resolution for performing micro-benchmarks. Running a BPF program is considerd to have 30 ns of overhead.
 
 
 ## Metrics to measure

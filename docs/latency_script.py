@@ -21,17 +21,16 @@ for i, line in enumerate(stream):
     except:
         print('failed to convert to fload: sample at line', i)
         continue
-
     samples.append(v)
-
 stream.close()
 
-
+samples.sort()
 count_smaples = len(samples)
 mean = sum(samples) / count_smaples
 print('samples:', count_smaples)
 print('max:', max(samples))
 print('min:', min(samples))
 print(f'mean: {mean:.2f}')
+print('@1 :', samples[int(count_smaples * 0.01)])
 print('@50:', samples[int(count_smaples * 0.50)])
 print('@99:', samples[int(count_smaples * 0.99)])

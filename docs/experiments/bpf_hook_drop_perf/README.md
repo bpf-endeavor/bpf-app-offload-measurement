@@ -23,8 +23,9 @@ Insdie the eBPF program I measure the request dropping throughput.
 |max| 45303.0|
 |min| 497.0|
 |mean| 14614.01|
-|@50| 26545.0|
-|@99| 619.0|
+|@1|  523|
+|@50| 14691.0|
+|@99| 34042.0|
 
 command:
 ```sh
@@ -40,8 +41,9 @@ cat udp_socket_share_irq_core.txt  | awk '{print $2}' | ../../latency_script.py
 |max| 349111.0|
 |min| 255816.0|
 |mean| 287592.64|
-|@50| 264493.0|
-|@99| 267251.0|
+|@1| 256588.0|
+|@50| 279936.0|
+|@99| 348334.0|
 
 
 **Hook: STREAM_VERDICT**
@@ -52,8 +54,9 @@ cat udp_socket_share_irq_core.txt  | awk '{print $2}' | ../../latency_script.py
 |max| 108742.0|
 |min| 75788.0|
 |mean| 97449.12|
-|@50| 99155.0|
-|@99| 99043.0|
+|@1| 76467.0|
+|@50| 99249.0|
+|@99| 106975.0|
 
 command:
 ```sh
@@ -69,8 +72,9 @@ cat ./stream_verdict_drop_traffic.txt  | awk '{print $7}' | ../../latency_script
 |max| 1385162.0|
 |min| 840175.0|
 |mean| 1110772.84|
-|@50| 1099079.0|
-|@99| 953546.0|
+|@1| 859938.0|
+|@50| 1126743.0|
+|@99| 1380377.0|
 
 command:
 ```sh
@@ -86,14 +90,11 @@ cat tc_drop_traffic.txt | tail -n +6  | awk '{print $7}' | ../../latency_script.
 |max| 1449518.0|
 |min| 916868.0|
 |mean| 1230702.15|
-|@50| 1259985.0|
-|@99| 994468.0|
+|@1|919936.0|
+|@50| 1234000.0|
+|@99| 1448861..0|
 
 command:
 ```sh
 cat ./xdp_drop_traffic.txt | awk '{print $7}' | ../../latency_script.py
 ```
-
-
-
-
