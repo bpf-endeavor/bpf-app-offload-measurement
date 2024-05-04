@@ -27,6 +27,10 @@
     + Running in containers --> The applications run in containers, what are the support what is missing How it affects the measurements?
     + Running inside a VM:
         + I run some test on my laptop inside a VM using KVM [kernel version v6.8.7]
+        + I turned off some of the fearutre of the VM virtual interface
+            + `sudo ethtool -K $NET_IFACE tso off gso off gro off lro off rx-gro-hw off`
+            + `sudo systemctl stop irqbalance`
+            + set irq for input/output to core 3
 
 - How off is the BPF helper for getting the timer, what is the resolution?
     + Can I trust this timer or do I need to add my own?
@@ -73,12 +77,13 @@
 - What would be the minimum-cost if the eBPF program need to go to user-space?
   If we have an eBPF program that just passes the packet to next level it would
   show the minimum overhead an eBPF program can impose on the application
-  performance in case of falling-back to user-space.
-    + UDP Socket (sharing irq and not sharing irq): same as previous part
-    + XDP: ?
-    + TC:  ?
-    + stream_verdict: ?
-    + stream_parser:  ?
+  performance in case of falling-back to user-space. Reported values are average result.
+    + TCP Socket (sharing irq):     65477 (pps)
+    + TCP Socket (not sharing irq): 72904 (pps)
+    + stream_parser+verdict:        ?
+    + stream_verdict:               56899 (pps)
+    + TC:                           77407 (pps)
+    + XDP:                          76325 (pps)
 - Are there any cases, in which falling back to user-space could be beneficial?
   That is doing something in eBPF which result the eBPF+user-space perform
   better than just directly running user-space program.
