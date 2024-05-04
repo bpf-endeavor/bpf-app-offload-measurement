@@ -48,25 +48,43 @@
 
 #### Basics: Performance gain strategies and basic runtime cost
 
+> Run experiment on different versions of Linux kernel (currently testing on 6.8.7)
+
 - Overhead of running eBPF Program: When invoking eBPF runtime how much overhead we add
     + For different hooks (XDP, TC, SK_SKB)
-        + XDP: 37 (ns)
-        + SK_SKB (parser + verdict): `error` -  The packets get stucked for some reason
-        + SK_SKB (verdict): 1020 - 1100 (ns)
+        + stream_parser+verdict: `error` -  The packets get stucked for some reason
+        + stream_verdict: 1020 - 1100 (ns)
         + TC: 55 (ns)
-    + For different version of kernel
-- What percentage of overhead (cycles) are spent on what type of operation (getting a lock, copying packet, preparing BPF stack, ...)
-    + XDP: ...
-    + SK_SKB: ...
-    + TC: ...
-- How much does early exit path benefit from offload
-    + UDP Socket (share irq):     mean: 14614 (pps)
-    + UDP Socket (not share irq): mean: 287592 (pps)
-    + XDP:                        mean: 1230702 (pps)
-    + TC:                         mean: 1110772 (pps)
-    + stream_verdict: ?
+        + XDP: 37 (ns)
+- What percentage of overhead (cycles) are spent on what type of operation (getting a lock, copying packet, preparing eBPF stack, ...)
     + stream_parser+verdict: ?
-        + There are different cases with parser, without parser, different versions of Linux kernel.
+    + stream_verdict: ?
+    + TC: ?
+    + XDP: ?
+- What is the maximum benefit an application can get from offloading to eBPF?
+  If we drop packets in the an eBPF hook we avoid any other instruction
+  happening after. It will be the maximum performance gain.
+    + UDP Socket (share irq):     mean: 14614   (pps)
+    + UDP Socket (not share irq): mean: 287592  (pps)
+    + stream_verdict:             mean: 97449   (pps)
+    + stream_parser+verdict: ?
+    + TC:                         mean: 1110772 (pps)
+    + XDP:                        mean: 1230702 (pps)
+- What would be the minimum-cost if the eBPF program need to go to user-space?
+  If we have an eBPF program that just passes the packet to next level it would
+  show the minimum overhead an eBPF program can impose on the application
+  performance in case of falling-back to user-space.
+    + UDP Socket (sharing irq and not sharing irq): same as previous part
+    + XDP: ?
+    + TC:  ?
+    + stream_verdict: ?
+    + stream_parser:  ?
+- Are there any cases, in which falling back to user-space could be beneficial?
+  That is doing something in eBPF which result the eBPF+user-space perform
+  better than just directly running user-space program.
+    + Data summarization
+    + Request batching
+    + ?
 - Is data summarization beneficial?
     + Throughput benchmark if we do not share any state
     + Throughput benchmark if we share some state

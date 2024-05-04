@@ -44,6 +44,22 @@ cat udp_socket_share_irq_core.txt  | awk '{print $2}' | ../../latency_script.py
 |@99| 267251.0|
 
 
+**Hook: STREAM_VERDICT**
+
+|Measure|Packet / Sec|
+|:------|:----------:|
+|samples| 183|
+|max| 108742.0|
+|min| 75788.0|
+|mean| 97449.12|
+|@50| 99155.0|
+|@99| 99043.0|
+
+command:
+```sh
+cat ./stream_verdict_drop_traffic.txt  | awk '{print $7}' | ../../latency_script.py
+```
+
 
 **Hook: TC**
 
