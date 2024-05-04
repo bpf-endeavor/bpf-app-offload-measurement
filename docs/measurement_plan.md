@@ -3,10 +3,13 @@
 
 ## Introduction
 
-- Why this question is important: people are offloading application to the kernel (BMC, Electrode, XRP, DINT).
-- Why people are trying to offload in the first place? Is DPDK, AF_XDP, and others not suitable? Do we need a new approach?
+- Why this question is important: people are offloading application to the
+  kernel (BMC, Electrode, XRP, DINT).
+- Why people are trying to offload in the first place? Is DPDK, AF_XDP, and
+  others not suitable? Do we need a new approach?
 - Does eBPF provide enough support to meet these applications needs?
-- Is there any advantage in offloading more general applications or are these cases specially hand-crafted to the situation?
+- Is there any advantage in offloading more general applications or are these
+  cases specially hand-crafted to the situation?
 
 
 ## Scope of study and notes to have in mind
@@ -14,17 +17,20 @@
 - Socket types under study are TCP and UDP sockets.
 
 - For TCP applications, eBPF offload must not interfere with TCP state machine
-    + If the eBPF hook is before the TCP stack, then the packet size should not change (including dropping the packet)
+    + If the eBPF hook is before the TCP stack, then the packet size should not
+      change (including dropping the packet)
     + The hooks after TCP stack processing are (1) SK_SKB_PARSER (2) SK_SKB_VERDICT
 - For UDP applications
-    + Offload to XDP (e.g., BMC) may bypass netfilter, and other eBPF programs hooking after it
+    + Offload to XDP (e.g., BMC) may bypass netfilter, and other eBPF programs
+      hooking after it
 
 
 ## Testbed setup
 
 - What type of machines do I need?
     + Bare-metal experiments
-    + Running in containers --> The applications run in containers, what are the support what is missing How it affects the measurements?
+    + Running in containers --> The applications run in containers, what are
+      the support what is missing How it affects the measurements?
     + Running inside a VM:
         + I run some test on my laptop inside a VM using KVM [kernel version v6.8.7]
         + I turned off some of the fearutre of the VM virtual interface
@@ -34,7 +40,10 @@
 
 - How off is the BPF helper for getting the timer, what is the resolution?
     + Can I trust this timer or do I need to add my own?
-        + I did an experiment: the `bpf_ktime_get_ns` is off by 45 ns in average. this is not a good resolution for performing micro-benchmarks. Running a BPF program is considerd to have 30 ns of overhead.
+        + I did an experiment: the `bpf_ktime_get_ns` is off by 45 ns in
+          average. this is not a good resolution for performing
+          micro-benchmarks. Running a BPF program is considerd to have 30 ns of
+          overhead.
 
 
 ## Metrics to measure
@@ -42,7 +51,8 @@
 
 ### General socket application study
 
-(I am not sure what to do in this part, maybe select a set of applications and see if they have access to files and send network requests)
+(I am not sure what to do in this part, maybe select a set of applications and
+see if they have access to files and send network requests)
 - What type of socket applications have early exit
     + Does it access a file on data-path
     + Does it send a request (e.g., MapReduce)
@@ -60,7 +70,8 @@
         + stream_verdict: 1020 - 1100 (ns)
         + TC: 55 (ns)
         + XDP: 37 (ns)
-- What percentage of overhead (cycles) are spent on what type of operation (getting a lock, copying packet, preparing eBPF stack, ...)
+- What percentage of overhead (cycles) are spent on what type of operation
+  (getting a lock, copying packet, preparing eBPF stack, ...)
     + stream_parser+verdict: ?
     + stream_verdict: ?
     + TC: ?
@@ -90,14 +101,24 @@
   better than just directly running user-space program.
     + Data summarization
     + Request batching
-    + ?
-- Is data summarization beneficial?
-    + Throughput benchmark if we do not share any state
-    + Throughput benchmark if we share some state
-        + Share on the packet
-        + Share on the Array map
-        + Share on the Hash map
-        + Share using memory-mapped region
+    + Avoid inter-process communication
+- Is data summarization beneficial? One important factor for summarization is
+  the request size, specially in case of TCP, which means we might coalesce
+  some segments in eBPF. I design the experiment as described below. For
+  generate request of size (64, 258, 1024, 2048, 4096, 8192). Add eBPF program
+  that passes `p%` of the request to app. App will drop and report throughput.
+  The eBPF programs must wait until request is completely received before
+  passing it to app. The for each request size we vary values of `p`.
+    + TCP Socket (not sharing irq):
+    + stream_parser+verdict: ?
+    + stream_verdict: ?
+    + TC:?
+    + XDP: ?
+- Data summarization drop request but share something on a ring/map:
+    + Share on the packet
+    + Share on the Array map
+    + Share on the Hash map
+    + Share using memory-mapped region
 - Is batching requests beneficial? A throughput and latency study
     + For UDP:
         + Batch in XDP
@@ -105,6 +126,7 @@
         + Batch in SK_SKB
     + For TCP:
         + Batch in SK_SKB
+
 
 #### Verifier Imposed Limitations:
 
@@ -123,6 +145,9 @@
         + The PERCPU ARRAYs are not safe anymore if in SK_SKB
             + Benchmark by adding a spin-lock to protect the access
 - Tail call and moving state from one function to another (BMC did it)
+- How hard is it to parse HTTP/1.1
+- How hard is it to parse HTTP/2
+- How hard is it to parse json (some restrictions)
 
 
 -- vim: et ts=4 sw=4 spell
