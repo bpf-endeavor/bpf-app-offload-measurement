@@ -78,12 +78,13 @@
   If we have an eBPF program that just passes the packet to next level it would
   show the minimum overhead an eBPF program can impose on the application
   performance in case of falling-back to user-space. Reported values are average result.
+  The eBPF program was not sharing a core with user-app.
     + TCP Socket (sharing irq):     65477 (pps)
-    + TCP Socket (not sharing irq): 72904 (pps)
+    + TCP Socket (not sharing irq): 72904 (pps) [cost: 0%]
     + stream_parser+verdict:        ?
-    + stream_verdict:               56899 (pps)
-    + TC:                           77407 (pps)
-    + XDP:                          76325 (pps)
+    + stream_verdict:               56899 (pps) [cost: 21.9]
+    + TC:                           77407 (pps) [cost: -6.1]
+    + XDP:                          76325 (pps) [cost: -4.6]
 - Are there any cases, in which falling back to user-space could be beneficial?
   That is doing something in eBPF which result the eBPF+user-space perform
   better than just directly running user-space program.
