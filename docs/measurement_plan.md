@@ -4,13 +4,11 @@
 ## Introduction
 
 - Why this question is important?
-    + People are offloading application to the kernel (BMC, Electrode, XRP, DINT).
-- Why people are trying to offload in the first place? Is DPDK, AF_XDP, and
-  others not suitable? Do we need a new approach?
+    + People are offloading applications to the kernel (BMC, Electrode, XRP, DINT).
+- Why people are trying to offload in the first place? Are Socket API, DPDK,
+  AF_XDP, and others not suitable? Do we need a new approach?
 - What patterns/optimizations are used in order to accelerate applications?
-- Does eBPF provide enough support to meet these applications needs?
-- Is there any advantage in offloading more general applications or are these
-  cases specially hand-crafted to the situation?
+- Does eBPF provide enough support to meet the needs of applications?
 
 
 ## Argument in Favor of eBPF
@@ -19,9 +17,9 @@
 
 ### Optimization patterns
 
-- Early exit, pre-stack processing (BMC)
-- Avoiding inter-process communication
-    + Side-car proxy offload
+- Early exit, pre-stack processing (e.g., BMC)
+- Reducing system calls (e.g., Electrode when sending broadcast messages)
+- Avoiding inter-process communication (e.g., Side-car proxy offload)
 - Are there any cases, in which falling back to user-space could be beneficial?
   (That is doing something in eBPF which result the eBPF+user-space perform better than just directly running user-space program.)
     + Data summarization
@@ -36,7 +34,7 @@
         - bpf_loop
         - sk_skb
     + In new versions of kernel, the interrupts are not disabled when running
-      eBPF program. I think I observed some concurrency issue even with a
+      eBPF programs. I think I observed some concurrency issues even with a
       single core running the eBPF program. Need to investigate it more.
 - Offloading to eBPF is seen as compliant with legacy Linux configuration and
   application, but is it true?
@@ -94,7 +92,8 @@
             + `sudo systemctl stop irqbalance`
             + set irq for input/output to core 3
 
-> A side question?
+**A side question:**
+
 - How off is the eBPF helper for getting the timer, what is the resolution?
     + Can I trust this timer or do I need to add my own?
         + I did an experiment: the `bpf_ktime_get_ns` is off by 45 ns in
