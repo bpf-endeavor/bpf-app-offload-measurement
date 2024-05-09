@@ -1,0 +1,25 @@
+figsize: [5.0,2.0]
+title:
+x: ["TCP Socket\n(isolated)", "SK_SKB\nverdict", "TC", " XDP"]
+y: [
+  [72, 0, 0, 0],
+  [0, 56, 0, 0],
+  [0, 0, 77, 0],
+  [0, 0, 0, 76],
+]
+yticks: [0, 20, 40, 60, 80, 100]
+bar_width: 0.25
+ylabel: "Throughput (Kpps)"
+output: "pass_perf_bar.pdf"
+grid: true
+ax_below: false
+legend: false
+annotate:
+  - xy: [-0.10, 77]
+    text: 72
+  - xy: [0.90, 61]
+    text: 56
+  - xy: [1.90, 82]
+    text: 77
+  - xy: [2.80, 81]
+    text: 76

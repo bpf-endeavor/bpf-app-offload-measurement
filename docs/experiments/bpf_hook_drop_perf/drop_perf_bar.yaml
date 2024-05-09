@@ -10,7 +10,7 @@ y: [
 ]
 yticks: [0, 250, 500, 750, 1000, 1250, 1500]
 bar_width: 0.25
-ylabel: "Throughput (K Packets / Sec)"
+ylabel: "Throughput (Kpps)"
 output: "drop_perf_bar.pdf"
 grid: true
 ax_below: false
