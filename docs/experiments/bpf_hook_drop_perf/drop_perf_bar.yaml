@@ -1,0 +1,29 @@
+figsize: [5.0,2.0]
+title:
+x: ["UDP Socket\n(share irq)", "UDP Socket\n(isolated)", "SK_SKB\nverdict", "TC", " XDP"]
+y: [
+  [14, 0, 0, 0, 0],
+  [0, 255, 0, 0, 0],
+  [0, 0, 97, 0, 0],
+  [0, 0, 0, 1110, 0, 0],
+  [0, 0, 0, 0, 1234]
+]
+yticks: [0, 250, 500, 750, 1000, 1250, 1500]
+bar_width: 0.25
+ylabel: "Throughput (K Packets / Sec)"
+output: "drop_perf_bar.pdf"
+grid: true
+ax_below: false
+legend: false
+annotate:
+  # Userspace
+  - xy: [-0.10, 19]
+    text: 14
+  - xy: [0.90, 260]
+    text: 255
+  - xy: [1.90, 102]
+    text: 97
+  - xy: [2.80, 1110]
+    text: 1110
+  - xy: [3.80, 1239]
+    text: 1234
