@@ -85,7 +85,7 @@ int xdp_bound_check(struct xdp_md *ctx)
 	__builtin_memcpy(arr, MESSAGE, MESSAGE_SIZE);
 	value = 0;
 	index = 0;
-	for (i = 0; i < 8000 && i < arg->inst_count; i++) {
+	for (i = 0; i < 8000; i++) {
 		/* Perform a bound check */
 		if (index >= MESSAGE_SIZE) {
 			bpf_printk("access out of range");
@@ -136,14 +136,14 @@ int xdp_no_check(struct xdp_md *ctx)
 	__builtin_memcpy(arr, MESSAGE, MESSAGE_SIZE);
 	value = 0;
 	index = 0;
-	for (i = 0; i < 4000 && i < arg->inst_count; i++) {
+	for (i = 0; i < 8000; i++) {
 		/* index = i % MESSAGE_SIZE; */
 		/* DO not perform a bound check */
 		value += arr[index];
 		index = index == 56 ? 0 : index + 1;
 	}
 
-	if (value == 2345) {
+	if (value == 0) {
 		bpf_printk("This should not be printed!");
 	}
 
