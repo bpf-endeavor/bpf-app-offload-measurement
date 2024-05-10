@@ -1,0 +1,19 @@
+figsize: [2.0,3.0]
+title:
+x: ["Code A", "Code B"]
+y: [
+  [44, 0],
+  [0, 72],
+]
+yticks: [0, 20, 40, 60, 80, 100]
+bar_width: 0.25
+ylabel: "Throughput (Kpps)"
+output: "boundcheck_bar.pdf"
+grid: true
+ax_below: false
+legend: false
+annotate:
+  - xy: [-0.10, 49]
+    text: 44
+  - xy: [0.90, 79]
+    text: 72
