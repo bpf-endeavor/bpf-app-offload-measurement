@@ -12,7 +12,7 @@ struct client_ctx { };
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
-#define RECV_BUFFER_SIZE 2048
+#define RECV_BUFFER_SIZE 4096
 
 #define RECV(fd, buf, size, flag)  {                  \
 	ret = recv(fd, buf, size, flag);              \

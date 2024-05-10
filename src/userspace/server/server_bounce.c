@@ -11,6 +11,8 @@ struct client_ctx { };
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
+#define RECV_BUFSIZE 4096
+
 #define RECV(fd, buf, size, flag)  {                  \
 	ret = recv(fd, buf, size, flag);              \
 	if (ret == 0)                                 \
@@ -32,10 +34,10 @@ struct client_ctx { };
 int handle_client(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len;
-	char buf[BUFSIZE];
+	char buf[RECV_BUFSIZE];
 
 	/* Receive message and check the return value */
-	RECV(client_fd, buf, BUFSIZE, 0);
+	RECV(client_fd, buf, RECV_BUFSIZE, 0);
 	len = ret;
 	/* if (len == 0) */
 	/* 	return 1; */
@@ -50,13 +52,13 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 int handle_client_udp(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len;
-	char buf[BUFSIZE];
+	char buf[RECV_BUFSIZE];
 
 	struct sockaddr_in client_addr;
 	socklen_t addr_len = sizeof(client_addr);
 
 	/* Receive message and check the return value */
-	ret = recvfrom(client_fd, buf, BUFSIZE, 0 /*udp_flags*/,
+	ret = recvfrom(client_fd, buf, RECV_BUFSIZE, 0 /*udp_flags*/,
 			(struct sockaddr *)&client_addr, &addr_len);
 	if (ret == 0) {
 		ERROR("Receive no data!\n");

@@ -89,6 +89,9 @@ struct sk_skb_progs {
 	struct bpf_program *parser;
 	struct bpf_program *verdict;
 	struct bpf_program *sockops;
+
+	struct bpf_program *bind4;
+	struct bpf_program *sock_release;
 };
 
 static struct {
