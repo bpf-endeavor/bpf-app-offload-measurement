@@ -36,6 +36,22 @@ int verdict(struct __sk_buff *skb)
 	 * traffic
 	 * */
 	int ret;
+	char *p = (char *)(__u64)skb->data;
+	void *data_end = (void *)(__u64)skb->data_end;
+	short z_index = skb->len - 2;
+	z_index &= 0x1fff;
+	__u16 length = (__u64)skb->data_end - (__u64)skb->data;
+	if (skb->len != length) {
+		bpf_printk("what is this??? skb.len:%d != delta:%d", skb->len, length);
+	}
+	if (z_index < 0 || z_index >= skb->len || ((void *)p + z_index + 1) > data_end) {
+		bpf_printk("This should never happen! (len: %d index: %d)", skb->len, z_index);
+		return SK_DROP;
+	}
+	if (p[z_index] != 'Z') {
+		bpf_printk("have not received the full message!! Is message in multiple packets? len=%d @ %d", skb->len, z_index);
+		return SK_DROP;
+	}
 	ret = __adjust_skb_size(skb, SUMMARY_RESULT_BYTES);
 	if (ret != 0) {
 		bpf_printk("failed to resize the request!");
@@ -90,7 +106,29 @@ int tc_prog(struct __sk_buff *skb)
 		return TC_ACT_OK;
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return TC_ACT_OK;
-	return TC_ACT_SHOT;
+
+	int ret;
+	char *p = data;
+	short z_index = skb->len - 2;
+	z_index &= 0x1fff;
+	__u16 length = (__u64)skb->data_end - (__u64)skb->data;
+	if (skb->len != length) {
+		bpf_printk("what is this??? skb.len:%d != delta:%d", skb->len, length);
+	}
+	if (z_index < 0 || z_index >= skb->len || ((void *)p + z_index + 1) > data_end) {
+		bpf_printk("This should never happen! (len: %d index: %d)", skb->len, z_index);
+		return TC_ACT_SHOT;
+	}
+	if (p[z_index] != 'Z') {
+		bpf_printk("have not received the full message!! Is message in multiple packets? len=%d @ %d", skb->len, z_index);
+		return TC_ACT_SHOT;
+	}
+	ret = __adjust_skb_size(skb, SUMMARY_RESULT_BYTES);
+	if (ret != 0) {
+		bpf_printk("failed to resize the request!");
+		return TC_ACT_SHOT;
+	}
+	return TC_ACT_OK;
 }
 
 char _license[] SEC("license") = "GPL";
