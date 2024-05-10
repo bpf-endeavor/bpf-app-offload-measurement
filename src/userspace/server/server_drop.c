@@ -93,6 +93,10 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 		/* Would block continue polling */
 		return 0;
 	}
+	/* if (buf[ret - 2] != 'Z') { */
+	/* 	ERROR("The request is split among multiple messages ? (size: %d)\n", ret); */
+	/* 	INFO("%s\n", buf + 3950); */
+	/* } */
 	report_tput();
 	/* Drop */
 	return 0;
@@ -108,6 +112,7 @@ void register_socket(int fd)
 	int ret;
 	int map_fd;
 	int zero = 0;
+	char cmd;
 
 	if (first != 0) {
 		ERROR("Multiple sockets, this code expects only one socket update it\n");
@@ -118,16 +123,23 @@ void register_socket(int fd)
 	map_fd = find_map("sock_map");
 	if (map_fd <= 0) {
 		ERROR("Did not found the socket map\n");
-		exit(EXIT_FAILURE);
+		goto sock_register_failure;
 	}
 	ret = bpf_map_update_elem(map_fd, &zero, &fd, BPF_NOEXIST);
 	if (ret != 0) {
 		ERROR("Failed to insert socket (%d) to the map\n", fd);
-		perror("what:");
-		exit(EXIT_FAILURE);
+		goto sock_register_failure;
 	}
 	INFO("Inserted the socket (%d) into sock_map\n", fd);
 	return;
+sock_register_failure:
+		INFO("Failed to register socket to sock_map. Should the program terminate? [Y/n] ");
+		scanf("%c", &cmd);
+		if (cmd == 'n' || cmd == 'N') {
+			INFO("Continue...\n");
+			return;
+		}
+		exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
