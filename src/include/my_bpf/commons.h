@@ -69,6 +69,8 @@ __prepare_headers_before_pass(struct xdp_md *xdp)
 	const __u32 new_packet_len = ((__u64)xdp->data_end - (__u64)xdp->data);
 	const __u32 new_ip_len  = new_packet_len - sizeof(struct ethhdr);
 	const __u32 new_udp_len = new_ip_len - sizeof(struct iphdr);
+	/* bpf_printk("ip len: %d", new_ip_len); */
+	/* bpf_prinkt("udp len: %d", new_udp_len); */
 	__u64 csum;
 	/* IP fields */
 	ip->tot_len = bpf_htons(new_ip_len);

@@ -93,6 +93,7 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 		/* Would block continue polling */
 		return 0;
 	}
+	/* INFO("received: %d\n", ret); */
 	/* if (buf[ret - 2] != 'Z') { */
 	/* 	ERROR("The request is split among multiple messages ? (size: %d)\n", ret); */
 	/* 	INFO("%s\n", buf + 3950); */
