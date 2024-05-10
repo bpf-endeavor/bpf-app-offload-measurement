@@ -1,4 +1,4 @@
-figsize: [5.0,2.0]
+figsize: [3.5,2.2]
 title:
 x: ["TCP Socket\n(isolated)", "SK_SKB\nverdict", "TC", " XDP"]
 y: [
