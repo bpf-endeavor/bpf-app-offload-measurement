@@ -98,6 +98,38 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+
+/* When the socket is ready, register it to the sock-map. This allows sk_skb
+ * program to operate on traffic of this socket.
+ * */
+void register_socket(int fd)
+{
+	static int first = 0;
+	int ret;
+	int map_fd;
+	int zero = 0;
+
+	if (first != 0) {
+		ERROR("Multiple sockets, this code expects only one socket update it\n");
+		exit(EXIT_FAILURE);
+	}
+	first = 1;
+
+	map_fd = find_map("sock_map");
+	if (map_fd <= 0) {
+		ERROR("Did not found the socket map\n");
+		exit(EXIT_FAILURE);
+	}
+	ret = bpf_map_update_elem(map_fd, &zero, &fd, BPF_NOEXIST);
+	if (ret != 0) {
+		ERROR("Failed to insert socket (%d) to the map\n", fd);
+		perror("what:");
+		exit(EXIT_FAILURE);
+	}
+	INFO("Inserted the socket (%d) into sock_map\n", fd);
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -125,10 +157,13 @@ int main(int argc, char *argv[])
 	app.count_workers = 1;
 	if (udp) {
 		app.sock_handler = handle_client_udp;
+		/* TODO: have a flag to check if we need to add the socket to
+		 * sock_map or not */
+		app.on_sockready = register_socket;
 	} else {
 		app.sock_handler = handle_client;
+		app.on_sockready = NULL;
 	}
-	app.on_sockready = NULL;
 	app.on_sockclose = NULL;
 	app.on_events = NULL;
 

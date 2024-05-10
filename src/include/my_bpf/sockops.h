@@ -141,42 +141,42 @@ int monitor_connections(struct bpf_sock_ops *skops)
 // 	struct sock_context *skctx;
 // 	struct count_sock *count;
 // 	int sk_index;
-// 
+//
 // 	sk = ctx->sk;
 // 	if (!sk)
 // 		return 0;
-// 
+//
 // 	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
 // 			BPF_LOCAL_STORAGE_GET_F_CREATE);
 // 	if (!skctx) {
 // 		/* Should never happen */
 // 		return 0;
 // 	}
-// 
+//
 // 	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
 // 	if (!conf) {
 // 		/* Should never happen */
 // 		return 0;
 // 	}
-// 
+//
 // 	if (sk->family != AF_INET)
 // 		return 0;
-// 
+//
 // 	if (ctx->type != SOCK_DGRAM)
 // 		return 0;
-// 
+//
 // 	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
 // 	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
 // 	if (ctx->user_port != conf->port)
 // 		return 0;
-// 
+//
 // 	count = bpf_map_lookup_elem(&count_sock_map, &ret);
 // 	if (!count) {
 // 		/* Should never happen */
 // 		bpf_printk("failed to get count map");
 // 		return 0;
 // 	}
-// 
+//
 // 	bpf_spin_lock(&count->lock);
 // 	sk_index = count->value;
 // 	/* Update this index as used */
@@ -189,7 +189,7 @@ int monitor_connections(struct bpf_sock_ops *skops)
 // 		bpf_printk("failed to insert into map");
 // 		return 0;
 // 	}
-// 
+//
 // 	return 0;
 // }
 
@@ -200,36 +200,36 @@ int monitor_connections(struct bpf_sock_ops *skops)
 // 	struct bpf_sock *sk;
 // 	struct count_sock *count;
 // 	struct sock_context *skctx;
-// 
+//
 // 	sk = ctx->sk;
 // 	if (!sk)
 // 		return 0;
-// 
+//
 // 	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
 // 			BPF_LOCAL_STORAGE_GET_F_CREATE);
 // 	if (!skctx) {
 // 		/* Should never happen */
 // 		return 0;
 // 	}
-// 
+//
 // 	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
 // 	if (!conf) {
 // 		/* Should never happen */
 // 		return 0;
 // 	}
-// 
+//
 // 	if (sk->family != AF_INET)
 // 		return 0;
-// 
+//
 // 	if (ctx->type != SOCK_DGRAM)
 // 		return 0;
-// 
+//
 // 	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
 // 	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
 // 	if (ctx->user_port != conf->port)
 // 		return 0;
-// 
+//
 // 	bpf_map_delete_elem(&sock_map, &skctx->sock_map_index);
-// 
+//
 // 	return 0;
 // }
