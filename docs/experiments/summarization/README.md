@@ -3,19 +3,24 @@
 We are trying to answer if reducing the size of requests inside the kernel can
 help with the performance of applications. The experiment is conducted as
 follows.
-The `server_bounce` is up on core zero, while the soft irq for experiment NIC
+The `server_drop` is up on core zero, while the soft irq for experiment NIC
 is configured on core 3. I used `udpgen` for generating request toward the
-server in a closed loop (send some requests and wait for the response before
-sendign more)[1].  We load a BPF program that resizes the requests to `p%` of
+server [1].  We load a BPF program that resizes the requests to `p%` of
 their original size. We measure the throughput observed in workload generator.
 
-[1]  `./build/udpgen --ip 192.168.122.245 --port 8080 -t 1 -P 4 -d 20`
+Since ebpf program is on a seperate core, all the eBPF experiments are enjoying
+more processing power than the case in which we have just a socket application.
+
+I am doing the test with UDP sockets because it is not possible to resize TCP
+request before the network stack.
+
+[1]  ` ./build/udpgen --ip 192.168.122.245 --port 8080 -t 1 -d 20 --one`
 
 
 ## Results
 
 **Approahces:**
-1. TCP Sock (not share irq)
+1. UDP Sock (not share irq)
 2. stream_parser+verdict
 3. stream_verdict
 4. TC
@@ -25,11 +30,11 @@ their original size. We measure the throughput observed in workload generator.
 
 | Approach | 25% (16) | 50% (32) | 75% (48) | 100% (64) |
 |:---------|:--:|:--:|:--:|:--:|
-| 1        | -- | -- | -- | 33373  |
+| 1        | -- | -- | -- |    |
 | 2        | ?  | ?  | ?  | ?  |
-| 3        |  |  |  |    |
-| 4        |    |    |    |    |
-| 5        |    |    |    |    |
+| 3        | -  | -  | -  |    |
+| 4        | -  | -  | -  |    |
+| 5        | -  | -  | -  |    |
 
 ### Request size 256
 
