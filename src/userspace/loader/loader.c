@@ -81,6 +81,22 @@ static int configure_bpf_benchmark(int map_fd)
 		INFO("summary size: %d\n", arg.summary_size);
 		INFO("\n");
 		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
+	} else if (strcmp(file_name, "bpf_boundcheck_overhead.o")) {
+		/* TODO: this struct should be same as the one in the BPF source code  */
+		struct arg {
+			int inst_count;
+		} arg;
+
+		/* Get arguments from user */
+		INFO("Arguments for bpf_boundcheck_overhead benchmakr:\n");
+		INFO("insts (int): ");
+		fflush(stdout);
+		scanf("%d", &arg.inst_count);
+		INFO("--------------------------\n");
+		INFO("Summary:\n");
+		INFO("insts: %d\n", arg.inst_count);
+		INFO("\n");
+		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
 	}
 	return -1;
 }

@@ -133,103 +133,103 @@ int monitor_connections(struct bpf_sock_ops *skops)
 
 // PROG TYPE: BPF_PROG_TYPE_CGROUP_SOCK
 // ATTACH POINT: BPF_CGROUP_INET4_POST_BIND
-SEC("cgroup/post_bind4")
-int bind_v4_prog(struct bpf_sock_addr *ctx)
-{
-	int ret;
-	struct bpf_sock *sk;
-	struct sock_context *skctx;
-	struct count_sock *count;
-	int sk_index;
+// SEC("cgroup/post_bind4")
+// int bind_v4_prog(struct bpf_sock_addr *ctx)
+// {
+// 	int ret;
+// 	struct bpf_sock *sk;
+// 	struct sock_context *skctx;
+// 	struct count_sock *count;
+// 	int sk_index;
+// 
+// 	sk = ctx->sk;
+// 	if (!sk)
+// 		return 0;
+// 
+// 	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
+// 			BPF_LOCAL_STORAGE_GET_F_CREATE);
+// 	if (!skctx) {
+// 		/* Should never happen */
+// 		return 0;
+// 	}
+// 
+// 	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
+// 	if (!conf) {
+// 		/* Should never happen */
+// 		return 0;
+// 	}
+// 
+// 	if (sk->family != AF_INET)
+// 		return 0;
+// 
+// 	if (ctx->type != SOCK_DGRAM)
+// 		return 0;
+// 
+// 	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
+// 	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
+// 	if (ctx->user_port != conf->port)
+// 		return 0;
+// 
+// 	count = bpf_map_lookup_elem(&count_sock_map, &ret);
+// 	if (!count) {
+// 		/* Should never happen */
+// 		bpf_printk("failed to get count map");
+// 		return 0;
+// 	}
+// 
+// 	bpf_spin_lock(&count->lock);
+// 	sk_index = count->value;
+// 	/* Update this index as used */
+// 	count->value = (count->value + 1) % MAX_CONN;
+// 	bpf_spin_unlock(&count->lock);
+// 	/* Add the socket to the map */
+// 	skctx->sock_map_index = sk_index;
+// 	ret = bpf_sock_map_update(skops, &sock_map, &sk_index, BPF_ANY);
+// 	if (ret != 0) {
+// 		bpf_printk("failed to insert into map");
+// 		return 0;
+// 	}
+// 
+// 	return 0;
+// }
 
-	sk = ctx->sk;
-	if (!sk)
-		return 0;
-
-	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
-			BPF_LOCAL_STORAGE_GET_F_CREATE);
-	if (!skctx) {
-		/* Should never happen */
-		return 0;
-	}
-
-	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
-	if (!conf) {
-		/* Should never happen */
-		return 0;
-	}
-
-	if (sk->family != AF_INET)
-		return 0;
-
-	if (ctx->type != SOCK_DGRAM)
-		return 0;
-
-	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
-	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
-	if (ctx->user_port != conf->port)
-		return 0;
-
-	count = bpf_map_lookup_elem(&count_sock_map, &ret);
-	if (!count) {
-		/* Should never happen */
-		bpf_printk("failed to get count map");
-		return 0;
-	}
-
-	bpf_spin_lock(&count->lock);
-	sk_index = count->value;
-	/* Update this index as used */
-	count->value = (count->value + 1) % MAX_CONN;
-	bpf_spin_unlock(&count->lock);
-	/* Add the socket to the map */
-	skctx->sock_map_index = sk_index;
-	ret = bpf_sock_map_update(skops, &sock_map, &sk_index, BPF_ANY);
-	if (ret != 0) {
-		bpf_printk("failed to insert into map");
-		return 0;
-	}
-
-	return 0;
-}
-
-SEC("cgroup/sock_release)
-int release_v4_prog(struct bpf_sock_addr *ctx)
-{
-	int ret;
-	struct bpf_sock *sk;
-	struct count_sock *count;
-	struct sock_context *skctx;
-
-	sk = ctx->sk;
-	if (!sk)
-		return 0;
-
-	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
-			BPF_LOCAL_STORAGE_GET_F_CREATE);
-	if (!skctx) {
-		/* Should never happen */
-		return 0;
-	}
-
-	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
-	if (!conf) {
-		/* Should never happen */
-		return 0;
-	}
-
-	if (sk->family != AF_INET)
-		return 0;
-
-	if (ctx->type != SOCK_DGRAM)
-		return 0;
-
-	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
-	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
-	if (ctx->user_port != conf->port)
-		return 0;
-
-	bpf_map_delete_elem(&sock_map, &skctx->sock_map_index);
-
-	return 0;
-}
+// SEC("cgroup/sock_release)
+// int release_v4_prog(struct bpf_sock_addr *ctx)
+// {
+// 	int ret;
+// 	struct bpf_sock *sk;
+// 	struct count_sock *count;
+// 	struct sock_context *skctx;
+// 
+// 	sk = ctx->sk;
+// 	if (!sk)
+// 		return 0;
+// 
+// 	skctx = bpf_sk_storage_get(&sock_ctx_map, sk, NULL,
+// 			BPF_LOCAL_STORAGE_GET_F_CREATE);
+// 	if (!skctx) {
+// 		/* Should never happen */
+// 		return 0;
+// 	}
+// 
+// 	conf = bpf_map_lookup_elem(&conn_monitor_config_map, &ret);
+// 	if (!conf) {
+// 		/* Should never happen */
+// 		return 0;
+// 	}
+// 
+// 	if (sk->family != AF_INET)
+// 		return 0;
+// 
+// 	if (ctx->type != SOCK_DGRAM)
+// 		return 0;
+// 
+// 	/* if (ctx->user_ip4 != bpf_htonl(SERV4_IP) || */
+// 	/*     ctx->user_port != bpf_htons(SERV4_PORT)) */
+// 	if (ctx->user_port != conf->port)
+// 		return 0;
+// 
+// 	bpf_map_delete_elem(&sock_map, &skctx->sock_map_index);
+// 
+// 	return 0;
+// }
