@@ -43,6 +43,7 @@ static int configure_bpf_benchmark(int map_fd)
 {
 	const int zero = 0;
 	char *file_name = basename(context.bpf_bin);
+	INFO("benchmark bpf file: %s\n", file_name);
 	/* TODO: how am I going to support different benchmark arguments ? */
 	if (strcmp(file_name, "bpf_inst.o") == 0) {
 		/* TODO: this struct should be same as the one in the BPF source code  */
@@ -81,7 +82,7 @@ static int configure_bpf_benchmark(int map_fd)
 		INFO("summary size: %d\n", arg.summary_size);
 		INFO("\n");
 		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
-	} else if (strcmp(file_name, "bpf_boundcheck_overhead.o")) {
+	} else if (strcmp(file_name, "bpf_boundcheck_overhead.o") == 0) {
 		/* TODO: this struct should be same as the one in the BPF source code  */
 		struct arg {
 			int inst_count;
@@ -98,7 +99,9 @@ static int configure_bpf_benchmark(int map_fd)
 		INFO("\n");
 		return bpf_map_update_elem(map_fd, &zero, &arg, BPF_ANY);
 	}
-	return -1;
+	/* Nothing to configure */
+	INFO("No benchmark argument configuration\n");
+	return 0;
 }
 
 struct sk_skb_progs {
@@ -161,20 +164,7 @@ int load_sk_skb(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 	}
 
 no_sockops:
-	/* Configure the benchmark */
-	map_obj = bpf_object__find_map_by_name(bpfobj, BENCHMARK_ARG_MAP_NAME);
-	if (!map_obj) {
-		WARN("Failed to find the benchmark specific argument map\n");
-		goto ignore_arg_map;
-	}
-	map_fd = bpf_map__fd(map_obj);
-	ret = configure_bpf_benchmark(map_fd);
-	if (ret) {
-		ERROR("Failed to configure the benchmark\n");
-		goto unload;
-	}
 
-ignore_arg_map:
 	/* Get sock_map for attaching programs */
 	map_obj = bpf_object__find_map_by_name(bpfobj, SOCK_MAP_NAME);
 	if (!map_obj) {
@@ -380,6 +370,22 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	/* Configure the benchmark */
+	struct bpf_map *map_obj;
+	int map_fd;
+	map_obj = bpf_object__find_map_by_name(bpfobj, BENCHMARK_ARG_MAP_NAME);
+	if (!map_obj) {
+		WARN("Failed to find the benchmark specific argument map\n");
+		goto ignore_arg_map;
+	}
+	map_fd = bpf_map__fd(map_obj);
+	ret = configure_bpf_benchmark(map_fd);
+	if (ret) {
+		ERROR("Failed to configure the benchmark\n");
+		goto unload_in_main_func;
+	}
+
+ignore_arg_map:
 	for (i = 0; i < context.count_prog; i++) {
 		bpf_req = &context.bpf_prog[i];
 		switch(bpf_req->bpf_hook) {
@@ -425,6 +431,8 @@ int main(int argc, char *argv[])
 				return EXIT_FAILURE;
 		}
 	}
+
+unload_in_main_func:
 	bpf_object__close(bpfobj);
 
 	INFO("Done!\n");
