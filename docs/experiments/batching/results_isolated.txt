@@ -1,0 +1,89 @@
+Experiment transport protocol: UDP
+Share IRQ: False (ebpf and app have their own core)
+Payload size: 1024
+Workload generator command: `sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10`
+Using server_lookup on DUT
+
+BATCH SIZE 15
+
+
+## UDP Socket:
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 284119        284150
+thread 1: 305080        305111
+thread 2: 202436        202467
+thread 3: 255876        255907
+total recv: 1047511
+total sent: 1047635
+duration: 10
+Recv Throughput: 104751.10
+Sent Throughput: 104763.50
+
+
+
+## XDP
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 412248        412279
+thread 1: 429656        429687
+thread 2: 398225        398256
+thread 3: 422398        422429
+total recv: 1662527
+total sent: 1662651
+duration: 10
+Recv Throughput: 166252.70
+Sent Throughput: 166265.10
+
+
+## TC
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 430476        430507
+thread 1: 374135        374166
+thread 2: 445572        445603
+thread 3: 373495        373526
+total recv: 1623678
+total sent: 1623802
+duration: 10
+Recv Throughput: 162367.80
+Sent Throughput: 162380.20
+
+
+## SK_VERDICT
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 466117        466148
+thread 1: 156848        156879
+thread 2: 173151        173182
+thread 3: 208871        208902
+total recv: 1004987
+total sent: 1005111
+duration: 10
+Recv Throughput: 100498.70
+Sent Throughput: 100511.10
+farbod@node1:~/udp_traffic_

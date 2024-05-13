@@ -1,0 +1,82 @@
+Experiment transport protocol: UDP
+Share IRQ: True
+Payload size: 1024
+Workload generator command: `sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10`
+Using server_lookup on DUT
+
+## UDP Socket
+ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 206920        206951
+thread 1: 273824        273855
+thread 2: 219007        219039
+thread 3: 312564        312596
+total recv: 1012315
+total sent: 1012441
+duration: 10
+Recv Throughput: 101231.50
+Sent Throughput: 101244.10
+
+## XDP
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 346186        346217
+thread 1: 293596        293627
+thread 2: 347689        347720
+thread 3: 292294        292325
+total recv: 1279765
+total sent: 1279889
+duration: 10
+Recv Throughput: 127976.50
+Sent Throughput: 127988.90
+
+
+## TC
+
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 318206        318237
+thread 1: 277809        277841
+thread 2: 321569        321600
+thread 3: 279259        279290
+total recv: 1196843
+total sent: 1196968
+duration: 10
+Recv Throughput: 119684.30
+Sent Throughput: 119696.80
+
+
+## STREAM_VERDICT
+farbod@node1:~/udp_traffic_gen/src$ sudo ./build/udpgen -i 192.168.1.1 -p 8080 -P 32 -t 4 -d 10
+Experiment for 10 sec.    Server 192.168.1.1:8080
+Worker started
+Worker started
+Worker started
+Worker started
+          RECV        SENT
+thread 0: 302331        302362
+thread 1: 210238        210269
+thread 2: 34581        34613
+thread 3: 237309        237340
+total recv: 784459
+total sent: 784584
+duration: 10
+Recv Throughput: 78445.90
+Sent Throughput: 78458.40
+

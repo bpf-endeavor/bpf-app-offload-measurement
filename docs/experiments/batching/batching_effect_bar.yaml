@@ -1,0 +1,25 @@
+figsize: [3.5,2.2]
+title:
+x: ["UDP Socket\n(share core)", "SK_SKB\nverdict", "TC", " XDP"]
+y: [
+  [101, 0, 0, 0],
+  [0, 78, 0,  0],
+  [0, 0, 119, 0],
+  [0, 0, 0, 127],
+]
+yticks: [0, 40, 80, 120, 160]
+bar_width: 0.25
+ylabel: "Throughput (Kpps)"
+output: "batching_effect.pdf"
+grid: true
+ax_below: false
+legend: false
+annotate:
+  - xy: [-0.10, 106]
+    text: 101
+  - xy: [0.90, 83]
+    text: 78
+  - xy: [1.90, 124]
+    text: 119
+  - xy: [2.80, 132]
+    text: 127
