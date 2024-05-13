@@ -342,7 +342,7 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 
 	/* A safty check for when the data is not in correct format */
 	if (pkg.count != 15) {
-		ERROR("Unexpected number of items in the package\n");
+		ERROR("Unexpected number of items in the package (%d)\n", pkg.count);
 		return 1;
 	}
 
@@ -522,7 +522,7 @@ int main(int argc, char *argv[])
 
 	/* parse args */
 	if (argc < 4) {
-		INFO("usage: prog <core> <ip> <mode>\n"
+		INFO("usage: prog <core> <ip> <mode> [--sockmap]\n"
 		"* mode: either 0 or 1.\n"
 		"  0: full userspace\n"
 		"  1: recieve hash from ebpf\n"

@@ -38,18 +38,11 @@ struct package {
 	unsigned int count;
 	struct req_data data[15];
 } __attribute__((__packed__));
-#define need_lock 1
-struct protected_area {
-	struct package package;
-#ifdef need_lock
-	struct bpf_spin_lock lock;
-#endif
-};
 
 struct {
 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key,   __u32);
-	__type(value, struct protected_area);
+	__type(value, struct package);
 	__uint(max_entries, 2);
 } batching_map SEC(".maps");
 /* ---------------- */
@@ -67,7 +60,6 @@ int tc_prog(struct __sk_buff *skb)
 	__u16 len;
 	short new_size, packet_size;
 	short size_delta;
-	struct udphdr *old_udp;
 	__u16 tmp_off;
 
 	__u32 hash;
@@ -76,6 +68,7 @@ int tc_prog(struct __sk_buff *skb)
 	struct package *state;
 	__u8 index;
 	unsigned long long int cksum;
+	struct udphdr old_udp;
 
 	data = (void *)(__u64)skb->data;
 	data_end = (void *)(__u64)skb->data_end;
@@ -115,21 +108,14 @@ int tc_prog(struct __sk_buff *skb)
 		bpf_printk("Failed to perform the hashing!");
 		return TC_ACT_SHOT;
 	}
-	struct protected_area *parea = bpf_map_lookup_elem(&batching_map, &zero);
-	if (parea == NULL) {
-		bpf_printk("Failed to get the proteced area");
+	pkg = bpf_map_lookup_elem(&batching_map, &zero);
+	if (pkg == NULL) {
+		bpf_printk("Failed to get the package");
 		return TC_ACT_SHOT;
 	}
-#ifdef need_lock
-	bpf_spin_lock(&parea->lock);
-#endif
-	pkg = &parea->package;
 	index = pkg->count;
 	if (index >= BATCH_SIZE) {
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
-		bpf_printk("Batch size grow larger than expected!");
+		bpf_printk("Batch size grow larger than expected! (%d)", index);
 		return TC_ACT_SHOT;
 	}
 	pkg->count++;
@@ -139,12 +125,11 @@ int tc_prog(struct __sk_buff *skb)
 
 	if (pkg->count != BATCH_SIZE) {
 		/* Waiting for more request */
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
 		/* bpf_printk("waiting!"); */
 		return TC_ACT_SHOT;
 	}
+
+	memcpy(&old_udp, udp, sizeof(struct udphdr));
 
 	/* I just want to place a package as UDP payload.  `` has the curent
 	 * length of UDP payload. I use it to calculate the amount of memory
@@ -155,9 +140,6 @@ int tc_prog(struct __sk_buff *skb)
 	size_delta = new_size - packet_size;
 	/* bpf_printk("resize delta: %d", size_delta); */
 	if (bpf_skb_adjust_room(skb, size_delta, BPF_ADJ_ROOM_NET, BPF_F_ADJ_ROOM_NO_CSUM_RESET) != 0) {
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
 		bpf_printk("Failed to resize the packet");
 		return TC_ACT_SHOT;
 	}
@@ -166,54 +148,18 @@ int tc_prog(struct __sk_buff *skb)
 	eth = data;
 	ip = (struct iphdr *)(eth + 1);
 	if ((void *)(ip + 1) > data_end) {
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
 		bpf_printk("Failed: IP header out of range!!");
 		return TC_ACT_SHOT;
 	}
-
 	udp = (void *)ip + (ip->ihl * 4);
-
-	/* if (size_delta > 0 && size_delta < 256) { */
-		/* If we have grown the packet, then the space
-		 * is added between IP header and UDP header
-		 * (notice BPF_ADJ_ROOM_NET). Move UDP up to
-		 * fill the gap and create space for data.
-		 * */
-
-		/* The if condition is wiered because of the
-		 * BPF verifier. I am not sure why I need to
-		 * check the upper value of size_delta.
-		 * */
-
-		/* tmp_off is unsigned short and is used only
-		 * to get pass the BPF verifier
-		 * */
-		tmp_off = size_delta;
-		tmp_off = (tmp_off & OFFSET_MASK);
-		old_udp = ((void *)udp) + tmp_off;
-		if ((void *)(udp+1) > data_end || (void *)(old_udp + 1) > data_end) {
-#ifdef need_lock
-			bpf_spin_unlock(&parea->lock);
-#endif
-			bpf_printk("Accessing out of packet when moving UDP header (size_delta: %d tmp_off: %d)", size_delta, tmp_off);
-			return TC_ACT_SHOT;
-		}
-		memmove(udp, old_udp, sizeof(*old_udp));
-	/* } */
-
-	if ((void *)(udp + 1) > data_end) {
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
+	if ((void *)(udp+1) > data_end) {
+		bpf_printk("Accessing out of packet when moving UDP header");
 		return TC_ACT_SHOT;
 	}
+	memcpy(udp, &old_udp, sizeof(struct udphdr));
+
 	state = (struct package *)(udp + 1);
 	if ((void *)(state + 1) > data_end) {
-#ifdef need_lock
-		bpf_spin_unlock(&parea->lock);
-#endif
 		bpf_printk("not enough space for the state");
 		return TC_ACT_SHOT;
 	}
@@ -221,10 +167,6 @@ int tc_prog(struct __sk_buff *skb)
 
 	/* Clear the package */
 	pkg->count = 0;
-#ifdef need_lock
-	bpf_spin_unlock(&parea->lock);
-#endif
-
 	/* Fix value of some fields */
 	len = (__u64)data_end - (__u64)ip;
 	ip->tot_len = bpf_htons(len);

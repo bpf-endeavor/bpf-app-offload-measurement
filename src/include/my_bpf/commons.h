@@ -19,7 +19,9 @@ typedef unsigned long long  __u64;
 #endif
 
 #define sinline static inline __attribute__((__always_inline__))
+#ifndef mem_barrier
 #define mem_barrier asm volatile("": : :"memory")
+#endif
 
 #ifndef memcpy
 #define memcpy(d, s, len) __builtin_memcpy(d, s, len)

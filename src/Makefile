@@ -81,7 +81,7 @@ $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 		-D__KERNEL__  \
 		-D__BPF_TRACING__ \
 		-D__TARGET_ARCH_x86 \
-		-Wall -Werror \
+		-Wall \
 		-Wno-unused-value -Wno-pointer-sign \
 		-Wno-compare-distinct-pointer-types \
 		-O2 -g -emit-llvm -c $< -o $$LL_FILE; \

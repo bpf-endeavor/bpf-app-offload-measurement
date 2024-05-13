@@ -1,6 +1,10 @@
 #define FNV_OFFSET_BASIS_32	2166136261
 #define FNV_PRIME_32		16777619
 
+#ifndef mem_barrier
+#define mem_barrier asm volatile("": : :"memory")
+#endif
+
 /* We need an upper bound for the length or the verifier would complement with
  * the unmber of jumps */
 #define HASH_MAX_LENGTH 0xff
