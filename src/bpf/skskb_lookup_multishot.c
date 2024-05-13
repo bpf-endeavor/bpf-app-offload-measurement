@@ -22,7 +22,7 @@ struct connection_state {};
 
 /* NOTE: I am using a __u8 as index, if changing the value to larger than 255
  * update the code */
-#define BATCH_SIZE 16
+#define BATCH_SIZE 15
 
 
 /*
@@ -100,67 +100,63 @@ int verdict(struct __sk_buff *skb)
 	if (req->req_type == 1) {
 		bpf_printk("Currently type 1 request is not supported\n");
 		return SK_DROP;
-	} else if (req->req_type == 2) {
-		base = (__u8 *)(req + 1);
-		len = (__u64)data_end - (__u64)base;
-		/* assert len == req->payload_length */
-		hash = FNV_OFFSET_BASIS_32;
-		if (fnv_hash(base, len, data_end, &hash) != 0) {
-			bpf_printk("Failed to perform the hashing!");
-			return SK_DROP;
-		}
-
-		pkg = bpf_map_lookup_elem(&batching_map, &zero);
-		if (!pkg) {
-			bpf_printk("Failed to get the package (batch)!");
-			return SK_DROP;
-		}
-		index = pkg->count;
-		if (index >= BATCH_SIZE) {
-			bpf_printk("Batch size grow larger than expected!");
-			return SK_DROP;
-		}
-		pkg->count++;
-		pkg->data[index].hash = hash;
-
-		/* For some reason these values are zero in case of UDP? */
-		/* pkg->data[index].source_ip = skb->remote_ip4; */
-		/* pkg->data[index].source_port = bpf_ntohs((__u16)bpf_ntohl(skb->remote_port)); */
-
-		/* Copy source IP and port to the package data */
-		pkg->data[index].src_addr = *src_addr_hdr;
-
-		/* bpf_printk("recv request from: %x:%d", */
-		/* 		pkg->data[index].src_addr.source_ip, */
-		/* 		pkg->data[index].src_addr.source_port); */
-
-		if (pkg->count == BATCH_SIZE) {
-			if (__adjust_skb_size(skb, sizeof(struct package)) != 0) {
-				bpf_printk("Failed to resize the packet");
-				return SK_DROP;
-			}
-			data = (void *)(__u64)skb->data;
-			data_end = (void *)(__u64)skb->data_end;
-
-			state = (struct package *)(data);
-			if ((void *)(state + 1) > data_end) {
-				bpf_printk("not enough space for the state");
-				return SK_DROP;
-			}
-			memcpy(state, pkg, sizeof(struct package));
-
-			/* Clear the package */
-			pkg->count = 0;
-
-			/* Send it to the userspace app */
-			return SK_PASS;
-		} else {
-			/* Waiting for more request */
-			return SK_DROP;
-		}
+	} else if (req->req_type != 2) {
+		bpf_printk("unsupported request\n");
+		return SK_DROP;
+	}
+	base = (__u8 *)(req + 1);
+	len = (__u64)data_end - (__u64)base;
+	/* assert len == req->payload_length */
+	hash = FNV_OFFSET_BASIS_32;
+	if (fnv_hash_impl2(base, len, data_end, &hash) != 0) {
+		bpf_printk("Failed to perform the hashing!");
+		return SK_DROP;
 	}
 
-	/* Other request types are not handled in BPF */
+	pkg = bpf_map_lookup_elem(&batching_map, &zero);
+	if (!pkg) {
+		bpf_printk("Failed to get the package (batch)!");
+		return SK_DROP;
+	}
+	index = pkg->count;
+	if (index >= BATCH_SIZE) {
+		bpf_printk("Batch size grow larger than expected!");
+		return SK_DROP;
+	}
+	pkg->count++;
+	pkg->data[index].hash = hash;
+
+	/* For some reason these values are zero in case of UDP? */
+	/* pkg->data[index].source_ip = skb->remote_ip4; */
+	/* pkg->data[index].source_port = bpf_ntohs((__u16)bpf_ntohl(skb->remote_port)); */
+
+	/* Copy source IP and port to the package data */
+	pkg->data[index].src_addr = *src_addr_hdr;
+
+	/* bpf_printk("recv request from: %x:%d", */
+	/* 		pkg->data[index].src_addr.source_ip, */
+	/* 		pkg->data[index].src_addr.source_port); */
+
+	if (pkg->count != BATCH_SIZE) {
+		/* Wait for more request */
+		return SK_DROP;
+	}
+
+	if (__adjust_skb_size(skb, sizeof(struct package)) != 0) {
+		bpf_printk("Failed to resize the packet");
+		return SK_DROP;
+	}
+	data = (void *)(__u64)skb->data;
+	data_end = (void *)(__u64)skb->data_end;
+
+	state = (struct package *)(data);
+	if ((void *)(state + 1) > data_end) {
+		bpf_printk("not enough space for the state");
+		return SK_DROP;
+	}
+	memcpy(state, pkg, sizeof(struct package));
+	/* Clear the package */
+	pkg->count = 0;
 	return SK_PASS;
 }
 
