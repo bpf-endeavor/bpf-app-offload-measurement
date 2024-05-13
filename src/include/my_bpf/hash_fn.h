@@ -96,3 +96,23 @@ __u32 fnv_hash(const __u8 *message, __u16 length, const void *data_end, __u32 *h
 	*hash = loop_ctx.hash;
 	return 0;
 }
+
+
+static inline __attribute__((__always_inline__))
+int fnv_hash_impl2(__u8 *message, __u16 length, void *data_end, __u32 *hash)
+{
+	if (length >= 1500) return 1;
+	__u16 off;
+	for (off = 0; off < 1500; off++) {
+		if (off >= length) {
+			break;
+		}
+		if ((void *)&message[off + 1] > data_end)  {
+			return 1;
+		}
+		mem_barrier;
+		*hash ^= message[off];
+		*hash *= FNV_PRIME_32;
+	}
+	return 0;
+}

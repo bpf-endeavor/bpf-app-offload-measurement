@@ -17,6 +17,9 @@ struct client_ctx {
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
+#undef BUFSIZE
+#define BUFSIZE 2048
+
 /* use c-hashmap library */
 #include <c-hashmap/map.h>
 
@@ -60,10 +63,9 @@ struct req_data {
 	unsigned int hash;
 	struct source_addr src_addr;
 } __attribute__((__packed__));
-
 struct package {
 	unsigned int count;
-	struct req_data data[5];
+	struct req_data data[15];
 } __attribute__((__packed__));
 
 static inline int prepare_type2_response(char *buf,
@@ -339,7 +341,10 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 	/* INFO("Receive a package: count: %d\n", pkg.count); */
 
 	/* A safty check for when the data is not in correct format */
-	if (pkg.count > 5) return 1;
+	if (pkg.count != 15) {
+		ERROR("Unexpected number of items in the package\n");
+		return 1;
+	}
 
 	for (i = 0; i < pkg.count; i++) {
 		/* Send a reply */
@@ -355,7 +360,12 @@ int handle_client_bpf_multishot(int client_fd, struct client_ctx *ctx)
 		/* INFO("ip: %x port: %d\n", ntohl(client_addr.sin_addr.s_addr), ntohs(client_addr.sin_port)); */
 		if (sendto(client_fd, buf, message_length, 0 /*flags*/,
 				(struct sockaddr *)&client_addr, addr_len) < 0) {
+			INFO("here\n");
 			ERROR("Failed to send: %s\n", strerror(errno));
+			char tmp_ip[32];
+			uint16_t tmp_port = ntohs(client_addr.sin_port);
+			inet_ntop(client_addr.sin_family, &client_addr.sin_addr, &tmp_ip, addr_len);
+			DEBUG("Failed to send to client addr: %s:%d\n", tmp_ip, tmp_port);
 		} else {
 			/* INFO("SEND\n"); */
 		}

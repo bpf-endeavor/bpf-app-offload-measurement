@@ -18,7 +18,7 @@
 #define PORT 8080
 /* #define MAX_CONN 10240 */
 
-#define BATCH_SIZE 5
+#define BATCH_SIZE 15
 
 struct reqhdr {
 	int req_type;
@@ -26,21 +26,30 @@ struct reqhdr {
 } __attribute__((__packed__));
 
 /* NOTE: this struct is duplicated in the userspace program */
+struct source_addr {
+	unsigned int source_ip;
+	unsigned short source_port;
+} __attribute__((__packed__));
 struct req_data {
 	unsigned int hash;
-	__u32 source_ip;
-	__u16 source_port;
+	struct source_addr src_addr;
 } __attribute__((__packed__));
-
 struct package {
-	__u32 count;
-	struct req_data data[BATCH_SIZE];
+	unsigned int count;
+	struct req_data data[15];
 } __attribute__((__packed__));
+#define need_lock 1
+struct protected_area {
+	struct package package;
+#ifdef need_lock
+	struct bpf_spin_lock lock;
+#endif
+};
 
 struct {
 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key,   __u32);
-	__type(value, struct package);
+	__type(value, struct protected_area);
 	__uint(max_entries, 2);
 } batching_map SEC(".maps");
 /* ---------------- */
@@ -93,121 +102,148 @@ int tc_prog(struct __sk_buff *skb)
 	if (req->req_type == 1) {
 		bpf_printk("Currently type 1 request is not supported\n");
 		return TC_ACT_SHOT;
-	} else if (req->req_type == 2) {
-		base = (__u8 *)(req + 1);
-		len = (__u64)data_end - (__u64)base;
-		/* assert len == req->payload_length */
-		hash = FNV_OFFSET_BASIS_32;
-		if (fnv_hash(base, len, data_end, &hash) != 0) {
-			bpf_printk("Failed to perform the hashing!");
-			return TC_ACT_SHOT;
-		}
-
-		pkg = bpf_map_lookup_elem(&batching_map, &zero);
-		if (!pkg) {
-			bpf_printk("Failed to get the package (batch)!");
-			return TC_ACT_SHOT;
-		}
-		index = pkg->count;
-		if (index >= BATCH_SIZE) {
-			bpf_printk("Batch size grow larger than expected!");
-			return TC_ACT_SHOT;
-		}
-		pkg->count++;
-		pkg->data[index].hash = hash;
-		pkg->data[index].source_ip = ip->saddr;
-		pkg->data[index].source_port = udp->source;
-
-		if (pkg->count == BATCH_SIZE) {
-			/* I just want to place a package as UDP payload.
-			 * `` has the curent length of UDP payload. I use it
-			 * to calculate the amount of memory adjustment needed.
-			 * */
-			packet_size = (__u64)data_end - (__u64)data;
-			new_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct package);
-			size_delta = new_size - packet_size;
-			/* bpf_printk("resize delta: %d", size_delta); */
-			if (bpf_skb_adjust_room(skb, size_delta, BPF_ADJ_ROOM_NET, BPF_F_ADJ_ROOM_NO_CSUM_RESET) != 0) {
-				bpf_printk("Failed to resize the packet");
-				return TC_ACT_SHOT;
-			}
-			data = (void *)(__u64)skb->data;
-			data_end = (void *)(__u64)skb->data_end;
-			eth = data;
-			ip = (struct iphdr *)(eth + 1);
-			if ((void *)(ip + 1) > data_end) {
-				bpf_printk("Failed: IP header out of range!!");
-				return TC_ACT_SHOT;
-			}
-
-			udp = (void *)ip + (ip->ihl * 4);
-
-			if (size_delta > 0 && size_delta < 256) {
-				/* If we have grown the packet, then the space
-				 * is added between IP header and UDP header
-				 * (notice BPF_ADJ_ROOM_NET). Move UDP up to
-				 * fill the gap and create space for data.
-				 * */
-
-				/* The if condition is wiered because of the
-				 * BPF verifier. I am not sure why I need to
-				 * check the upper value of size_delta.
-				 * */
-
-				/* tmp_off is unsigned short and is used only
-				 * to get pass the BPF verifier
-				 * */
-				tmp_off = size_delta;
-				tmp_off = (tmp_off & OFFSET_MASK);
-				old_udp = ((void *)udp) + tmp_off;
-				if ((void *)(udp+1) > data_end ||
-					(void *)(old_udp + 1) > data_end) {
-					bpf_printk("Accessing out of packet when moving UDP header (size_delta: %d tmp_off: %d)", size_delta, tmp_off);
-					return TC_ACT_SHOT;
-				}
-				memmove(udp, old_udp, sizeof(*old_udp));
-			}
-
-			if ((void *)(udp + 1) > data_end) {
-				return TC_ACT_SHOT;
-			}
-			state = (struct package *)(udp + 1);
-			if ((void *)(state + 1) > data_end) {
-				bpf_printk("not enough space for the state");
-				return TC_ACT_SHOT;
-			}
-			memcpy(state, pkg, sizeof(struct package));
-
-			/* Clear the package */
-			pkg->count = 0;
-
-			/* Fix value of some fields */
-			len = (__u64)data_end - (__u64)ip;
-			ip->tot_len = bpf_htons(len);
-			/* bpf_printk("len: %d (%d, %d, %d)", len, sizeof(*ip), sizeof(*udp), sizeof(*state)); */
-
-			udp->len = bpf_htons(sizeof(struct udphdr) + sizeof(struct package));
-
-			cksum = 0;
-			ip->check = 0;
-			ipv4_csum_inline(ip, &cksum);
-			ip->check = bpf_htons(cksum);
-
-			cksum = 0;
-			udp->check = 0;
-			/* ipv4_l4_csum_inline(data_end, udp, ip, &cksum); */
-			/* udp->check = bpf_htons(cksum); */
-
-			/* bpf_printk("To userspace %x:%d", bpf_ntohl(pkg->data[0].source_ip), bpf_ntohs(pkg->data[0].source_port)); */
-			/* Send it to the userspace app */
-			return TC_ACT_OK;
-		} else {
-			/* Waiting for more request */
-			/* bpf_printk("waiting!"); */
-			return TC_ACT_SHOT;
-		}
+	} else if (req->req_type != 2) {
+		bpf_printk("Unexpected request type");
+		return TC_ACT_SHOT;
 	}
 
+	base = (__u8 *)(req + 1);
+	len  = (__u64)data_end - (__u64)base;
+	/* assert len == req->payload_length */
+	hash = FNV_OFFSET_BASIS_32;
+	if (fnv_hash_impl2(base, len, data_end, &hash) != 0) {
+		bpf_printk("Failed to perform the hashing!");
+		return TC_ACT_SHOT;
+	}
+	struct protected_area *parea = bpf_map_lookup_elem(&batching_map, &zero);
+	if (parea == NULL) {
+		bpf_printk("Failed to get the proteced area");
+		return TC_ACT_SHOT;
+	}
+#ifdef need_lock
+	bpf_spin_lock(&parea->lock);
+#endif
+	pkg = &parea->package;
+	index = pkg->count;
+	if (index >= BATCH_SIZE) {
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		bpf_printk("Batch size grow larger than expected!");
+		return TC_ACT_SHOT;
+	}
+	pkg->count++;
+	pkg->data[index].hash = hash;
+	pkg->data[index].src_addr.source_ip = ip->saddr;
+	pkg->data[index].src_addr.source_port = udp->source;
+
+	if (pkg->count != BATCH_SIZE) {
+		/* Waiting for more request */
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		/* bpf_printk("waiting!"); */
+		return TC_ACT_SHOT;
+	}
+
+	/* I just want to place a package as UDP payload.  `` has the curent
+	 * length of UDP payload. I use it to calculate the amount of memory
+	 * adjustment needed.  */
+	packet_size = (__u64)data_end - (__u64)data;
+	new_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + \
+			sizeof(struct udphdr) + sizeof(struct package);
+	size_delta = new_size - packet_size;
+	/* bpf_printk("resize delta: %d", size_delta); */
+	if (bpf_skb_adjust_room(skb, size_delta, BPF_ADJ_ROOM_NET, BPF_F_ADJ_ROOM_NO_CSUM_RESET) != 0) {
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		bpf_printk("Failed to resize the packet");
+		return TC_ACT_SHOT;
+	}
+	data = (void *)(__u64)skb->data;
+	data_end = (void *)(__u64)skb->data_end;
+	eth = data;
+	ip = (struct iphdr *)(eth + 1);
+	if ((void *)(ip + 1) > data_end) {
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		bpf_printk("Failed: IP header out of range!!");
+		return TC_ACT_SHOT;
+	}
+
+	udp = (void *)ip + (ip->ihl * 4);
+
+	/* if (size_delta > 0 && size_delta < 256) { */
+		/* If we have grown the packet, then the space
+		 * is added between IP header and UDP header
+		 * (notice BPF_ADJ_ROOM_NET). Move UDP up to
+		 * fill the gap and create space for data.
+		 * */
+
+		/* The if condition is wiered because of the
+		 * BPF verifier. I am not sure why I need to
+		 * check the upper value of size_delta.
+		 * */
+
+		/* tmp_off is unsigned short and is used only
+		 * to get pass the BPF verifier
+		 * */
+		tmp_off = size_delta;
+		tmp_off = (tmp_off & OFFSET_MASK);
+		old_udp = ((void *)udp) + tmp_off;
+		if ((void *)(udp+1) > data_end || (void *)(old_udp + 1) > data_end) {
+#ifdef need_lock
+			bpf_spin_unlock(&parea->lock);
+#endif
+			bpf_printk("Accessing out of packet when moving UDP header (size_delta: %d tmp_off: %d)", size_delta, tmp_off);
+			return TC_ACT_SHOT;
+		}
+		memmove(udp, old_udp, sizeof(*old_udp));
+	/* } */
+
+	if ((void *)(udp + 1) > data_end) {
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		return TC_ACT_SHOT;
+	}
+	state = (struct package *)(udp + 1);
+	if ((void *)(state + 1) > data_end) {
+#ifdef need_lock
+		bpf_spin_unlock(&parea->lock);
+#endif
+		bpf_printk("not enough space for the state");
+		return TC_ACT_SHOT;
+	}
+	memcpy(state, pkg, sizeof(struct package));
+
+	/* Clear the package */
+	pkg->count = 0;
+#ifdef need_lock
+	bpf_spin_unlock(&parea->lock);
+#endif
+
+	/* Fix value of some fields */
+	len = (__u64)data_end - (__u64)ip;
+	ip->tot_len = bpf_htons(len);
+	/* bpf_printk("len: %d (%d, %d, %d)", len, sizeof(*ip), sizeof(*udp), sizeof(*state)); */
+
+	udp->len = bpf_htons(sizeof(struct udphdr) + sizeof(struct package));
+
+	cksum = 0;
+	ip->check = 0;
+	ipv4_csum_inline(ip, &cksum);
+	ip->check = bpf_htons(cksum);
+
+	cksum = 0;
+	udp->check = 0;
+	/* ipv4_l4_csum_inline(data_end, udp, ip, &cksum); */
+	/* udp->check = bpf_htons(cksum); */
+
+	/* bpf_printk("To userspace %x:%d", bpf_ntohl(pkg->data[0].source_ip), bpf_ntohs(pkg->data[0].source_port)); */
+	/* Send it to the userspace app */
 	return TC_ACT_OK;
 }
 

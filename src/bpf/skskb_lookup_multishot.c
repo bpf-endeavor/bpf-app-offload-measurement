@@ -22,7 +22,7 @@ struct connection_state {};
 
 /* NOTE: I am using a __u8 as index, if changing the value to larger than 255
  * update the code */
-#define BATCH_SIZE 5
+#define BATCH_SIZE 16
 
 
 /*
