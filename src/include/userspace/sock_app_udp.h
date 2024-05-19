@@ -11,6 +11,8 @@
 /* The UDP server relies on the same interface as TCP (sock_app.h) */
 #include "userspace/sock_app.h"
 
+char running;
+
 static int set_udp_sock_opts(int fd)
 {
 	int ret;
@@ -93,8 +95,12 @@ int run_udp_server(struct socket_app *app)
 	arg->core = app->core_worker;
 	num_conn = arg->count_conn;
 
+	running = 1;
+	signal(SIGTERM, handle_int);
+	signal(SIGINT, handle_int);
+
 	/* The main logic would be here */
-	while (1) {
+	while (running) {
 		num_event = poll(arg->list, num_conn, -1);
 		if (num_event < 0) {
 			ERROR("Polling failed! (%s)\n", strerror(errno));

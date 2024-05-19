@@ -1,7 +1,7 @@
 CC = clang
 LLC = llc
 INCLUDES = -I ./include/ -I ../deps/usr/include/
-CFLAGS = -g -O2 -Wall
+CFLAGS = -g -O2 -Wall -Wno-unused-but-set-variable -Wno-unused-variable
 
 # Output directory (executables are in this dir)
 OUTPUT_DIR = ./build/
@@ -23,7 +23,8 @@ SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_lookup_ring_buf \
 			  ${OUTPUT_DIR}/server_overhead \
 			  ${OUTPUT_DIR}/server_bounce \
-			  ${OUTPUT_DIR}/server_drop
+			  ${OUTPUT_DIR}/server_drop \
+			  ${OUTPUT_DIR}/server_hook_timestamp
 SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF
@@ -42,7 +43,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_pass_perf.o \
 	bpf_summarize_2.o \
 	bpf_summarize_3.o \
-	bpf_boundcheck_overhead.o
+	bpf_boundcheck_overhead.o \
+	bpf_hook_stamp.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
