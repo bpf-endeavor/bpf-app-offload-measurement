@@ -1,0 +1,21 @@
+Experiments on my laptop using the cost-benchmark in Kashk repo.
+Map has only one element
+
+Lookup Time:
+
+ARRAY: 5.2 ns
+PERCPU_ARRAY: 8.5 ns
+
+HASH_MAP (key  8 B): 17.2 ns
+HASH_MAP (key 16 B): 21.3 ns
+HASH_MAP (key 32 B): 24.7 ns
+PERCPU_HASH_MAP (key  8 B): 20.7
+PERCPU_HASH_MAP (key 16 B): 24.8
+PERCPU_HASH_MAP (key 32 B): 28.3
+
+LRU_HASH_MAP (key  8 B):
+LRU_HASH_MAP (key 16 B):
+LRU_HASH_MAP (key 32 B):
+PERCPU_LRU_HASH_MAP (key  8 B):
+PERCPU_LRU_HASH_MAP (key 16 B):
+PERCPU_LRU_HASH_MAP (key 32 B):
