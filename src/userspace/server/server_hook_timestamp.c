@@ -43,9 +43,10 @@ struct payload {
 typedef struct {
 	uint64_t time_to_tc;
 	uint64_t time_to_stream_verdict;
+	uint64_t time_to_app;
 } sample_t;
 #define SAMPLE_SIZE 100000000LL
-static sample_t samples[SAMPLE_SIZE];
+static sample_t *samples;
 static size_t sample_index = 0;
 
 static inline
@@ -55,12 +56,14 @@ void record_sample(void *buf, int len)
 		ERROR("Request is too small\n");
 		return;
 	}
+	uint64_t ts = get_ns();
 	size_t index = sample_index;
 	sample_index += 1;
 	struct payload *p = buf;
 	sample_t *s = &samples[index];
 	s->time_to_tc = p->timestamps[TC_OFF] - p->timestamps[XDP_OFF];
 	s->time_to_stream_verdict = p->timestamps[STREAM_VERDICT_OFF] - p->timestamps[XDP_OFF];
+	s->time_to_app = ts - p->timestamps[XDP_OFF];
 }
 
 void report_samples(void)
@@ -68,8 +71,10 @@ void report_samples(void)
 	INFO("Number of samples: %d\n", sample_index);
 	for (size_t i = 0; i < sample_index; i++) {
 		sample_t *s = &samples[i];
-		INFO("tc: %d    stream_verdict: %d\n", s->time_to_tc,
-				s->time_to_stream_verdict);
+		INFO("tc: %ld    stream_verdict: %ld    socket: %ld\n",
+				s->time_to_tc,
+				s->time_to_stream_verdict,
+				s->time_to_app);
 	}
 }
 
@@ -170,6 +175,8 @@ int main(int argc, char *argv[])
 	int udp = 1;
 	struct socket_app app = {};
 
+	samples = calloc(SAMPLE_SIZE, sizeof(sample_t));
+
 	/* parse args */
 	if (argc < 5) {
 		INFO("usage: prog <core> <ip> <port> <mode>\n"
@@ -193,7 +200,8 @@ int main(int argc, char *argv[])
 	app.count_workers = 1;
 	if (udp) {
 		app.sock_handler = handle_client_udp;
-		app.on_sockready = register_socket;
+		/* app.on_sockready = register_socket; */
+		app.on_sockready = NULL;
 	} else {
 		app.sock_handler = handle_client;
 		app.on_sockready = NULL;
