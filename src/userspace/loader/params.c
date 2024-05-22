@@ -20,6 +20,7 @@ void usage(void)
 	INFO("  --iface:   -i:  the interface to use for TC or XDP program\n");
 	INFO("  --port     -P:  the destination port (for connection monitor)\n");
 	INFO("  --xdp:          load XDP program on given interface\n");
+	INFO("  --gxdp:         load XDP program in generic mode\n");
 	INFO("  --tc:           load TC program on ingress of given interface\n");
 	INFO("  --skskb:        load SK_SKB program\n");
 }
@@ -52,6 +53,7 @@ int parse_args(int argc, char *argv[])
 		TC_FLAG,
 		SKSKB_FLAG,
 		IFACE,
+		XDP_G_FLAG,
 	};
 
 	struct option long_opts[] = {
@@ -62,6 +64,7 @@ int parse_args(int argc, char *argv[])
 		{"iface",    required_argument, NULL, IFACE},       /* i */
 		{"skskb",    required_argument, NULL, SKSKB_FLAG},
 		{"xdp",      required_argument, NULL, XDP_FLAG},
+		{"gxdp",     required_argument, NULL, XDP_G_FLAG},
 		{"tc",       required_argument, NULL, TC_FLAG},
 		/* End of option list ------------------- */
 		{NULL, 0, NULL, 0},
@@ -108,6 +111,12 @@ int parse_args(int argc, char *argv[])
 				req = &context.bpf_prog[count_prog++];
 				req->prog_name = optarg;
 				req->bpf_hook = XDP;
+				req->ifindex = ifindex;
+				break;
+			case XDP_G_FLAG:
+				req = &context.bpf_prog[count_prog++];
+				req->prog_name = optarg;
+				req->bpf_hook = GXDP;
 				req->ifindex = ifindex;
 				break;
 			case TC_FLAG:

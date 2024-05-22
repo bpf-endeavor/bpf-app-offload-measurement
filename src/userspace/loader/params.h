@@ -6,7 +6,8 @@
 enum attach_type {
 	SK_SKB,
 	XDP,
-	TC
+	TC,
+	GXDP,
 };
 
 /* Load a program of the given type and attach it to the interface */

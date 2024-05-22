@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <arpa/inet.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -122,7 +123,7 @@ static struct {
 	struct bpf_tc_hook tc_hook;
 } tc_ctx;
 
-static unsigned int xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
+/* static unsigned int xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE; */
 
 int load_sk_skb(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 {
@@ -236,7 +237,8 @@ void detach_sk_skb(void)
 	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);
 }
 
-int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req)
+int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req,
+		uint32_t xdp_flags)
 {
 	/* Attach XDP program */
 	struct bpf_program *prog = bpf_object__find_program_by_name(bpfobj,
@@ -255,7 +257,7 @@ int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req)
 	return 0;
 }
 
-void detach_xdp(struct attach_request *bpf_req)
+void detach_xdp(struct attach_request *bpf_req, uint32_t xdp_flags)
 {
 	bpf_xdp_detach(bpf_req->ifindex, xdp_flags, NULL);
 }
@@ -342,6 +344,7 @@ int main(int argc, char *argv[])
 	int i;
 	struct bpf_object *bpfobj;
 	struct attach_request *bpf_req;
+	uint32_t xdp_flags = 0;
 
 	if (parse_args(argc, argv) != 0) {
 		return EXIT_FAILURE;
@@ -390,13 +393,22 @@ ignore_arg_map:
 		bpf_req = &context.bpf_prog[i];
 		switch(bpf_req->bpf_hook) {
 			case SK_SKB:
-				if (load_sk_skb(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				if (load_sk_skb(bpfobj, bpf_req) != 0)
+					return EXIT_FAILURE;
 				break;
 			case XDP:
-				if (load_xdp(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
+				if (load_xdp(bpfobj, bpf_req, xdp_flags) != 0)
+					return EXIT_FAILURE;
+				break;
+			case GXDP:
+				xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_SKB_MODE;
+				if (load_xdp(bpfobj, bpf_req, xdp_flags) != 0)
+					return EXIT_FAILURE;
 				break;
 			case TC:
-				if (load_tc(bpfobj, bpf_req) != 0) return EXIT_FAILURE;
+				if (load_tc(bpfobj, bpf_req) != 0)
+					return EXIT_FAILURE;
 				break;
 			default:
 				ERROR("Unexpected value!");
@@ -421,7 +433,12 @@ ignore_arg_map:
 				detach_sk_skb();
 				break;
 			case XDP:
-				detach_xdp(bpf_req);
+				xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
+				detach_xdp(bpf_req, xdp_flags);
+				break;
+			case GXDP:
+				xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_SKB_MODE;
+				detach_xdp(bpf_req, xdp_flags);
 				break;
 			case TC:
 				detach_tc();
