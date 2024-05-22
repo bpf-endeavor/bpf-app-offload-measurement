@@ -1,0 +1,80 @@
+From 5a5e17614d67554571ff547a8bc8140245f94063 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Wed, 22 May 2024 15:52:50 +0000
+Subject: [PATCH 5/5] measure time to invoke a xdp-generic program
+
+---
+ net/core/dev.c | 28 +++++++++++++++++++++++++---
+ 1 file changed, 25 insertions(+), 3 deletions(-)
+
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 0230391c78f7..b62e3145b632 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -157,6 +157,8 @@
+ #include "dev.h"
+ #include "net-sysfs.h"
+ 
++#include <linux/test_timer.h>
++
+ static DEFINE_SPINLOCK(ptype_lock);
+ struct list_head ptype_base[PTYPE_HASH_SIZE] __read_mostly;
+ struct list_head ptype_all __read_mostly;	/* Taps */
+@@ -4920,17 +4922,30 @@ u32 bpf_prog_run_generic_xdp(struct sk_buff *skb, struct xdp_buff *xdp,
+ 	return act;
+ }
+ 
++
++/* #define MEASURE_GENERIC_XDP_OVERHEAD 1 */
++#ifndef MEASURE_GENERIC_XDP_OVERHEAD
++#undef TEST_TIMER_BEGIN
++#define TEST_TIMER_BEGIN()
++#undef TEST_TIMER_MEASURE
++#define TEST_TIMER_MEASURE(a, b)
++#undef TEST_TIMER_END
++#define TEST_TIMER_END()
++#endif
+ static u32 netif_receive_generic_xdp(struct sk_buff *skb,
+ 				     struct xdp_buff *xdp,
+ 				     struct bpf_prog *xdp_prog)
+ {
++	TEST_TIMER_BEGIN();
+ 	u32 act = XDP_DROP;
+ 
+ 	/* Reinjected packets coming from act_mirred or similar should
+ 	 * not get XDP generic processing.
+ 	 */
+-	if (skb_is_redirected(skb))
++	if (skb_is_redirected(skb)) {
++		TEST_TIMER_END();
+ 		return XDP_PASS;
++	}
+ 
+ 	/* XDP packets must be linear and must have sufficient headroom
+ 	 * of XDP_PACKET_HEADROOM bytes. This is the guarantee that also
+@@ -4946,13 +4961,20 @@ static u32 netif_receive_generic_xdp(struct sk_buff *skb,
+ 		 */
+ 		if (pskb_expand_head(skb,
+ 				     hroom > 0 ? ALIGN(hroom, NET_SKB_PAD) : 0,
+-				     troom > 0 ? troom + 128 : 0, GFP_ATOMIC))
++				     troom > 0 ? troom + 128 : 0, GFP_ATOMIC)) {
++			TEST_TIMER_END();
+ 			goto do_drop;
+-		if (skb_linearize(skb))
++		}
++		if (skb_linearize(skb)) {
++			TEST_TIMER_END();
+ 			goto do_drop;
++		}
+ 	}
+ 
+ 	act = bpf_prog_run_generic_xdp(skb, xdp, xdp_prog);
++	TEST_TIMER_MEASURE("BPF XDP GENERIC", 1);
++	TEST_TIMER_END();
++
+ 	switch (act) {
+ 	case XDP_REDIRECT:
+ 	case XDP_TX:
+-- 
+2.34.1
+
