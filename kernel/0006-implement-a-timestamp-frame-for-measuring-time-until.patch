@@ -1,0 +1,169 @@
+From f28bb7bb53d78686a8e0fdc4f0a36cd6956c2e3f Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 24 May 2024 15:29:51 +0000
+Subject: [PATCH 6/7] implement a timestamp frame for measuring time until the
+ packet exit the vritio driver
+
+---
+ drivers/net/virtio_net.c   | 44 ++++++++++++++++++++++++++++++--------
+ include/linux/test_timer.h | 44 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 79 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
+index 1c9aa34ee317..6aee7773c82c 100644
+--- a/drivers/net/virtio_net.c
++++ b/drivers/net/virtio_net.c
+@@ -904,6 +904,19 @@ static int __virtnet_xdp_xmit_one(struct virtnet_info *vi,
+ 	if (unlikely(err))
+ 		return -ENOSPC; /* Caller handle free/refcnt */
+ 
++
++#ifdef MEASURE_REDIRECT_TIME
++	/* printk("xdp_xmit_one\n"); */
++	u64 tmp_ts;
++	/* Farbod: Trying to find frames with timestamp and record the samples */
++	TEST_TIMER_BEGIN();
++	if (__check_if_timestamp_frame(xdpf->data, xdpf->len, &tmp_ts)) {
++		t.time_start = tmp_ts;
++		TEST_TIMER_MEASURE("XDP Redirect", 1);
++	}
++	TEST_TIMER_END();
++#endif
++
+ 	return 0;
+ }
+ 
+@@ -1036,14 +1049,7 @@ static void put_xdp_frags(struct xdp_buff *xdp)
+ }
+ 
+ /* #define MEASURE_VIRTIO_XDP_OVERHEAD 1 */
+-#ifndef MEASURE_VIRTIO_XDP_OVERHEAD
+-#undef TEST_TIMER_BEGIN
+-#define TEST_TIMER_BEGIN()
+-#undef TEST_TIMER_MEASURE
+-#define TEST_TIMER_MEASURE(a, b)
+-#undef TEST_TIMER_END
+-#define TEST_TIMER_END()
+-#endif
++#define MEASURE_REDIRECT_TIME 1
+ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 			       struct net_device *dev,
+ 			       unsigned int *xdp_xmit,
+@@ -1053,11 +1059,15 @@ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 	int err;
+ 	u32 act;
+ 
++#ifdef MEASURE_VIRTIO_XDP_OVERHEAD
+ 	TEST_TIMER_BEGIN();
++#endif
+ 	act = bpf_prog_run_xdp(xdp_prog, xdp);
+ 
++#ifdef MEASURE_VIRTIO_XDP_OVERHEAD
+ 	TEST_TIMER_MEASURE("BPF XDP", 1);
+ 	TEST_TIMER_END();
++#endif
+ 
+ 	u64_stats_inc(&stats->xdp_packets);
+ 
+@@ -2360,6 +2370,7 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
+ 	int num_sg;
+ 	unsigned hdr_len = vi->hdr_len;
+ 	bool can_push;
++	int tmp_o;
+ 
+ 	pr_debug("%s: xmit %p %pM\n", vi->dev->name, skb, dest);
+ 
+@@ -2396,7 +2407,22 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
+ 			return num_sg;
+ 		num_sg++;
+ 	}
+-	return virtqueue_add_outbuf(sq->vq, sq->sg, num_sg, skb, GFP_ATOMIC);
++	tmp_o = virtqueue_add_outbuf(sq->vq, sq->sg, num_sg, skb, GFP_ATOMIC);
++
++#ifdef MEASURE_REDIRECT_TIME
++	u64 tmp_ts;
++	/* Farbod: Trying to find frames with timestamp and record the samples */
++	TEST_TIMER_BEGIN();
++	if (__check_if_timestamp_frame(skb->data, skb->len, &tmp_ts)) {
++		t.time_start = tmp_ts;
++		/* printk("test: %lld\n", tmp_ts); */
++		TEST_TIMER_MEASURE("SKB Redirect", 1);
++		/* printk("sample index: %d\n", t.i); */
++	}
++	TEST_TIMER_END();
++#endif
++
++	return tmp_o;
+ }
+ 
+ static netdev_tx_t start_xmit(struct sk_buff *skb, struct net_device *dev)
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index c39e558c76ea..af185e2bf5ac 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -6,6 +6,12 @@
+ #include <asm/timex.h>
+ #include <linux/timekeeping.h>
+ 
++/* For parsing packets */
++#include <linux/if_ether.h>
++#include <linux/ip.h>
++#include <linux/udp.h>
++#include <linux/in.h>
++
+ struct test_timer {
+ 	enum { NO_PREEMPT, NO_MIGRATE } mode;
+ 	u32 i;
+@@ -94,6 +100,8 @@ __must_hold(rcu)
+ 		if (tmp_err == 0) { \
+ 			/* Report the experiment result */ \
+ 			printk(KERN_INFO"Farbod: on average invoking %s takes: %d (ns)\n", label, tmp_res); \
++		} else { \
++			printk(KERN_INFO"Farbod: measurment failed\n"); \
+ 		} \
+ 		/* Reset the experiment */ \
+ 		memset(&t, 0, sizeof(struct test_timer)); \
+@@ -103,4 +111,40 @@ __must_hold(rcu)
+ #define TEST_TIMER_END() \
+ 	test_timer_leave(&t)
+ 
++
++#define TF_MAGIC 0x7591
++#define TF_PORT 3030
++struct timestamp_frame {
++	u32 magic;
++	u64 timestamp;
++} __attribute__((packed));
++
++/* Timestamp frames are UDP packets going to a destination of port TF_PORT and
++ * has TF_MAGIC as their first byte of payload.
++ *
++ * We can use these frames to measure a time it takes from a point until the
++ * frame exit the driver.
++ * */
++static inline bool __check_if_timestamp_frame(void *data, u16 len, u64 *ts)
++{
++	/* TODO: Check if the packet has our signiture */
++	struct ethhdr *eth = data;
++	struct iphdr  *ip = (void *)(eth + 1);
++	struct udphdr *udp = (void *)(ip + 1);
++	struct timestamp_frame *tf = (void *)(udp + 1);
++	if (eth->h_proto != htons(ETH_P_IP))
++		return false;
++	if (ip->protocol != IPPROTO_UDP)
++		return false;
++	if (udp->dest != htons(TF_PORT))
++		return false;
++
++	if (tf->magic != TF_MAGIC)
++		return false;
++
++	/* printk("found a timestamp packet\n"); */
++	*ts = tf->timestamp;
++	return true;
++}
++
+ #endif /* __TEST_TIMER_H */
+-- 
+2.34.1
+

@@ -1,0 +1,20 @@
+From 40599e42eae13434d9ed9a6a4b739dfad0be1050 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 24 May 2024 15:30:16 +0000
+Subject: [PATCH 7/7] add a patch script
+
+---
+ script_format_patch.sh | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 script_format_patch.sh
+
+diff --git a/script_format_patch.sh b/script_format_patch.sh
+new file mode 100644
+index 000000000000..2cd0ec804166
+--- /dev/null
++++ b/script_format_patch.sh
+@@ -0,0 +1 @@
++git format-patch 90d35da658da8cff0d4ecbb5113f5fac9d00eb72
+-- 
+2.34.1
+

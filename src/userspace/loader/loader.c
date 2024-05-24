@@ -11,6 +11,7 @@
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
 #include <linux/if_link.h> // XDP_FLAGS_*
+#include <net/if.h> /* if_nametoindex */
 
 #include "userspace/log.h"
 #include "params.h"
@@ -389,6 +390,25 @@ int main(int argc, char *argv[])
 	}
 
 ignore_arg_map:
+	/* /1* Configure devmap *1/ */
+	/* /1* TODO: this is hardcoded for a specific experiment make it general if */
+	/*  * really needed *1/ */
+	/* map_obj = bpf_object__find_map_by_name(bpfobj, "devmap"); */
+	/* if (!map_obj) { */
+	/* 	WARN("Failed to find the device map for redirecting\n"); */
+	/* 	goto ignore_devmap_map; */
+	/* } */
+	/* map_fd = bpf_map__fd(map_obj); */
+	/* const int zero = 0; */
+	/* int other_ifindex = if_nametoindex("enp1s0"); */
+	/* if (other_ifindex <= 0) { */
+	/* 	ERROR("Error finding the other interface\n"); */
+	/* 	goto ignore_devmap_map; */
+	/* } */
+	/* bpf_map_update_elem(map_fd, &zero, &other_ifindex, BPF_NOEXIST); */
+	/* INFO("Add enp1s0 to the devmap!\n"); */
+
+/* ignore_devmap_map: */
 	for (i = 0; i < context.count_prog; i++) {
 		bpf_req = &context.bpf_prog[i];
 		switch(bpf_req->bpf_hook) {
