@@ -12,7 +12,8 @@ Experiment were performed on my laptop in a VM.
 
 | Hook | Overhead (nanoseconds) |
 |:----:|:----------------------:|
-| XDP  | 37                     |
+| XDP (Native) | 37                     |
+| XDP (Generic) | 155 |
 | TC   | 55                     |
 | stream_verdict | 1020 - 1100  |
 | stream_parser+verdict | Error |
