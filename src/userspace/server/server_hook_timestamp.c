@@ -141,6 +141,18 @@ void register_socket(int fd)
 	int zero = 0;
 	char cmd;
 
+	// /* Connect the socket to a target so that I can use bpf_sk_map_redirect */
+	// struct sockaddr_in addr;
+	// addr.sin_family = AF_INET;
+	// addr.sin_port = htons(3000);
+	// inet_pton(AF_INET, "192.168.200.102", &addr.sin_addr);
+	// socklen_t addrlen = sizeof(addr);
+	// ret = connect(fd, (struct sockaddr *)&addr, addrlen);
+	// if (ret != 0) {
+	// 	ERROR("Failed to connect the socket");
+	// 	exit(EXIT_FAILURE);
+	// }
+
 	if (first != 0) {
 		ERROR("Multiple sockets, this code expects only one socket update it\n");
 		exit(EXIT_FAILURE);

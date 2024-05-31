@@ -15,12 +15,12 @@
 /* TIMESTAMP FRAME MUST REFLECT THE ONE INSIDE THE KERNEL
  * (/include/linux/test_timer.h)
  * */
-#define TF_MAGIC 0x7591
-#define TF_PORT 3030
-struct timestamp_frame {
-	__u32 magic;
-	__u64 timestamp;
-} __attribute__((packed));
+/* #define TF_MAGIC 0x7591 */
+/* #define TF_PORT 3030 */
+/* struct timestamp_frame { */
+/* 	__u32 magic; */
+/* 	__u64 timestamp; */
+/* } __attribute__((packed)); */
 /* ---------------------------------------------------------------------- */
 
 /* struct { */
@@ -29,6 +29,60 @@ struct timestamp_frame {
 /* 	__type(value_size, struct bpf_devmap_val); */
 /* 	__uint(max_entries, 1); */
 /* } devmap SEC(".maps"); */
+
+
+#include <my_bpf/commons.h>
+
+
+static inline __attribute__((always_inline))
+void swap_src_dst_mac(void *data)
+{
+	unsigned short *p = data;
+	unsigned short dst[3];
+
+	dst[0] = p[0];
+	dst[1] = p[1];
+	dst[2] = p[2];
+	p[0] = p[3];
+	p[1] = p[4];
+	p[2] = p[5];
+	p[3] = dst[0];
+	p[4] = dst[1];
+	p[5] = dst[2];
+}
+
+static inline __attribute__((always_inline))
+void echo(struct ethhdr *eth, struct iphdr *ip, struct udphdr *udp)
+{
+	__u32 tmp;
+	__u64 csum;
+
+	/* Swap MAC addresses */
+	swap_src_dst_mac(eth);
+
+	/* Update dest mac */
+	/* char tmp_d[] = {0xb8,0xce,0xf6,0xd2,0x12,0xc7}; */
+	/* memcpy(&eth->h_dest, tmp_d, sizeof(tmp_d)); */
+	/* char tmp_s[] = { 0xe8,0xeb,0xd3,0xa7,0x0c,0xb7 }; */
+	/* memcpy(&eth->h_source, tmp_s, sizeof(tmp_s)); */
+	/* bpf_printk("here"); */
+
+	tmp = ip->saddr;
+	ip->saddr = ip->daddr;
+	ip->daddr = tmp;
+	ip->ttl = 64;
+	ip->check = 0;
+	csum = 0;
+	ipv4_csum_inline(ip, &csum);
+	ip->check = bpf_htons(csum);
+
+	tmp = 0;
+	tmp = udp->dest;
+	udp->dest = udp->source;
+	udp->source = (__u16)tmp;
+	udp->check = 0;
+
+}
 
 
 /* SK_SKB Test ------------------------------------------------------------- */
@@ -49,25 +103,18 @@ int verdict(struct __sk_buff *skb)
 	/* We are hooked to our server socket so we are dropping the correct
 	 * traffic
 	 * */
-	return SK_DROP;
+	/* return SK_DROP; */
+
+	/* Pull message data so that we can access it */
+	/* if (bpf_skb_pull_data(skb, skb->len) != 0) { */
+	/* 	bpf_printk("Parser: Failed to load message data"); */
+	/* 	return SK_DROP; */
+	/* } */
+
+	int zero  = 0;
+	int r = bpf_sk_redirect_map(skb, &sock_map, zero, 0);
+	return r;
 }
-
-static __always_inline void swap_src_dst_mac(void *data)
-{
-	unsigned short *p = data;
-	unsigned short dst[3];
-
-	dst[0] = p[0];
-	dst[1] = p[1];
-	dst[2] = p[2];
-	p[0] = p[3];
-	p[1] = p[4];
-	p[2] = p[5];
-	p[3] = dst[0];
-	p[4] = dst[1];
-	p[5] = dst[2];
-}
-
 
 /* XDP Test ---------------------------------------------------------------- */
 SEC("xdp")
@@ -81,11 +128,9 @@ int xdp_prog(struct xdp_md *ctx)
 	struct ethhdr *eth = data;
 	struct iphdr  *ip = (void *)(eth + 1);
 	struct udphdr *udp = (void *)(ip + 1);
-	struct timestamp_frame *tf = (void *)(udp+1);
-	__u32 tmp;
-	__u64 csum;
+	/* struct timestamp_frame *tf = (void *)(udp+1); */
 
-	if (tf + 1 > data_end) {
+	if (udp + 1 > data_end) {
 		/* Packet is too small */
 		return XDP_PASS;
 	}
@@ -96,47 +141,22 @@ int xdp_prog(struct xdp_md *ctx)
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return XDP_PASS;
 
-	// /* Swap MAC addresses */
-	// /* Copy first 4 bytes */
-	// tmp = *(__u32 *)(&eth->h_dest[0]);
-	// *(__u32 *)(&eth->h_dest[0]) = *(__u32 *)(&eth->h_source[0]);
-	// *(__u32 *)(&eth->h_source[0]) = tmp;
-	// /* Copy last 2 bytes */
-	// tmp = 0;
-	// tmp = *(__u16 *)(&eth->h_dest[4]);
-	// *(__u16 *)(&eth->h_dest[4]) = *(__u16 *)(&eth->h_source[4]);
-	// *(__u16 *)(&eth->h_source[4]) = (__u16)tmp;
-	swap_src_dst_mac(eth);
+	echo(eth, ip, udp);
 
-	tmp = ip->saddr;
-	ip->saddr = ip->daddr;
-	ip->daddr = tmp;
-	ip->ttl = 64;
-	ip->check = 0;
-	csum = 0;
-	ipv4_csum_inline(ip, &csum);
-	ip->check = bpf_htons(csum);
-
-
-	tmp = 0;
-	tmp = udp->dest;
-	udp->dest = udp->source;
-	udp->source = (__u16)tmp;
-	udp->check = 0;
-
-	udp->dest = bpf_htons(TF_PORT);
-	tf->magic = TF_MAGIC;
-	tf->timestamp = bpf_ktime_get_ns();
+	/* udp->dest = bpf_htons(TF_PORT); */
+	/* tf->magic = TF_MAGIC; */
+	/* tf->timestamp = bpf_ktime_get_ns(); */
 	/* int zero = 0; */
 	/* return bpf_redirect_map(&devmap, &zero); */
 	/* NOTE: the interface index is hard coded */
 	/* ip -json addr show enp1s0 */
 
-	int r = bpf_redirect(2, 0);
-	if (r != XDP_REDIRECT) {
-		bpf_printk("failed to redirect");
-	}
-	return r;
+	/* int r = bpf_redirect(7, 0); */
+	/* if (r != XDP_REDIRECT) { */
+	/* 	bpf_printk("failed to redirect"); */
+	/* } */
+	/* return r; */
+	return XDP_TX;
 }
 
 /* TC Test ----------------------------------------------------------------- */
@@ -159,7 +179,16 @@ int tc_prog(struct __sk_buff *skb)
 		return TC_ACT_OK;
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return TC_ACT_OK;
-	return TC_ACT_SHOT;
+
+	echo(eth, ip, udp);
+
+	/* return TC_ACT_SHOT; */
+
+	/* NOTE: interface index is hard code. Find it using the following
+	 * command.
+	 *     ip -json addr show  <eth..>
+	 * */
+	return bpf_redirect(5, 0);
 }
 
 char _license[] SEC("license") = "GPL";
