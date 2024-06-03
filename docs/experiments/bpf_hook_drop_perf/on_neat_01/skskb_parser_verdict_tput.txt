@@ -1,0 +1,18 @@
+farbod@neat-01:~$ sudo cat /sys/kernel/debug/tracing/trace_pipe
+          <idle>-0       [031] d.s.1 1487058.883784: bpf_trace_printk: throughput: 357121 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487059.885430: bpf_trace_printk: throughput: 355971 (pps)
+          <idle>-0       [031] d.s.1 1487060.895742: bpf_trace_printk: throughput: 354173 (pps)
+          <idle>-0       [031] d.s.1 1487061.911738: bpf_trace_printk: throughput: 356608 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487062.913469: bpf_trace_printk: throughput: 355664 (pps)
+          <idle>-0       [031] d.s.1 1487063.923715: bpf_trace_printk: throughput: 352944 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487064.925496: bpf_trace_printk: throughput: 355712 (pps)
+          <idle>-0       [031] d.s.1 1487065.939673: bpf_trace_printk: throughput: 353920 (pps)
+          <idle>-0       [031] d.s.1 1487066.947655: bpf_trace_printk: throughput: 357888 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487067.949530: bpf_trace_printk: throughput: 355765 (pps)
+          <idle>-0       [031] d.s.1 1487068.963640: bpf_trace_printk: throughput: 353867 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487069.965556: bpf_trace_printk: throughput: 356051 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487070.969575: bpf_trace_printk: throughput: 347469 (pps)
+    ksoftirqd/31-204     [031] d.s.1 1487071.973582: bpf_trace_printk: throughput: 357096 (pps)
+          <idle>-0       [031] d.s.1 1487072.983572: bpf_trace_printk: throughput: 351480 (pps)
+          <idle>-0       [031] d.s.1 1487073.987551: bpf_trace_printk: throughput: 357120 (pps)
+
