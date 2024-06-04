@@ -11,6 +11,7 @@
 #include <linux/pkt_cls.h>
 
 #define SERVER_PORT 8080
+#define REPEAT 100000
 
 /*
  * This is a custom helper functions added just for this test. The patch should
@@ -19,6 +20,20 @@
 #ifndef bpf_ret_zero
 static int (*bpf_ret_zero)() = (void *) 212;
 #endif
+
+struct loop_context {
+	void *context;
+};
+
+static long do_experiment(__u32 i, void *_ctx)
+{
+	/* bpf_ret_zero(); */
+
+	struct xdp_md *ctx = ((struct loop_context *)_ctx)->context;
+	bpf_xdp_adjust_tail(ctx, 1000);
+	bpf_xdp_adjust_tail(ctx, -1000);
+	return 0;
+}
 
 SEC("xdp")
 int xdp_prog(struct xdp_md *ctx)
@@ -40,12 +55,15 @@ int xdp_prog(struct xdp_md *ctx)
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return XDP_PASS;
 
-	int ret = bpf_ret_zero();
-	if (ret != 0) {
-		bpf_printk("what a surprise :)");
-		return XDP_DROP;
-	}
-
+	bpf_printk("Started an experiment:");
+	__u64 begin, duration;
+	begin = bpf_ktime_get_ns();
+	struct loop_context llctx = {
+		.context = (void *)ctx,
+	};
+	bpf_loop(REPEAT, do_experiment, &llctx, 0);
+	duration = bpf_ktime_get_ns() - begin;
+	bpf_printk("Empty hook avg exec time: %ld", duration / REPEAT);
 	return XDP_DROP;
 }
 

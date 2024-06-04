@@ -1,0 +1,21 @@
+# Empty hook
+
+samples: 5180
+max: 37.0
+min: 6.0
+mean: 6.77
+@1 : 6.0
+@50: 7.0
+@99: 11.0
+
+# bpf_xdp_adjust_tail
+
+samples: 1938
+max: 191.0
+min: 40.0
+mean: 44.89
+@1 : 40.0
+@50: 44.0
+@99: 56.0
+
+
