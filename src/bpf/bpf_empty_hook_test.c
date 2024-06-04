@@ -25,7 +25,7 @@ struct loop_context {
 	void *context;
 };
 
-static long do_experiment(__u32 i, void *_ctx)
+static long do_experiment_xdp(__u32 i, void *_ctx)
 {
 	/* bpf_ret_zero(); */
 
@@ -33,6 +33,46 @@ static long do_experiment(__u32 i, void *_ctx)
 	bpf_xdp_adjust_tail(ctx, 1000);
 	bpf_xdp_adjust_tail(ctx, -1000);
 	return 0;
+}
+
+static long do_experiment_tc(__u32 i, void *_ctx)
+{
+	struct __sk_buff *ctx = ((struct loop_context *)_ctx)->context;
+	bpf_skb_adjust_room(ctx, 1000, BPF_ADJ_ROOM_NET, BPF_F_ADJ_ROOM_NO_CSUM_RESET);
+	bpf_skb_adjust_room(ctx, -1000, BPF_ADJ_ROOM_NET, BPF_F_ADJ_ROOM_NO_CSUM_RESET);
+	return 0;
+}
+
+SEC("tc")
+int tc_prog(struct __sk_buff *skb)
+{
+	/* Make sure we are dropping only the traffic related to the our server
+	 * */
+	void *data, *data_end;
+	data = (void *)(__u64)skb->data;
+	data_end = (void *)(__u64)skb->data_end;
+	struct ethhdr *eth = data;
+	struct iphdr  *ip = (void *)(eth + 1);
+	struct udphdr *udp = (void *)(ip + 1);
+	if (udp + 1 > data_end)
+		return TC_ACT_OK;
+	if (eth->h_proto != bpf_htons(ETH_P_IP))
+		return TC_ACT_OK;
+	if (ip->protocol != IPPROTO_UDP)
+		return TC_ACT_OK;
+	if (udp->dest != bpf_htons(SERVER_PORT))
+		return TC_ACT_OK;
+
+	/* bpf_printk("Started an experiment:"); */
+	__u64 begin, duration;
+	begin = bpf_ktime_get_ns();
+	struct loop_context llctx = {
+		.context = (void *)skb,
+	};
+	bpf_loop(REPEAT, do_experiment_tc, &llctx, 0);
+	duration = bpf_ktime_get_ns() - begin;
+	bpf_printk("Helper function avg exec time: %ld", duration / REPEAT);
+	return TC_ACT_SHOT;
 }
 
 SEC("xdp")
@@ -55,15 +95,15 @@ int xdp_prog(struct xdp_md *ctx)
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return XDP_PASS;
 
-	bpf_printk("Started an experiment:");
+	/* bpf_printk("Started an experiment:"); */
 	__u64 begin, duration;
 	begin = bpf_ktime_get_ns();
 	struct loop_context llctx = {
 		.context = (void *)ctx,
 	};
-	bpf_loop(REPEAT, do_experiment, &llctx, 0);
+	bpf_loop(REPEAT, do_experiment_xdp, &llctx, 0);
 	duration = bpf_ktime_get_ns() - begin;
-	bpf_printk("Empty hook avg exec time: %ld", duration / REPEAT);
+	bpf_printk("Helper function avg exec time: %ld", duration / REPEAT);
 	return XDP_DROP;
 }
 

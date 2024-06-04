@@ -10,6 +10,7 @@ mean: 6.77
 
 # bpf_xdp_adjust_tail
 
+> remember to divide by 2 (experiment grow and shrink the packet)
 samples: 1938
 max: 191.0
 min: 40.0
@@ -18,4 +19,15 @@ mean: 44.89
 @50: 44.0
 @99: 56.0
 
+
+# bpf_skb_adjust_room
+
+> remember to divide by 2 (experiment grow and shrink the packet)
+samples: 1635
+max: 321.0
+min: 81.0
+mean: 89.17
+@1 : 82.0
+@50: 88.0
+@99: 104.0
 
