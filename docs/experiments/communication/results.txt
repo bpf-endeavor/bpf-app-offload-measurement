@@ -1,0 +1,9 @@
+NEAT-01
+
+|MODE              |  Time (ns) |
+|:----             | :-----:    |
+|ARRAY             |  639       |
+|ARRAY MMAP        |  0         |
+|ARRAY PERCPU      |  1434      |
+|HASH (32)         |  677       |
+|HASH PERCPU (32)  |  1472      |
