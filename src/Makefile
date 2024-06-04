@@ -24,7 +24,8 @@ SERVER_BINS = ${OUTPUT_DIR}/server_inst \
 			  ${OUTPUT_DIR}/server_overhead \
 			  ${OUTPUT_DIR}/server_bounce \
 			  ${OUTPUT_DIR}/server_drop \
-			  ${OUTPUT_DIR}/server_hook_timestamp
+			  ${OUTPUT_DIR}/server_hook_timestamp \
+			  ${OUTPUT_DIR}/server_comm_map
 SERVER_LIBS = -L ../deps -lpthread -lbpf -lelf -lz
 
 # BPF
@@ -45,7 +46,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_summarize_3.o \
 	bpf_boundcheck_overhead.o \
 	bpf_hook_stamp.o \
-	bpf_redirect.o
+	bpf_redirect.o \
+	bpf_comm_map.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
