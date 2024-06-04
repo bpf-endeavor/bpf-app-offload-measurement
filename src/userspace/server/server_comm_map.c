@@ -13,13 +13,19 @@
 #define BPF_F_MMAPABLE (1U << 10)
 #endif
 
+#define THE_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
 #define COMM_MAP "comm_channel_ma"
 #define REPEAT 100000
 #define VALUE_SIZE 64
 
+/* These types should match the ones defined in bpf program */
 typedef struct {
 	char data[VALUE_SIZE];
 } __attribute__((packed)) value_t;
+
+typedef struct {
+	char data[32];
+} __attribute__((packed)) my_key_t;
 
 int measure_array(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
@@ -83,15 +89,40 @@ int measure_percpu_array(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 
 int measure_hash(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
-	ERROR("NOT IMPLEMENTED YET");
-	exit(EXIT_FAILURE);
+	uint64_t begin;
+	begin = get_ns();
+	my_key_t key;
+	memcpy(&key.data, THE_KEY, 32);
+	value_t val;
+	for (int i = 0; i < REPEAT; i++) {
+		bpf_map_lookup_elem(map_fd, &key, &val);
+		if (val.data[0] == 123) {
+			INFO("this!\n");
+		}
+	}
+	*d = (get_ns() - begin) / REPEAT;
 	return 0;
 }
 
 int measure_percpu_hash(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
-	ERROR("NOT IMPLEMENTED YET");
-	exit(EXIT_FAILURE);
+	uint64_t begin;
+	begin = get_ns();
+	my_key_t key;
+	memcpy(&key.data, THE_KEY, 32);
+	unsigned int nr_cpus = libbpf_num_possible_cpus();
+	if (nr_cpus < 1) {
+		ERROR("Something is wrong\n");
+		return 1;
+	}
+	value_t val[128];
+	for (int i = 0; i < REPEAT; i++) {
+		bpf_map_lookup_elem(map_fd, &key, &val);
+		if (val[0].data[0] == 123) {
+			INFO("this!\n");
+		}
+	}
+	*d = (get_ns() - begin) / REPEAT;
 	return 0;
 }
 

@@ -21,6 +21,11 @@ typedef struct {
 	char data[VALUE_SIZE];
 } __attribute__((packed)) value_t;
 
+
+/* #define MAP_ARRAY 1 */
+#define MAP_HASH 1
+
+#ifdef MAP_ARRAY
 struct {
 	/* __uint(type, BPF_MAP_TYPE_ARRAY); */
 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
@@ -29,6 +34,22 @@ struct {
 	__uint(max_entries, 1);
 	/* __uint(map_flags, BPF_F_MMAPABLE); */
 } comm_channel_map SEC(".maps");
+#endif
+
+#ifdef MAP_HASH
+#define THE_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+typedef struct {
+	char data[32];
+} __attribute__((packed)) my_key_t;
+
+struct {
+	/* __uint(type, BPF_MAP_TYPE_HASH); */
+	__uint(type, BPF_MAP_TYPE_PERCPU_HASH);
+	__type(key,  my_key_t);
+	__type(value, value_t);
+	__uint(max_entries, 1);
+} comm_channel_map SEC(".maps");
+#endif
 
 SEC("tc")
 int tc_prog(struct __sk_buff *skb)
@@ -50,6 +71,13 @@ int tc_prog(struct __sk_buff *skb)
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return TC_ACT_OK;
 	bpf_printk("here in tc_prog (bpf_comm_map)");
+#ifdef MAP_HASH
+	my_key_t key;
+	value_t v;
+	__builtin_memcpy(&key.data, THE_KEY, 32);
+	__builtin_memset(&v.data, 0xAB, VALUE_SIZE);
+	bpf_map_update_elem(&comm_channel_map, &key, &v, BPF_ANY);
+#endif
 	return TC_ACT_SHOT;
 }
 
