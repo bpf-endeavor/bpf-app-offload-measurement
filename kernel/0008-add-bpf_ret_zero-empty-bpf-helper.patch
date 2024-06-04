@@ -1,0 +1,70 @@
+From b0bffcd4e296720e85b6cdbf1d637716d9f41603 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Tue, 4 Jun 2024 15:39:06 +0000
+Subject: [PATCH 8/8] add bpf_ret_zero (empty bpf helper)
+
+---
+ include/uapi/linux/bpf.h |  8 ++++++++
+ net/core/filter.c        | 13 +++++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index 754e68ca8744..bf4c3fa7fe64 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -5679,6 +5679,13 @@ union bpf_attr {
+  *		0 on success.
+  *
+  *		**-ENOENT** if the bpf_local_storage cannot be found.
++ *
++ * int bpf_ret_zero()
++ *	Description
++ *		Just return zero :) for testing the overhead of using helper functions
++ *	Return
++ *		0 always
++ *
+  */
+ #define ___BPF_FUNC_MAPPER(FN, ctx...)			\
+ 	FN(unspec, 0, ##ctx)				\
+@@ -5893,6 +5900,7 @@ union bpf_attr {
+ 	FN(user_ringbuf_drain, 209, ##ctx)		\
+ 	FN(cgrp_storage_get, 210, ##ctx)		\
+ 	FN(cgrp_storage_delete, 211, ##ctx)		\
++	FN(ret_zero, 212, ##ctx)			\
+ 	/* */
+ 
+ /* backwards-compatibility macros for users of __BPF_FUNC_MAPPER that don't
+diff --git a/net/core/filter.c b/net/core/filter.c
+index ef3e78b6a39c..65d7040f73cb 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -4548,6 +4548,17 @@ static const struct bpf_func_proto bpf_xdp_redirect_proto = {
+ 	.arg2_type      = ARG_ANYTHING,
+ };
+ 
++BPF_CALL_0(bpf_ret_zero)
++{
++	return 0;
++}
++
++static const struct bpf_func_proto bpf_ret_zero_proto = {
++	.func           = bpf_ret_zero,
++	.gpl_only       = false,
++	.ret_type       = RET_INTEGER,
++};
++
+ BPF_CALL_3(bpf_xdp_redirect_map, struct bpf_map *, map, u64, key,
+ 	   u64, flags)
+ {
+@@ -11812,6 +11823,8 @@ bpf_sk_base_func_proto(enum bpf_func_id func_id)
+ 		break;
+ 	case BPF_FUNC_ktime_get_coarse_ns:
+ 		return &bpf_ktime_get_coarse_ns_proto;
++	case BPF_FUNC_ret_zero:
++		return &bpf_ret_zero_proto;
+ 	default:
+ 		return bpf_base_func_proto(func_id);
+ 	}
+-- 
+2.34.1
+

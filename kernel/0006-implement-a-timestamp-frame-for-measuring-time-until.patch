@@ -1,7 +1,7 @@
 From f28bb7bb53d78686a8e0fdc4f0a36cd6956c2e3f Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Fri, 24 May 2024 15:29:51 +0000
-Subject: [PATCH 6/7] implement a timestamp frame for measuring time until the
+Subject: [PATCH 6/8] implement a timestamp frame for measuring time until the
  packet exit the vritio driver
 
 ---

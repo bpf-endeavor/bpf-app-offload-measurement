@@ -47,7 +47,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_boundcheck_overhead.o \
 	bpf_hook_stamp.o \
 	bpf_redirect.o \
-	bpf_comm_map.o
+	bpf_comm_map.o \
+	bpf_empty_hook_test.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
