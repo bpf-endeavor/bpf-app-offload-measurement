@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 import sys
+import math
 
 count_args = len(sys.argv)
 FILE='-'
@@ -26,6 +27,9 @@ stream.close()
 
 samples.sort()
 count_smaples = len(samples)
+if count_smaples < 1:
+    print('No samples found', file=sys.stderr)
+    sys.exit(1)
 mean = sum(samples) / count_smaples
 print('samples:', count_smaples)
 print('max:', max(samples))
@@ -34,3 +38,10 @@ print(f'mean: {mean:.2f}')
 print('@1 :', samples[int(count_smaples * 0.01)])
 print('@50:', samples[int(count_smaples * 0.50)])
 print('@99:', samples[int(count_smaples * 0.99)])
+
+
+N = count_smaples
+std = math.sqrt( (1 / (N - 1)) * sum([(x - mean) ** 2 for x in samples]))
+std_err = std / math.sqrt(N)
+print(f'std: {std:.3}')
+print(f'standard err: {std_err:.3}')
