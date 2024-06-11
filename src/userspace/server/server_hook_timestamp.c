@@ -12,6 +12,12 @@ struct client_ctx { };
 #include "userspace/sock_app_udp.h"
 #include "userspace/util.h"
 
+#include <sys/socket.h>
+#include <linux/net_tstamp.h>
+#include <linux/sockios.h>
+#include <linux/if.h>
+#include <sys/ioctl.h>
+
 #define RECV_BUFSIZE 2048
 
 #define RECV(fd, buf, size, flag)  {                  \
@@ -41,6 +47,7 @@ struct payload {
 /* ------------------------------------------------------------------------ */
 
 typedef struct {
+	uint64_t time_to_xdp;
 	uint64_t time_to_tc;
 	uint64_t time_to_stream_verdict;
 	uint64_t time_to_app;
@@ -49,21 +56,45 @@ typedef struct {
 static sample_t *samples;
 static size_t sample_index = 0;
 
+static inline unsigned long int get_realtime_ns(void) {
+	struct timespec spec = {};
+	clock_gettime(CLOCK_REALTIME, &spec);
+	unsigned long int rprt_ts = spec.tv_sec * 1000000000LL + spec.tv_nsec;
+	return rprt_ts;
+}
+
 static inline
-void record_sample(void *buf, int len)
+void record_sample(void *buf, int len, uint64_t raw_hw_ts)
 {
 	if (len < sizeof(struct payload)) {
 		ERROR("Request is too small\n");
 		return;
 	}
-	uint64_t ts = get_ns();
 	size_t index = sample_index;
 	sample_index += 1;
 	struct payload *p = buf;
 	sample_t *s = &samples[index];
-	s->time_to_tc = p->timestamps[TC_OFF] - p->timestamps[XDP_OFF];
-	s->time_to_stream_verdict = p->timestamps[STREAM_VERDICT_OFF] - p->timestamps[XDP_OFF];
-	s->time_to_app = ts - p->timestamps[XDP_OFF];
+	if (raw_hw_ts == 0) {
+		uint64_t ts = get_ns();
+		/* There is no hardware timestamping */
+		s->time_to_xdp = 0;
+		s->time_to_tc = p->timestamps[TC_OFF] - p->timestamps[XDP_OFF];
+		s->time_to_stream_verdict = p->timestamps[STREAM_VERDICT_OFF] - p->timestamps[XDP_OFF];
+		s->time_to_app = ts - p->timestamps[XDP_OFF];
+	} else {
+		/* Use hardware time stamp */
+		uint64_t monotonic_ts = get_ns();
+		uint64_t ts = get_realtime_ns();
+		int64_t addjustment = ts - monotonic_ts;
+		/* BPF timestamps are set using MONOTONIC_CLOCK, convert them
+		 * to REALTIME_CLOCK before comparison
+		 * */
+		s->time_to_xdp = addjustment + p->timestamps[XDP_OFF] - raw_hw_ts;
+		s->time_to_tc = addjustment + p->timestamps[TC_OFF] - raw_hw_ts;
+		s->time_to_stream_verdict = addjustment + p->timestamps[STREAM_VERDICT_OFF] - raw_hw_ts;
+		/* We now the REALTIME_CLOCK in user */
+		s->time_to_app = ts - raw_hw_ts;
+	}
 }
 
 void report_samples(void)
@@ -71,7 +102,8 @@ void report_samples(void)
 	INFO("Number of samples: %d\n", sample_index);
 	for (size_t i = 0; i < sample_index; i++) {
 		sample_t *s = &samples[i];
-		INFO("tc: %ld    stream_verdict: %ld    socket: %ld\n",
+		INFO("xdp: %ld    tc: %ld    stream_verdict: %ld    socket: %ld\n",
+				s->time_to_xdp,
 				s->time_to_tc,
 				s->time_to_stream_verdict,
 				s->time_to_app);
@@ -125,8 +157,83 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 		return 0;
 	}
 	len = ret;
-	record_sample(buf, len);
+	record_sample(buf, len, 0);
 	/* Send a drop */
+	return 0;
+}
+
+static uint64_t handle_time(struct msghdr* _msg)
+{
+	/* Code from: https://eng-blog.iij.ad.jp/archives/21198 */
+	struct timespec* ts = NULL;
+	struct cmsghdr* cmsg;
+
+	/*
+	 * The kernel stores control messages for each packet. E.g., on which
+	 * interface the packet was received on. Or, if as we configured it
+	 * with the timestamps from the NIC and the kernel.
+	 */
+	for(cmsg = CMSG_FIRSTHDR(_msg); cmsg; cmsg = CMSG_NXTHDR(_msg,cmsg)) {
+		if( cmsg->cmsg_level != SOL_SOCKET )
+			continue;
+		switch( cmsg->cmsg_type ) {
+			case SO_TIMESTAMPING:
+				ts = (struct timespec*) CMSG_DATA(cmsg);
+				break;
+			default:
+				break;
+		}
+	}
+	if (ts == NULL) {
+		ERROR("The request does not have a timestamp!\n");
+		return 0;
+	}
+	uint64_t hardware_raw = ts[2].tv_nsec + (ts[2].tv_sec * 1000000000L);
+	return hardware_raw;
+}
+
+int handle_client_udp_with_hw_ts(int client_fd, struct client_ctx *ctx)
+{
+	/* Code from: https://eng-blog.iij.ad.jp/archives/21198 */
+	struct msghdr _msg;
+	struct iovec iov;
+	struct sockaddr_in host_address;
+	char buf[RECV_BUFSIZE];
+	char control[1024];
+	int ret, len;
+
+	/* recvmsg header structure */
+	memset(&host_address, 0, sizeof(host_address));
+	iov.iov_base = buf;
+	iov.iov_len = RECV_BUFSIZE;
+	_msg.msg_iov = &iov;
+	_msg.msg_iovlen = 1;
+	_msg.msg_name = &host_address;
+	_msg.msg_namelen = sizeof(struct sockaddr_in);
+	_msg.msg_control = control;
+	_msg.msg_controllen = 1024;
+
+	/* block for message */
+	ret = recvmsg(client_fd, &_msg, 0);
+
+	if (ret == 0) {
+		ERROR("Receive no data!\n");
+		return 1;
+	}
+	if (ret < 0) {
+		if (errno != EWOULDBLOCK) {
+			ERROR("Recving failed! %s\n", strerror(errno));
+			return 1;
+		}
+		/* Would block continue polling */
+		return 0;
+	}
+	len = ret;
+	/* INFO("received (%d)\n", len); */
+
+	uint64_t raw_hw_ts = handle_time(&_msg);
+	record_sample(buf, len, raw_hw_ts);
+	/* Drop */
 	return 0;
 }
 
@@ -181,10 +288,95 @@ sock_register_failure:
 		exit(EXIT_FAILURE);
 }
 
+/*
+ * Enable hardware timestamping for this socket
+ * */
+void enable_hw_timestamp(int fd)
+{
+	int ret;
+	int enable = SOF_TIMESTAMPING_RX_HARDWARE |
+		SOF_TIMESTAMPING_RAW_HARDWARE | SOF_TIMESTAMPING_SYS_HARDWARE |
+		SOF_TIMESTAMPING_SOFTWARE;
+	ret = setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING, &enable,
+			sizeof(int));
+	if (ret != 0) {
+		fprintf(stderr, "Failed to enable hardware timestamping\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+/* This requires a bit of explanation.
+ * Typically, you have to enable hardware timestamping on an interface.
+ * Any application can do it, and then it's available to everyone.
+ * The easiest way to do this, is just to run sfptpd.
+ *
+ * But in case you need to do it manually; here is the code, but
+ * that's only supported on reasonably recent versions
+ *
+ * Option: --ioctl ethX
+ *
+ * NOTE:
+ * Usage of the ioctl call is discouraged. A better method, if using
+ * hardware timestamping, would be to use sfptpd as it will effectively
+ * make the ioctl call for you.
+ *
+ */
+static void enable_hwts_on_iface(int sock) {
+#ifdef SIOCSHWTSTAMP
+	struct ifreq ifr;
+	struct hwtstamp_config hwc;
+#endif
+
+#ifdef SIOCSHWTSTAMP
+	bzero(&ifr, sizeof(ifr));
+	printf("intreface name: ");
+	char ifname[128];
+	char x[32];
+	scanf("%s", ifname);
+	getc(stdin);
+	printf("iface name is %s\n", ifname);
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", ifname);
+
+	/* Standard kernel ioctl options */
+	hwc.flags = 0;
+	hwc.tx_type = 0;
+	hwc.rx_filter = HWTSTAMP_FILTER_ALL;
+
+	ifr.ifr_data = (char *)&hwc;
+
+	int ret;
+	ret = ioctl(sock, SIOCSHWTSTAMP, &ifr);
+	if (ret != 0) {
+		ERROR("ioctl operation failed: trying to enable hardware timestamping on the interface!\n");
+	}
+	return;
+#else
+	(void)sock;
+	printf("SIOCHWTSTAMP ioctl not supported on this kernel.\n");
+	exit(-ENOTSUP);
+	return;
+#endif
+}
+
+static int hw_timestamp = 0;
+static int sock_map_register = 0;
+static int udp = 1;
+void on_socket_ready(int fd) {
+	if (hw_timestamp) {
+		enable_hwts_on_iface(fd);
+		enable_hw_timestamp(fd);
+	}
+	if (sock_map_register) {
+		/* TODO: have a flag to check if we need to add the socket to
+		 * sock_map or not */
+		/* When we need to insert socket to the sock_map manually */
+		register_socket(fd);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
-	int udp = 1;
 	struct socket_app app = {};
 
 	samples = calloc(SAMPLE_SIZE, sizeof(sample_t));
@@ -211,15 +403,28 @@ int main(int argc, char *argv[])
 	app.port = atoi(argv[3]);
 	app.count_workers = 1;
 	if (udp) {
-		app.sock_handler = handle_client_udp;
-		/* app.on_sockready = register_socket; */
-		app.on_sockready = NULL;
+		hw_timestamp = 1;
+		sock_map_register = 1;
+		if (hw_timestamp) {
+			app.sock_handler = handle_client_udp_with_hw_ts;
+		} else {
+			app.sock_handler = handle_client_udp;
+		}
 	} else {
 		app.sock_handler = handle_client;
-		app.on_sockready = NULL;
 	}
+	app.on_sockready = on_socket_ready;
 	app.on_sockclose = NULL;
 	app.on_events = NULL;
+
+	if (hw_timestamp) {
+		INFO("In HW Timestamp mode\n");
+		INFO("MUST BE RUNNING THE phc2sys");
+		INFO("    sudo phc2sys -s <eth> -O 0 -m\n");
+		INFO("More info:  https://eng-blog.iij.ad.jp/archives/21198\n");
+	}
+	if (sock_map_register)
+		INFO("Will try to add the socket to sock_map");
 
 	if (!udp) {
 		ret = run_server(&app);
@@ -234,4 +439,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

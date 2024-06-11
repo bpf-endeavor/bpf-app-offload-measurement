@@ -72,7 +72,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 int handle_client_udp(int client_fd, struct client_ctx *ctx)
 {
-	int ret, len;
+	int ret;
 	char buf[RECV_BUFFER_SIZE];
 
 	struct sockaddr_in client_addr;
@@ -102,7 +102,6 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	/* Drop */
 	return 0;
 }
-
 
 /* When the socket is ready, register it to the sock-map. This allows sk_skb
  * program to operate on traffic of this socket.
@@ -143,10 +142,19 @@ sock_register_failure:
 		exit(EXIT_FAILURE);
 }
 
+static int udp = 1;
+void on_socket_ready(int fd) {
+	if (udp) {
+		/* TODO: have a flag to check if we need to add the socket to
+		 * sock_map or not */
+		/* When we need to insert socket to the sock_map manually */
+		register_socket(fd);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
-	int udp = 1;
 	struct socket_app app = {};
 
 	/* parse args */
@@ -170,13 +178,10 @@ int main(int argc, char *argv[])
 	app.count_workers = 1;
 	if (udp) {
 		app.sock_handler = handle_client_udp;
-		/* TODO: have a flag to check if we need to add the socket to
-		 * sock_map or not */
-		app.on_sockready = register_socket;
 	} else {
 		app.sock_handler = handle_client;
-		app.on_sockready = NULL;
 	}
+	app.on_sockready = on_socket_ready;
 	app.on_sockclose = NULL;
 	app.on_events = NULL;
 
@@ -192,4 +197,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
