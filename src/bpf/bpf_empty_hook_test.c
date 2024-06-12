@@ -13,6 +13,20 @@
 #define SERVER_PORT 8080
 #define REPEAT 100000
 
+
+#define VALUE_SIZE 64
+typedef struct {
+	char data[VALUE_SIZE];
+} __attribute__((packed)) value_t;
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	/* __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY); */
+	__type(key,  __u32);
+	__type(value, value_t);
+	__uint(max_entries, 1);
+	/* __uint(map_flags, BPF_F_MMAPABLE); */
+} a_map SEC(".maps");
+
 /*
  * This is a custom helper functions added just for this test. The patch should
  * be available kernel directory.
@@ -29,9 +43,14 @@ static long do_experiment_xdp(__u32 i, void *_ctx)
 {
 	/* bpf_ret_zero(); */
 
-	struct xdp_md *ctx = ((struct loop_context *)_ctx)->context;
-	bpf_xdp_adjust_tail(ctx, 1000);
-	bpf_xdp_adjust_tail(ctx, -1000);
+	int zero = 0;
+	value_t *v = bpf_map_lookup_elem(&a_map, &zero);
+	if (v == NULL) return 1;
+	v->data[0] = 'f';
+
+	/* struct xdp_md *ctx = ((struct loop_context *)_ctx)->context; */
+	/* bpf_xdp_adjust_tail(ctx, 1000); */
+	/* bpf_xdp_adjust_tail(ctx, -1000); */
 	return 0;
 }
 
