@@ -17,6 +17,29 @@
 
 #define SERVER_PORT 8080
 
+static __u64 counter = 0;
+static __u64 last_report = 0;
+
+static inline __attribute__((always_inline))
+void report_tput(void)
+{
+	__u64 ts, delta;
+	/* We must run on a single core */
+	counter += 1;
+	ts = bpf_ktime_get_coarse_ns();
+	if (last_report == 0) {
+		last_report = ts;
+		return;
+	}
+
+	delta = ts - last_report;
+	if (delta >= 1000000000L) {
+		bpf_printk("throughput: %ld (pps)", counter);
+		counter = 0;
+		last_report = ts;
+	}
+}
+
 /* SK_SKB Test ------------------------------------------------------------- */
 
 /* Put state of each socket in this struct (This will be used in sockops.h as
@@ -36,6 +59,7 @@ int verdict(struct __sk_buff *skb)
 	/* We are hooked to our server socket so we are dropping the correct
 	 * traffic
 	 * */
+	report_tput();
 	return SK_PASS;
 }
 
@@ -43,6 +67,7 @@ int verdict(struct __sk_buff *skb)
 SEC("xdp")
 int xdp_prog(struct xdp_md *ctx)
 {
+	report_tput();
 	return XDP_PASS;
 }
 
@@ -50,6 +75,7 @@ int xdp_prog(struct xdp_md *ctx)
 SEC("tc")
 int tc_prog(struct __sk_buff *skb)
 {
+	report_tput();
 	return TC_ACT_OK;
 }
 
