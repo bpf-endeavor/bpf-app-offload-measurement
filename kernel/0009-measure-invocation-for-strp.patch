@@ -1,0 +1,70 @@
+From 667d2b5f9dd837388daff54d4034f8eac143e7a1 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 17 Jun 2024 22:39:35 +0000
+Subject: [PATCH 9/9] measure invocation for strp
+
+---
+ net/core/skmsg.c | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/net/core/skmsg.c b/net/core/skmsg.c
+index 792368213288..ab97e7c77bfb 100644
+--- a/net/core/skmsg.c
++++ b/net/core/skmsg.c
+@@ -12,6 +12,16 @@
+ 
+ #include <linux/test_timer.h>
+ 
++#define MEASURE_SK_SKB_OVERHEAD 1
++#ifndef MEASURE_SK_SKB_OVERHEAD
++#undef TEST_TIMER_BEGIN
++#define TEST_TIMER_BEGIN()
++#undef TEST_TIMER_MEASURE
++#define TEST_TIMER_MEASURE(a, b)
++#undef TEST_TIMER_END
++#define TEST_TIMER_END()
++#endif
++
+ static bool sk_msg_try_coalesce_ok(struct sk_msg *msg, int elem_first_coalesce)
+ {
+ 	if (msg->sg.end > msg->sg.start &&
+@@ -1062,6 +1072,9 @@ static void sk_psock_strp_read(struct strparser *strp, struct sk_buff *skb)
+ 	struct sock *sk;
+ 
+ 	rcu_read_lock();
++
++	TEST_TIMER_BEGIN();
++
+ 	sk = strp->sk;
+ 	psock = sk_psock(sk);
+ 	if (unlikely(!psock)) {
+@@ -1079,7 +1092,9 @@ static void sk_psock_strp_read(struct strparser *strp, struct sk_buff *skb)
+ 		skb->sk = NULL;
+ 	}
+ 	sk_psock_verdict_apply(psock, skb, ret);
++	TEST_TIMER_MEASURE("BPF stream_strp+verdict", 1);
+ out:
++	TEST_TIMER_END();
+ 	rcu_read_unlock();
+ }
+ 
+@@ -1177,16 +1192,6 @@ static void sk_psock_done_strp(struct sk_psock *psock)
+ }
+ #endif /* CONFIG_BPF_STREAM_PARSER */
+ 
+-
+-/* #define MEASURE_STREAM_VERDICT_OVERHEAD 1 */
+-#ifndef MEASURE_STREAM_VERDICT_OVERHEAD
+-#undef TEST_TIMER_BEGIN
+-#define TEST_TIMER_BEGIN()
+-#undef TEST_TIMER_MEASURE
+-#define TEST_TIMER_MEASURE(a, b)
+-#undef TEST_TIMER_END
+-#define TEST_TIMER_END()
+-#endif
+ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ {
+ 	struct sk_psock *psock;
+-- 
+2.34.1
+
