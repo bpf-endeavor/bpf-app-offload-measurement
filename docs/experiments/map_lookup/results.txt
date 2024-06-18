@@ -19,3 +19,14 @@ LRU_HASH_MAP (key 32 B):
 PERCPU_LRU_HASH_MAP (key  8 B):
 PERCPU_LRU_HASH_MAP (key 16 B):
 PERCPU_LRU_HASH_MAP (key 32 B):
+
+
+# Array lookup
+samples: 5856
+max: 19.0
+min: 5.0
+mean: 6.04
+@1 : 5.0
+@50: 6.0
+@99: 7.0
+
