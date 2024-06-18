@@ -2,11 +2,11 @@ figsize: [5,2.5]
 title:
 subplots:
   - title: 'With initialization'
-    label: ["Stack", "Map", 'User-space']
-    color: ['tab:red', 'tab:blue', 'tab:green']
+    label: ["Stack", "Array [Collection]"] # , 'User-space'
+    color: ['tab:red', 'tab:blue'] # , 'tab:green'
     hatch: ['//', '++', '**']
-    x: ['1', '2', '3']
-    y: [ [767, 0, 0], [0, 655, 0], [0, 0, 700]]
+    x: ['1', '2']
+    y: [ [767, 0], [0, 655]] # , [0, 0, 700]
     yticks: [0, 200, 400, 600, 800, 1000]
     xtick_labels: ['', '', '']
     bar_width: 0.25
@@ -22,11 +22,11 @@ subplots:
       - xy: [1.90, 705]
         text: '??'
   - title: 'No initialization'
-    label: ["Stack", "Map", 'User-space']
-    color: ['tab:red', 'tab:blue', 'tab:green']
+    label: ["Stack", "Array [Collection]", 'User-space']
+    color: ['tab:red', 'tab:blue'] # , 'tab:green'
     hatch: ['//', '++', '**']
-    x: ['1', '2', '3']
-    y: [[752, 0, 0], [0, 574, 0], [0, 0, 700]]
+    x: ['1', '2']
+    y: [[752, 0], [0, 574]] #, [0, 0, 700]
     yticks: [0, 200, 400, 600, 800, 1000]
     ytick_labels: ['', '', '', '', '', '']
     xtick_labels: ['', '', '']
@@ -40,10 +40,10 @@ subplots:
         text: 752
       - xy: [0.90, 579]
         text: 574
-      - xy: [1.90, 705]
-        text: ??
+      # - xy: [1.90, 705]
+      #   text: ??
 output: "map_mov_large_obj_bar.pdf"
 legend:
   ncols: 3
-  _artist_from_label: ['Stack', 'Map', 'User-space']
+  _artist_from_label: ['Stack', 'Array [Collection]'] # , 'User-space'
   bbox_to_anchor: [1.0, 0.85]

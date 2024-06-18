@@ -1,0 +1,46 @@
+# Socket receving the traffic
+
+    ksoftirqd/31-204     [031] d.s.. 2093312.190715: bpf_trace_printk: throughput: 1899 (pps)
+          <idle>-0       [031] d.s.. 2093313.204575: bpf_trace_printk: throughput: 323671 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093314.206730: bpf_trace_printk: throughput: 323760 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093315.210738: bpf_trace_printk: throughput: 321291 (pps)
+          <idle>-0       [031] d.s.. 2093316.224544: bpf_trace_printk: throughput: 322117 (pps)
+          <idle>-0       [031] d.s.. 2093317.236521: bpf_trace_printk: throughput: 328064 (pps)
+          <idle>-0       [031] d.s.. 2093318.252498: bpf_trace_printk: throughput: 323584 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093319.258791: bpf_trace_printk: throughput: 326792 (pps)
+          <idle>-0       [031] d.s.. 2093320.276468: bpf_trace_printk: throughput: 324344 (pps)
+          <idle>-0       [031] d.s.. 2093321.288460: bpf_trace_printk: throughput: 321280 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093322.294833: bpf_trace_printk: throughput: 326992 (pps)
+          <idle>-0       [031] d.s.. 2093323.312426: bpf_trace_printk: throughput: 325168 (pps)
+          <idle>-0       [031] d.s.. 2093324.320424: bpf_trace_printk: throughput: 320640 (pps)
+          <idle>-0       [031] d.s.. 2093325.332408: bpf_trace_printk: throughput: 328449 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093326.334885: bpf_trace_printk: throughput: 323528 (pps)
+          <idle>-0       [031] d.s.. 2093327.344371: bpf_trace_printk: throughput: 317112 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093328.346904: bpf_trace_printk: throughput: 324000 (pps)
+          <idle>-0       [031] d.s.. 2093329.364336: bpf_trace_printk: throughput: 326624 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093330.366930: bpf_trace_printk: throughput: 323928 (pps)
+          <idle>-0       [031] d.s.. 2093331.372304: bpf_trace_printk: throughput: 317224 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093332.374949: bpf_trace_printk: throughput: 323984 (pps)
+          <idle>-0       [031] d.s.. 2093333.384281: bpf_trace_printk: throughput: 319344 (pps)
+
+
+
+# There is not listenning socket
+
+ sudo cat /sys/kernel/debug/tracing/trace_pipe
+          <idle>-0       [037] d.s.. 2093484.280673: bpf_trace_printk: throughput: 1 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093485.284827: bpf_trace_printk: throughput: 3152 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093486.288838: bpf_trace_printk: throughput: 554513 (pps)
+          <idle>-0       [031] d.s.. 2093487.306016: bpf_trace_printk: throughput: 555552 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093488.308860: bpf_trace_printk: throughput: 557224 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093489.312875: bpf_trace_printk: throughput: 558680 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093490.316881: bpf_trace_printk: throughput: 542307 (pps)
+          <idle>-0       [031] d.s.. 2093491.333953: bpf_trace_printk: throughput: 556574 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093492.336906: bpf_trace_printk: throughput: 558091 (pps)
+          <idle>-0       [031] d.s.. 2093493.349916: bpf_trace_printk: throughput: 551541 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093494.352930: bpf_trace_printk: throughput: 557999 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093495.356943: bpf_trace_printk: throughput: 559513 (pps)
+          <idle>-0       [031] d.s.. 2093496.365883: bpf_trace_printk: throughput: 548024 (pps)
+    ksoftirqd/31-204     [031] d.s.. 2093497.368968: bpf_trace_printk: throughput: 557680 (pps)
+          <idle>-0       [045] d.s.. 2093516.448843: bpf_trace_printk: throughput: 186384 (pps)
+

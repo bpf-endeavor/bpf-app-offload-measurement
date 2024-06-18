@@ -1,0 +1,37 @@
+throughput: 321026 (pps)
+throughput: 329911 (pps)
+throughput: 329160 (pps)
+throughput: 330244 (pps)
+throughput: 323370 (pps)
+throughput: 318162 (pps)
+throughput: 322216 (pps)
+throughput: 322227 (pps)
+throughput: 318117 (pps)
+throughput: 322227 (pps)
+throughput: 322247 (pps)
+throughput: 318086 (pps)
+throughput: 322252 (pps)
+throughput: 322224 (pps)
+throughput: 318084 (pps)
+throughput: 322268 (pps)
+throughput: 322212 (pps)
+throughput: 318080 (pps)
+throughput: 322232 (pps)
+throughput: 322230 (pps)
+
+# No user-space app
+
+farbod@neat-01:~/auto_kern_offload_bench/src$ sudo cat /sys/kernel/debug/tracing/trace_pipe
+throughput: 542906 (pps)
+throughput: 555180 (pps)
+throughput: 553200 (pps)
+throughput: 550784 (pps)
+
+
+# user-space app but not receiving
+throughput: 454938 (pps)
+throughput: 458624 (pps)
+throughput: 455800 (pps)
+throughput: 455176 (pps)
+throughput: 455896 (pps)
+throughput: 451880 (pps)
