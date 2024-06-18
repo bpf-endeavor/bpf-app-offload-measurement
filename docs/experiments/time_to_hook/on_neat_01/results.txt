@@ -1,0 +1,33 @@
+cat time_to_skskb_udp.txt | cut -d ':' -f 2 | awk '{print $3}' | sort -n -r | tail -n +100 | ~/auto_kern_offload_bench/docs/latency_script.py
+
+# xdp
+
+This is the origin 0
+
+# tc
+
+samples: 10821
+max: 617.0
+min: 246.0
+mean: 295.92
+@1 : 270.0
+@50: 273.0
+@99: 576.0
+std: 65.134
+standard err: 0.626
+
+
+
+# sk_skb (udp)
+
+samples: 10822
+max: 4337.0
+min: 803.0
+mean: 1235.45
+@1 : 963.0
+@50: 1076.0
+@99: 3996.0
+std: 576.564
+standard err: 5.542
+
+

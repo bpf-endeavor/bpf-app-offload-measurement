@@ -43,5 +43,5 @@ print('@99:', samples[int(count_smaples * 0.99)])
 N = count_smaples
 std = math.sqrt( (1 / (N - 1)) * sum([(x - mean) ** 2 for x in samples]))
 std_err = std / math.sqrt(N)
-print(f'std: {std:.3}')
-print(f'standard err: {std_err:.3}')
+print(f'std: {std:.3f}')
+print(f'standard err: {std_err:.3f}')
