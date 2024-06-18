@@ -133,6 +133,35 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+#define USING_TIMESTAMP_FRAME_PATCH 1
+#ifdef USING_TIMESTAMP_FRAME_PATCH
+/* NOTE:
+ * THIS MUST MATCH WITH THE STRUCT DEFINED INSIDE THE KERNEL
+ * (include/linux/test_timer.h)
+ * */
+struct timestamp_frame {
+	uint32_t magic;
+	uint64_t timestamp;
+} __attribute__((packed));
+#define TF_MAGIC 0x7591
+
+
+void report_timestamp_frame(void *buf, int len)
+{
+	if (len < sizeof(struct timestamp_frame)) {
+		ERROR("Request is smaller than timestamp_frame!\n");
+		return;
+	}
+	struct timestamp_frame *tf = buf;
+	uint64_t duration = get_ns() - tf->timestamp;
+	if (tf->magic != TF_MAGIC) {
+		ERROR("The timestamp_frame MAGIC does not match!\n");
+		return;
+	}
+	INFO("Farbod: It takes %llu to reach UDP socket\n", duration);
+}
+#endif
+
 int handle_client_udp(int client_fd, struct client_ctx *ctx)
 {
 	int ret, len;
@@ -157,7 +186,12 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 		return 0;
 	}
 	len = ret;
+
+#ifdef USING_TIMESTAMP_FRAME_PATCH
+	report_timestamp_frame(buf, len);
+#else
 	record_sample(buf, len, 0);
+#endif
 	/* Send a drop */
 	return 0;
 }
@@ -403,8 +437,8 @@ int main(int argc, char *argv[])
 	app.port = atoi(argv[3]);
 	app.count_workers = 1;
 	if (udp) {
-		hw_timestamp = 1;
-		sock_map_register = 1;
+		hw_timestamp = 0;
+		sock_map_register = 0;
 		if (hw_timestamp) {
 			app.sock_handler = handle_client_udp_with_hw_ts;
 		} else {
