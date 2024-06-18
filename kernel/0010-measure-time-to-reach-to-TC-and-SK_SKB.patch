@@ -1,0 +1,230 @@
+From 7e2e5b9e836febfb630f18d61725304958a6e549 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Tue, 18 Jun 2024 15:24:04 +0000
+Subject: [PATCH 10/10] measure time to reach to TC and SK_SKB
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en_rx.c   | 19 ++++++++++++
+ .../net/ethernet/mellanox/mlx5/core/main.c    |  1 +
+ include/linux/test_timer.h                    | 31 +++++++++++++++++++
+ net/core/skmsg.c                              |  3 +-
+ net/ipv4/udp.c                                | 19 ++++++++++++
+ net/sched/cls_bpf.c                           | 11 +++++++
+ net/strparser/strparser.c                     |  3 +-
+ 7 files changed, 84 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c b/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
+index d601b5faaed5..0da8f7fb0481 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
+@@ -60,6 +60,8 @@
+ #include "devlink.h"
+ #include "en/devlink.h"
+ 
++#include "linux/test_timer.h"
++
+ static struct sk_buff *
+ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
+ 				struct mlx5_cqe64 *cqe, u16 cqe_bcnt, u32 head_offset,
+@@ -1690,6 +1692,10 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5e_wqe_frag_info *wi,
+ 				      frag_size, rq->buff.map_dir);
+ 	net_prefetch(data);
+ 
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++	__set_timestamp_frame(data, cqe_bcnt);
++#endif
++
+ 	prog = rcu_dereference(rq->xdp_prog);
+ 	if (prog) {
+ 		struct mlx5e_xdp_buff mxbuf;
+@@ -1767,6 +1773,11 @@ mlx5e_skb_from_cqe_nonlinear(struct mlx5e_rq *rq, struct mlx5e_wqe_frag_info *wi
+ 		wi++;
+ 	}
+ 
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++	void *tmp_data = va + rx_headroom;
++	__set_timestamp_frame(tmp_data, cqe_bcnt);
++#endif
++
+ 	prog = rcu_dereference(rq->xdp_prog);
+ 	if (prog && mlx5e_xdp_handle(rq, prog, &mxbuf)) {
+ 		if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags)) {
+@@ -2067,6 +2078,10 @@ mlx5e_skb_from_cqe_mpwrq_nonlinear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *w
+ 		frag_page++;
+ 	}
+ 
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++	__set_timestamp_frame(va + linear_hr, linear_data_len);
++#endif
++
+ 	if (prog) {
+ 		if (mlx5e_xdp_handle(rq, prog, &mxbuf)) {
+ 			if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags)) {
+@@ -2164,6 +2179,10 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
+ 				      frag_size, rq->buff.map_dir);
+ 	net_prefetch(data);
+ 
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++	__set_timestamp_frame(data, cqe_bcnt);
++#endif
++
+ 	prog = rcu_dereference(rq->xdp_prog);
+ 	if (prog) {
+ 		struct mlx5e_xdp_buff mxbuf;
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/main.c b/drivers/net/ethernet/mellanox/mlx5/core/main.c
+index bccf6e53556c..4db2f5b69f17 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/main.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/main.c
+@@ -2307,6 +2307,7 @@ static void mlx5_core_verify_params(void)
+ static int __init mlx5_init(void)
+ {
+ 	int err;
++	printk("Modified MLX5\n");
+ 
+ 	WARN_ONCE(strcmp(MLX5_ADEV_NAME, KBUILD_MODNAME),
+ 		  "mlx5_core name not in sync with kernel module name");
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index d68d49307a26..13deb22413e2 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -112,6 +112,9 @@ __must_hold(rcu)
+ 	test_timer_leave(&t)
+ 
+ 
++
++/* #define MEASURE_TIME_TO_REACH_HOOK 1 */
++#ifdef MEASURE_TIME_TO_REACH_HOOK
+ #define TF_MAGIC 0x7591
+ #define TF_PORT 3030
+ struct timestamp_frame {
+@@ -147,4 +150,32 @@ static inline bool __check_if_timestamp_frame(void *data, u16 len, u64 *ts)
+ 	return true;
+ }
+ 
++/* Check if the packet is for the correct destination. If so, prepare the
++ * timestamp frame.
++ *
++ * @returns true if succeeds otherwise false
++ * */
++static inline bool __set_timestamp_frame(void *data, u16 len)
++{
++	struct ethhdr *eth = data;
++	struct iphdr  *ip = (void *)(eth + 1);
++	struct udphdr *udp = (void *)(ip + 1);
++	struct timestamp_frame *tf = (void *)(udp + 1);
++	const u32 header_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + \
++						sizeof(struct udphdr) + sizeof(struct timestamp_frame);
++	if (len < header_size)
++		return false;
++	if (eth->h_proto != htons(ETH_P_IP))
++		return false;
++	if (ip->protocol != IPPROTO_UDP)
++		return false;
++	if (udp->dest != htons(TF_PORT))
++		return false;
++	tf->magic = TF_MAGIC;
++	tf->timestamp = ktime_get_ns();
++	/* printk("Farbod: Just timestampped a measurment frame!\n"); */
++	return true;
++}
++#endif /* MEASURE_TIME_TO_REACH_HOOK */
++
+ #endif /* __TEST_TIMER_H */
+diff --git a/net/core/skmsg.c b/net/core/skmsg.c
+index 2040446b2a6a..2e58060ceb2d 100644
+--- a/net/core/skmsg.c
++++ b/net/core/skmsg.c
+@@ -12,7 +12,7 @@
+ 
+ #include <linux/test_timer.h>
+ 
+-#define MEASURE_SK_SKB_OVERHEAD 1
++/* #define MEASURE_SK_SKB_OVERHEAD 1 */
+ #ifndef MEASURE_SK_SKB_OVERHEAD
+ #undef TEST_TIMER_BEGIN
+ #define TEST_TIMER_BEGIN()
+@@ -1125,6 +1125,7 @@ static void sk_psock_strp_data_ready(struct sock *sk)
+ {
+ 	struct sk_psock *psock;
+ 
++
+ 	trace_sk_data_ready(sk);
+ 
+ 	rcu_read_lock();
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index e474b201900f..7cd414a5972e 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -119,6 +119,8 @@
+ #include <net/ipv6_stubs.h>
+ #endif
+ 
++#include "linux/test_timer.h"
++
+ struct udp_table udp_table __read_mostly;
+ EXPORT_SYMBOL(udp_table);
+ 
+@@ -1541,6 +1543,23 @@ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ 	__skb_queue_tail(list, skb);
+ 	spin_unlock(&list->lock);
+ 
++	/* Farbod: sk_data_ready will be set to the SK_SKB custom handler.
++	 * This is the point when we reach the SK_SKB hook!
++	 * */
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++	struct udphdr *udp = (struct udphdr *)skb_transport_header(skb);
++	if (udp->dest == htons(TF_PORT)) {
++		struct timestamp_frame *tf = (struct timestamp_frame *)skb->data;
++		if (tf->magic == TF_MAGIC) {
++			u64 tmp_ts = tf->timestamp;
++			u64 duration = ktime_get_ns() - tmp_ts;
++			printk("Farbod: It takes %llu to reach SK_SKB", duration);
++		} else {
++			printk("Farbod: warning: the timestamp frame's MAGIC number did not match\n");
++		}
++	}
++#endif
++
+ 	if (!sock_flag(sk, SOCK_DEAD))
+ 		INDIRECT_CALL_1(sk->sk_data_ready, sock_def_readable, sk);
+ 
+diff --git a/net/sched/cls_bpf.c b/net/sched/cls_bpf.c
+index e5077f241515..d576070e03f0 100644
+--- a/net/sched/cls_bpf.c
++++ b/net/sched/cls_bpf.c
+@@ -114,6 +114,17 @@ TC_INDIRECT_SCOPE int cls_bpf_classify(struct sk_buff *skb,
+ 			/* It is safe to push/pull even if skb_shared() */
+ 			__skb_push(skb, skb->mac_len);
+ 			bpf_compute_data_pointers(skb);
++
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++			u64 start_ts = 0;
++			bool tmp = __check_if_timestamp_frame(skb->data,
++					skb_headlen(skb), &start_ts);
++			if (tmp) {
++				u64 duration = ktime_get_ns() - start_ts;
++				printk("Farbod: It takes %llu to reach TC\n", duration);
++			}
++#endif
++
+ 			filter_res = bpf_prog_run(prog->filter, skb);
+ 			__skb_pull(skb, skb->mac_len);
+ 		} else {
+diff --git a/net/strparser/strparser.c b/net/strparser/strparser.c
+index 7030b5578e5d..031db197fa40 100644
+--- a/net/strparser/strparser.c
++++ b/net/strparser/strparser.c
+@@ -330,9 +330,8 @@ int strp_process(struct strparser *strp, struct sk_buff *orig_skb,
+ EXPORT_SYMBOL_GPL(strp_process);
+ 
+ static int strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
+-		     unsigned int orig_offset, size_t orig_len)
++		unsigned int orig_offset, size_t orig_len)
+ {
+-
+ 	/* static struct test_timer t = { NO_MIGRATE }; */
+ 	/* const u32 sample_count = 1000000; */
+ 	/* int tmp_err = 0; */
+-- 
+2.34.1
+
