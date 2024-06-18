@@ -1,14 +1,29 @@
-From 667d2b5f9dd837388daff54d4034f8eac143e7a1 Mon Sep 17 00:00:00 2001
+From 7529d37a4507d9d3eb23b654bbc35e8d9b884a97 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Mon, 17 Jun 2024 22:39:35 +0000
 Subject: [PATCH 9/9] measure invocation for strp
 
 ---
- net/core/skmsg.c | 25 +++++++++++++++----------
- 1 file changed, 15 insertions(+), 10 deletions(-)
+ include/linux/test_timer.h |  2 +-
+ net/core/skmsg.c           | 32 ++++++++++++++++++++++----------
+ net/strparser/strparser.c  | 34 +++++++++++++++++-----------------
+ 3 files changed, 40 insertions(+), 28 deletions(-)
 
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index af185e2bf5ac..d68d49307a26 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -88,7 +88,7 @@ __must_hold(rcu)
+ /* macros for easier use of test timer */
+ #define TEST_TIMER_BEGIN() \
+ 	static struct test_timer t = { NO_MIGRATE }; \
+-	const u32 sample_count = 1000000; \
++	const u32 sample_count = 100000; \
+ 	int tmp_err = 0; \
+ 	u32 tmp_res = 0; \
+ 	bool tmp_need_more_sample = true; \
 diff --git a/net/core/skmsg.c b/net/core/skmsg.c
-index 792368213288..ab97e7c77bfb 100644
+index 792368213288..2040446b2a6a 100644
 --- a/net/core/skmsg.c
 +++ b/net/core/skmsg.c
 @@ -12,6 +12,16 @@
@@ -33,7 +48,7 @@ index 792368213288..ab97e7c77bfb 100644
  
  	rcu_read_lock();
 +
-+	TEST_TIMER_BEGIN();
++	/* TEST_TIMER_BEGIN(); */
 +
  	sk = strp->sk;
  	psock = sk_psock(sk);
@@ -42,13 +57,34 @@ index 792368213288..ab97e7c77bfb 100644
  		skb->sk = NULL;
  	}
  	sk_psock_verdict_apply(psock, skb, ret);
-+	TEST_TIMER_MEASURE("BPF stream_strp+verdict", 1);
++	/* TEST_TIMER_MEASURE("BPF stream_strp+verdict", 1); */
  out:
-+	TEST_TIMER_END();
++	/* TEST_TIMER_END(); */
  	rcu_read_unlock();
  }
  
-@@ -1177,16 +1192,6 @@ static void sk_psock_done_strp(struct sk_psock *psock)
+@@ -1113,6 +1128,9 @@ static void sk_psock_strp_data_ready(struct sock *sk)
+ 	trace_sk_data_ready(sk);
+ 
+ 	rcu_read_lock();
++
++	TEST_TIMER_BEGIN();
++
+ 	psock = sk_psock(sk);
+ 	if (likely(psock)) {
+ 		if (tls_sw_has_ctx_rx(sk)) {
+@@ -1123,6 +1141,10 @@ static void sk_psock_strp_data_ready(struct sock *sk)
+ 			write_unlock_bh(&sk->sk_callback_lock);
+ 		}
+ 	}
++
++	TEST_TIMER_MEASURE("BPF stream_strp+verdict", 1);
++	TEST_TIMER_END();
++
+ 	rcu_read_unlock();
+ }
+ 
+@@ -1177,16 +1199,6 @@ static void sk_psock_done_strp(struct sk_psock *psock)
  }
  #endif /* CONFIG_BPF_STREAM_PARSER */
  
@@ -65,6 +101,57 @@ index 792368213288..ab97e7c77bfb 100644
  static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
  {
  	struct sk_psock *psock;
+diff --git a/net/strparser/strparser.c b/net/strparser/strparser.c
+index 52c721afda4b..7030b5578e5d 100644
+--- a/net/strparser/strparser.c
++++ b/net/strparser/strparser.c
+@@ -333,29 +333,29 @@ static int strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
+ 		     unsigned int orig_offset, size_t orig_len)
+ {
+ 
+-	static struct test_timer t = { NO_MIGRATE };
+-	const u32 sample_count = 1000000;
+-	int tmp_err = 0;
+-	u32 tmp_res = 0;
+-	bool tmp_need_more_sample = true;
+-	test_timer_enter(&t);
++	/* static struct test_timer t = { NO_MIGRATE }; */
++	/* const u32 sample_count = 1000000; */
++	/* int tmp_err = 0; */
++	/* u32 tmp_res = 0; */
++	/* bool tmp_need_more_sample = true; */
++	/* test_timer_enter(&t); */
+ 
+ 	struct strparser *strp = (struct strparser *)desc->arg.data;
+ 
+ 	int ret = __strp_recv(desc, orig_skb, orig_offset, orig_len,
+ 			   strp->sk->sk_rcvbuf, strp->sk->sk_rcvtimeo);
+ 
+-	tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res);
+-	if (!tmp_need_more_sample) {
+-		if (tmp_err == 0) {
+-			/* Report the experiment result */
+-			printk(KERN_INFO"Farbod: on average invoking SK_SKB (parser + verdict) takes: %d (ns)\n", tmp_res);
+-		}
+-		/* Reset the experiment */
+-		memset(&t, 0, sizeof(struct test_timer));
+-		t.mode = NO_MIGRATE;
+-	}
+-	test_timer_leave(&t);
++	/* tmp_need_more_sample = test_timer_continue(&t, 1, sample_count, &tmp_err, &tmp_res); */
++	/* if (!tmp_need_more_sample) { */
++	/* 	if (tmp_err == 0) { */
++	/* 		/1* Report the experiment result *1/ */
++	/* 		printk(KERN_INFO"Farbod: on average invoking SK_SKB (parser + verdict) takes: %d (ns)\n", tmp_res); */
++	/* 	} */
++	/* 	/1* Reset the experiment *1/ */
++	/* 	memset(&t, 0, sizeof(struct test_timer)); */
++	/* 	t.mode = NO_MIGRATE; */
++	/* } */
++	/* test_timer_leave(&t); */
+ 
+ 	return ret;
+ }
 -- 
 2.34.1
 
