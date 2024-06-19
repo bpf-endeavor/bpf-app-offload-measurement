@@ -45,3 +45,22 @@ std = math.sqrt( (1 / (N - 1)) * sum([(x - mean) ** 2 for x in samples]))
 std_err = std / math.sqrt(N)
 print(f'std: {std:.3f}')
 print(f'standard err: {std_err:.3f}')
+
+
+# Reporting median (+-) iqr
+q1 = samples[int(N * 0.25)]
+q2 = samples[int(N * 0.50)]
+q3 = samples[int(N * 0.75)]
+iqr = q3 - q1
+whisker =  iqr * 1.5
+upper_bound = q3 + whisker
+lower_bound = q1 - whisker
+print (f'median (iqr): {q2} ({iqr})')
+print (f'box-plot: {lower_bound:.2f}--[{q1}-|{q2}|-{q3}]--{upper_bound:.2f}')
+
+
+no_outlier = list(filter(lambda x: x <= upper_bound and x >= lower_bound, samples))
+d1 = q2 - no_outlier[0]
+d2 = no_outlier[-1] - q2
+r = max(d1, d2)
+print (f'meidan +- range: {q2} +- {r}')
