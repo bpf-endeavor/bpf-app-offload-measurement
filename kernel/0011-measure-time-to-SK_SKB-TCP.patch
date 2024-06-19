@@ -1,15 +1,45 @@
-From 1920919e4d4f30cbded35401f2f0fe8ec5b86069 Mon Sep 17 00:00:00 2001
+From 13c7998a1ec7464d3ec971348ecb507cb4a97775 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Wed, 19 Jun 2024 10:33:30 +0000
 Subject: [PATCH 11/11] measure time to SK_SKB TCP
 
 ---
+ drivers/net/virtio_net.c   |  4 +++-
  include/linux/test_timer.h | 42 ++++++++++++++++++++++++++++++--------
  net/ipv4/tcp_input.c       | 33 ++++++++++++++++++++++++++++--
  net/ipv4/udp.c             |  7 +++++--
  net/sched/cls_bpf.c        |  4 ++--
- 4 files changed, 72 insertions(+), 14 deletions(-)
+ 5 files changed, 75 insertions(+), 15 deletions(-)
 
+diff --git a/drivers/net/virtio_net.c b/drivers/net/virtio_net.c
+index 6aee7773c82c..c424b80749b7 100644
+--- a/drivers/net/virtio_net.c
++++ b/drivers/net/virtio_net.c
+@@ -1049,7 +1049,7 @@ static void put_xdp_frags(struct xdp_buff *xdp)
+ }
+ 
+ /* #define MEASURE_VIRTIO_XDP_OVERHEAD 1 */
+-#define MEASURE_REDIRECT_TIME 1
++/* #define MEASURE_REDIRECT_TIME 1 */
+ static int virtnet_xdp_handler(struct bpf_prog *xdp_prog, struct xdp_buff *xdp,
+ 			       struct net_device *dev,
+ 			       unsigned int *xdp_xmit,
+@@ -2410,6 +2410,7 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
+ 	tmp_o = virtqueue_add_outbuf(sq->vq, sq->sg, num_sg, skb, GFP_ATOMIC);
+ 
+ #ifdef MEASURE_REDIRECT_TIME
++#ifdef MEASURE_TIME_TO_REACH_HOOK
+ 	u64 tmp_ts;
+ 	/* Farbod: Trying to find frames with timestamp and record the samples */
+ 	TEST_TIMER_BEGIN();
+@@ -2420,6 +2421,7 @@ static int xmit_skb(struct send_queue *sq, struct sk_buff *skb)
+ 		/* printk("sample index: %d\n", t.i); */
+ 	}
+ 	TEST_TIMER_END();
++#endif
+ #endif
+ 
+ 	return tmp_o;
 diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
 index 13deb22413e2..d17633b88b91 100644
 --- a/include/linux/test_timer.h
