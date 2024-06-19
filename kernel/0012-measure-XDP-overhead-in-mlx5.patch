@@ -1,0 +1,164 @@
+From c18f41abdf50ce79012a8f4bd7d98f7cf45926ed Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Wed, 19 Jun 2024 14:40:04 +0000
+Subject: [PATCH 12/12] measure XDP overhead in mlx5
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en_rx.c   | 60 ++++++++++++++++---
+ net/core/skmsg.c                              | 10 +++-
+ 2 files changed, 58 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c b/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
+index 0da8f7fb0481..a2206a9467db 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en_rx.c
+@@ -61,6 +61,7 @@
+ #include "en/devlink.h"
+ 
+ #include "linux/test_timer.h"
++/* #define MEASURE_MLX5_XDP_OVERHEAD 1 */
+ 
+ static struct sk_buff *
+ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
+@@ -1698,12 +1699,24 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5e_wqe_frag_info *wi,
+ 
+ 	prog = rcu_dereference(rq->xdp_prog);
+ 	if (prog) {
++
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++	TEST_TIMER_BEGIN();
++#endif
++
+ 		struct mlx5e_xdp_buff mxbuf;
+ 
+ 		net_prefetchw(va); /* xdp_frame data area */
+ 		mlx5e_fill_mxbuf(rq, cqe, va, rx_headroom, rq->buff.frame0_sz,
+ 				 cqe_bcnt, &mxbuf);
+-		if (mlx5e_xdp_handle(rq, prog, &mxbuf))
++
++		bool _tmp = mlx5e_xdp_handle(rq, prog, &mxbuf);
++
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++	TEST_TIMER_MEASURE("mlx5: BPF XDP", 1);
++	TEST_TIMER_END();
++#endif
++		if (_tmp)
+ 			return NULL; /* page/packet was consumed by XDP */
+ 
+ 		rx_headroom = mxbuf.xdp.data - mxbuf.xdp.data_hard_start;
+@@ -1779,14 +1792,25 @@ mlx5e_skb_from_cqe_nonlinear(struct mlx5e_rq *rq, struct mlx5e_wqe_frag_info *wi
+ #endif
+ 
+ 	prog = rcu_dereference(rq->xdp_prog);
+-	if (prog && mlx5e_xdp_handle(rq, prog, &mxbuf)) {
+-		if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags)) {
+-			struct mlx5e_wqe_frag_info *pwi;
++	if (prog) {
+ 
+-			for (pwi = head_wi; pwi < wi; pwi++)
+-				pwi->frag_page->frags++;
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_BEGIN();
++#endif
++		bool _tmp = mlx5e_xdp_handle(rq, prog, &mxbuf);
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_MEASURE("mlx5: BPF XDP", 1);
++		TEST_TIMER_END();
++#endif
++		if (_tmp) {
++			if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags)) {
++				struct mlx5e_wqe_frag_info *pwi;
++
++				for (pwi = head_wi; pwi < wi; pwi++)
++					pwi->frag_page->frags++;
++			}
++			return NULL; /* page/packet was consumed by XDP */
+ 		}
+-		return NULL; /* page/packet was consumed by XDP */
+ 	}
+ 
+ 	skb = mlx5e_build_linear_skb(rq, mxbuf.xdp.data_hard_start, rq->buff.frame0_sz,
+@@ -2083,7 +2107,17 @@ mlx5e_skb_from_cqe_mpwrq_nonlinear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *w
+ #endif
+ 
+ 	if (prog) {
+-		if (mlx5e_xdp_handle(rq, prog, &mxbuf)) {
++
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_BEGIN();
++#endif
++		bool _tmp = mlx5e_xdp_handle(rq, prog, &mxbuf);
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_MEASURE("mlx5: BPF XDP", 1);
++		TEST_TIMER_END();
++#endif
++
++		if (_tmp) {
+ 			if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags)) {
+ 				struct mlx5e_frag_page *pfp;
+ 
+@@ -2188,9 +2222,17 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
+ 		struct mlx5e_xdp_buff mxbuf;
+ 
+ 		net_prefetchw(va); /* xdp_frame data area */
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_BEGIN();
++#endif
+ 		mlx5e_fill_mxbuf(rq, cqe, va, rx_headroom, rq->buff.frame0_sz,
+ 				 cqe_bcnt, &mxbuf);
+-		if (mlx5e_xdp_handle(rq, prog, &mxbuf)) {
++		bool _tmp = mlx5e_xdp_handle(rq, prog, &mxbuf);
++#ifdef MEASURE_MLX5_XDP_OVERHEAD
++		TEST_TIMER_MEASURE("mlx5: BPF XDP", 1);
++		TEST_TIMER_END();
++#endif
++		if (_tmp) {
+ 			if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags))
+ 				frag_page->frags++;
+ 			return NULL; /* page/packet was consumed by XDP */
+diff --git a/net/core/skmsg.c b/net/core/skmsg.c
+index 2e58060ceb2d..390310e69b28 100644
+--- a/net/core/skmsg.c
++++ b/net/core/skmsg.c
+@@ -1209,7 +1209,7 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 
+ 	rcu_read_lock();
+ 
+-	TEST_TIMER_BEGIN();
++	/* TEST_TIMER_BEGIN(); */
+ 
+ 	psock = sk_psock(sk);
+ 	if (unlikely(!psock)) {
+@@ -1231,9 +1231,9 @@ static int sk_psock_verdict_recv(struct sock *sk, struct sk_buff *skb)
+ 	if (ret < 0)
+ 		len = ret;
+ 
+-	TEST_TIMER_MEASURE("BPF sk_verdict", 1);
++	/* TEST_TIMER_MEASURE("BPF sk_verdict", 1); */
+ out:
+-	TEST_TIMER_END();
++	/* TEST_TIMER_END(); */
+ 	rcu_read_unlock();
+ 	return len;
+ }
+@@ -1251,6 +1251,8 @@ static void sk_psock_verdict_data_ready(struct sock *sk)
+ 	ops = READ_ONCE(sock->ops);
+ 	if (!ops || !ops->read_skb)
+ 		return;
++
++	TEST_TIMER_BEGIN();
+ 	copied = ops->read_skb(sk, sk_psock_verdict_recv);
+ 	if (copied >= 0) {
+ 		struct sk_psock *psock;
+@@ -1264,6 +1266,8 @@ static void sk_psock_verdict_data_ready(struct sock *sk)
+ 		}
+ 		rcu_read_unlock();
+ 	}
++	TEST_TIMER_MEASURE("BPF sk_verdict", 1);
++	TEST_TIMER_END();
+ }
+ 
+ void sk_psock_start_verdict(struct sock *sk, struct sk_psock *psock)
+-- 
+2.34.1
+
