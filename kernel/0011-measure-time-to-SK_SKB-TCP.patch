@@ -1,0 +1,204 @@
+From 1920919e4d4f30cbded35401f2f0fe8ec5b86069 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Wed, 19 Jun 2024 10:33:30 +0000
+Subject: [PATCH 11/11] measure time to SK_SKB TCP
+
+---
+ include/linux/test_timer.h | 42 ++++++++++++++++++++++++++++++--------
+ net/ipv4/tcp_input.c       | 33 ++++++++++++++++++++++++++++--
+ net/ipv4/udp.c             |  7 +++++--
+ net/sched/cls_bpf.c        |  4 ++--
+ 4 files changed, 72 insertions(+), 14 deletions(-)
+
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index 13deb22413e2..d17633b88b91 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -10,7 +10,9 @@
+ #include <linux/if_ether.h>
+ #include <linux/ip.h>
+ #include <linux/udp.h>
++#include <linux/tcp.h>
+ #include <linux/in.h>
++#include <net/tcp.h>
+ 
+ struct test_timer {
+ 	enum { NO_PREEMPT, NO_MIGRATE } mode;
+@@ -160,19 +162,43 @@ static inline bool __set_timestamp_frame(void *data, u16 len)
+ 	struct ethhdr *eth = data;
+ 	struct iphdr  *ip = (void *)(eth + 1);
+ 	struct udphdr *udp = (void *)(ip + 1);
+-	struct timestamp_frame *tf = (void *)(udp + 1);
+-	const u32 header_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + \
+-						sizeof(struct udphdr) + sizeof(struct timestamp_frame);
+-	if (len < header_size)
+-		return false;
++	struct timestamp_frame *tf;
++
+ 	if (eth->h_proto != htons(ETH_P_IP))
+ 		return false;
+-	if (ip->protocol != IPPROTO_UDP)
++	if (ip->protocol != IPPROTO_UDP && ip->protocol != IPPROTO_TCP)
+ 		return false;
+ 	if (udp->dest != htons(TF_PORT))
+ 		return false;
+-	tf->magic = TF_MAGIC;
+-	tf->timestamp = ktime_get_ns();
++
++	/* Update checksum */
++	if (ip->protocol == IPPROTO_TCP) {
++		struct tcphdr *tcp = (struct tcphdr *)udp;
++		u16 tcp_len = tcp->doff << 2;
++
++		const u32 header_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + \
++							tcp_len + sizeof(struct timestamp_frame);
++		if (len < header_size)
++			return false;
++
++		tf = (struct timestamp_frame *)(((u8 *)tcp) + tcp_len);
++		tf->magic = TF_MAGIC;
++		tf->timestamp = ktime_get_ns();
++		tcp->check = 0;
++		tcp->check = tcp_v4_check(ntohs(ip->tot_len) - (ip->ihl << 2),
++			ip->saddr, ip->daddr, csum_partial(tcp, tcp_len, 0));
++	} else {
++		const u32 header_size = sizeof(struct ethhdr) + sizeof(struct iphdr) + \
++						sizeof(struct udphdr) + sizeof(struct timestamp_frame);
++		if (len < header_size)
++			return false;
++
++		tf = (void *)(udp + 1);
++		tf->magic = TF_MAGIC;
++		tf->timestamp = ktime_get_ns();
++		udp->check = 0;
++	}
++
+ 	/* printk("Farbod: Just timestampped a measurment frame!\n"); */
+ 	return true;
+ }
+diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
+index df7b13f0e5e0..dbc85bebab2f 100644
+--- a/net/ipv4/tcp_input.c
++++ b/net/ipv4/tcp_input.c
+@@ -81,6 +81,8 @@
+ #include <net/busy_poll.h>
+ #include <net/mptcp.h>
+ 
++#include "linux/test_timer.h"
++
+ int sysctl_tcp_max_orphans __read_mostly = NR_FILE;
+ 
+ #define FLAG_DATA		0x01 /* Incoming frame contained data.		*/
+@@ -5137,10 +5139,32 @@ int tcp_send_rcvq(struct sock *sk, struct msghdr *msg, size_t size)
+ 
+ }
+ 
++
++/* #define MEASURE_TIME_TO_SK_SKB_TCP 1 */
++static void measure_time_to_reach_sk_skb(const struct sk_buff *skb)
++{
++#ifdef MEASURE_TIME_TO_SK_SKB_TCP
++#ifdef MEASURE_TIME_TO_REACH_HOOK
++		struct tcphdr *tcp = (struct tcphdr *)skb_transport_header(skb);
++		if (tcp->dest == htons(TF_PORT)) {
++			struct timestamp_frame *tf = (struct timestamp_frame *)skb->data;
++			if (tf->magic == TF_MAGIC) {
++				u64 tmp_ts = tf->timestamp;
++				u64 duration = ktime_get_ns() - tmp_ts;
++				printk("Farbod: It takes %llu to reach SK_SKB (TCP)", duration);
++			} else {
++				/* printk("Farbod: warning: the timestamp frame's MAGIC number did not match (TCP)\n"); */
++			}
++		}
++#endif
++#endif
++}
++
+ void tcp_data_ready(struct sock *sk)
+ {
+-	if (tcp_epollin_ready(sk, sk->sk_rcvlowat) || sock_flag(sk, SOCK_DONE))
++	if (tcp_epollin_ready(sk, sk->sk_rcvlowat) || sock_flag(sk, SOCK_DONE)) {
+ 		sk->sk_data_ready(sk);
++	}
+ }
+ 
+ static void tcp_data_queue(struct sock *sk, struct sk_buff *skb)
+@@ -5219,8 +5243,10 @@ static void tcp_data_queue(struct sock *sk, struct sk_buff *skb)
+ 
+ 		if (eaten > 0)
+ 			kfree_skb_partial(skb, fragstolen);
+-		if (!sock_flag(sk, SOCK_DEAD))
++		if (!sock_flag(sk, SOCK_DEAD)) {
++			measure_time_to_reach_sk_skb(skb);
+ 			tcp_data_ready(sk);
++		}
+ 		return;
+ 	}
+ 
+@@ -6132,8 +6158,11 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb)
+ 
+ 			__tcp_ack_snd_check(sk, 0);
+ no_ack:
++			measure_time_to_reach_sk_skb(skb);
++
+ 			if (eaten)
+ 				kfree_skb_partial(skb, fragstolen);
++
+ 			tcp_data_ready(sk);
+ 			return;
+ 		}
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index 7cd414a5972e..38e6686d22db 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -1491,6 +1491,7 @@ static int udp_rmem_schedule(struct sock *sk, int size)
+ 	return 0;
+ }
+ 
++/* #define MEASURE_TIME_TO_SK_SKB_UDP 1 */
+ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ {
+ 	struct sk_buff_head *list = &sk->sk_receive_queue;
+@@ -1546,6 +1547,7 @@ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ 	/* Farbod: sk_data_ready will be set to the SK_SKB custom handler.
+ 	 * This is the point when we reach the SK_SKB hook!
+ 	 * */
++#ifdef MEASURE_TIME_TO_SK_SKB_UDP
+ #ifdef MEASURE_TIME_TO_REACH_HOOK
+ 	struct udphdr *udp = (struct udphdr *)skb_transport_header(skb);
+ 	if (udp->dest == htons(TF_PORT)) {
+@@ -1553,11 +1555,12 @@ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ 		if (tf->magic == TF_MAGIC) {
+ 			u64 tmp_ts = tf->timestamp;
+ 			u64 duration = ktime_get_ns() - tmp_ts;
+-			printk("Farbod: It takes %llu to reach SK_SKB", duration);
++			printk("Farbod: It takes %llu to reach SK_SKB (UDP)", duration);
+ 		} else {
+-			printk("Farbod: warning: the timestamp frame's MAGIC number did not match\n");
++			printk("Farbod: warning: the timestamp frame's MAGIC number did not match (UDP)\n");
+ 		}
+ 	}
++#endif
+ #endif
+ 
+ 	if (!sock_flag(sk, SOCK_DEAD))
+diff --git a/net/sched/cls_bpf.c b/net/sched/cls_bpf.c
+index d576070e03f0..5283bb79f982 100644
+--- a/net/sched/cls_bpf.c
++++ b/net/sched/cls_bpf.c
+@@ -82,10 +82,10 @@ static int cls_bpf_exec_opcode(int code)
+ }
+ 
+ /* #define MEASURE_TC_OVERHEAD 1 */
+-#ifndef MEASURE_TC_OVERHEAD 
++#ifndef MEASURE_TC_OVERHEAD
+ #undef TEST_TIMER_BEGIN
+ #define TEST_TIMER_BEGIN()
+-#undef TEST_TIMER_MEASURE 
++#undef TEST_TIMER_MEASURE
+ #define TEST_TIMER_MEASURE(a, b)
+ #undef TEST_TIMER_END
+ #define TEST_TIMER_END()
+-- 
+2.34.1
+
