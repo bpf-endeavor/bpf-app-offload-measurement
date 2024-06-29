@@ -27,12 +27,15 @@ struct {
 	/* __uint(map_flags, BPF_F_MMAPABLE); */
 } a_map SEC(".maps");
 
+/* #define CHECK_EMPTY_HOOK 1 */
+#ifdef CHECK_EMPTY_HOOK
 /*
  * This is a custom helper functions added just for this test. The patch should
  * be available kernel directory.
  * */
 #ifndef bpf_ret_zero
 static int (*bpf_ret_zero)() = (void *) 212;
+#endif
 #endif
 
 struct loop_context {
@@ -41,8 +44,9 @@ struct loop_context {
 
 static long do_experiment_xdp(__u32 i, void *_ctx)
 {
-	/* bpf_ret_zero(); */
-
+#ifdef CHECK_EMPTY_HOOK
+	bpf_ret_zero();
+#else
 	int zero = 0;
 	value_t *v = bpf_map_lookup_elem(&a_map, &zero);
 	if (v == NULL) return 1;
@@ -51,6 +55,7 @@ static long do_experiment_xdp(__u32 i, void *_ctx)
 	/* struct xdp_md *ctx = ((struct loop_context *)_ctx)->context; */
 	/* bpf_xdp_adjust_tail(ctx, 1000); */
 	/* bpf_xdp_adjust_tail(ctx, -1000); */
+#endif
 	return 0;
 }
 

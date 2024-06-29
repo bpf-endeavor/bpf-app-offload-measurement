@@ -51,6 +51,7 @@ typedef struct {
 	uint64_t time_to_tc;
 	uint64_t time_to_stream_verdict;
 	uint64_t time_to_app;
+	uint64_t time_verdict_to_app;
 } sample_t;
 #define SAMPLE_SIZE 100000000LL
 static sample_t *samples;
@@ -77,10 +78,11 @@ void record_sample(void *buf, int len, uint64_t raw_hw_ts)
 	if (raw_hw_ts == 0) {
 		uint64_t ts = get_ns();
 		/* There is no hardware timestamping */
-		s->time_to_xdp = 0;
-		s->time_to_tc = p->timestamps[TC_OFF] - p->timestamps[XDP_OFF];
-		s->time_to_stream_verdict = p->timestamps[STREAM_VERDICT_OFF] - p->timestamps[XDP_OFF];
-		s->time_to_app = ts - p->timestamps[XDP_OFF];
+		/* s->time_to_xdp = 0; */
+		/* s->time_to_tc = p->timestamps[TC_OFF] - p->timestamps[XDP_OFF]; */
+		/* s->time_to_stream_verdict = p->timestamps[STREAM_VERDICT_OFF] - p->timestamps[XDP_OFF]; */
+		/* s->time_to_app = ts - p->timestamps[XDP_OFF]; */
+		s->time_verdict_to_app = ts - p->timestamps[STREAM_VERDICT_OFF];
 	} else {
 		/* Use hardware time stamp */
 		uint64_t monotonic_ts = get_ns();
@@ -102,11 +104,12 @@ void report_samples(void)
 	INFO("Number of samples: %d\n", sample_index);
 	for (size_t i = 0; i < sample_index; i++) {
 		sample_t *s = &samples[i];
-		INFO("xdp: %ld    tc: %ld    stream_verdict: %ld    socket: %ld\n",
-				s->time_to_xdp,
-				s->time_to_tc,
-				s->time_to_stream_verdict,
-				s->time_to_app);
+		/* INFO("xdp: %ld    tc: %ld    stream_verdict: %ld    socket: %ld\n", */
+		/* 		s->time_to_xdp, */
+		/* 		s->time_to_tc, */
+		/* 		s->time_to_stream_verdict, */
+		/* 		s->time_to_app); */
+		INFO("socket_layer: %ld\n", s->time_verdict_to_app);
 	}
 }
 
@@ -133,7 +136,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
-#define USING_TIMESTAMP_FRAME_PATCH 1
+/* #define USING_TIMESTAMP_FRAME_PATCH 1 */
 #ifdef USING_TIMESTAMP_FRAME_PATCH
 /* NOTE:
  * THIS MUST MATCH WITH THE STRUCT DEFINED INSIDE THE KERNEL
@@ -282,7 +285,12 @@ void register_socket(int fd)
 	int zero = 0;
 	char cmd;
 
-	// /* Connect the socket to a target so that I can use bpf_sk_map_redirect */
+	/* Connect the socket to a target so that I can use bpf_sk_map_redirect
+	 * More description:
+	 * For UDP sockets, we can not use bpf_sk_map_redirect in the
+	 * stream_verdict eBPF program unless the socket is connected.
+	 * */
+	INFO("NOTE: bpf_sk_map_redirect will not work (change code to connect server socket if you need it)\n");
 	// struct sockaddr_in addr;
 	// addr.sin_family = AF_INET;
 	// addr.sin_port = htons(3000);
@@ -419,6 +427,7 @@ int main(int argc, char *argv[])
 	if (argc < 5) {
 		INFO("usage: prog <core> <ip> <port> <mode>\n"
 		"  * mode: 0: UDP    1: TCP\n");
+		INFO("NOTE: some parameters are hard-coded. E.g, (if HW Timestamping is used or not)\n");
 		return 1;
 	}
 
@@ -438,7 +447,7 @@ int main(int argc, char *argv[])
 	app.count_workers = 1;
 	if (udp) {
 		hw_timestamp = 0;
-		sock_map_register = 0;
+		sock_map_register = 1;
 		if (hw_timestamp) {
 			app.sock_handler = handle_client_udp_with_hw_ts;
 		} else {
@@ -452,13 +461,13 @@ int main(int argc, char *argv[])
 	app.on_events = NULL;
 
 	if (hw_timestamp) {
-		INFO("In HW Timestamp mode\n");
+		INFO("\nIn HW Timestamp mode\n");
 		INFO("MUST BE RUNNING THE phc2sys");
 		INFO("    sudo phc2sys -s <eth> -O 0 -m\n");
-		INFO("More info:  https://eng-blog.iij.ad.jp/archives/21198\n");
+		INFO("More info:  https://eng-blog.iij.ad.jp/archives/21198\n\n");
 	}
 	if (sock_map_register)
-		INFO("Will try to add the socket to sock_map");
+		INFO("NOTE: will try to add the socket to sock_map\n");
 
 	if (!udp) {
 		ret = run_server(&app);
