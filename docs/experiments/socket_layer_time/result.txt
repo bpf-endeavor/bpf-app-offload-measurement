@@ -1,0 +1,36 @@
+Command:
+
+cat verdict_app.txt | awk '{print $2}' | ../../latency_script.py
+
+
+
+UDP Socket (no verdict):
+
+samples: 28772608
+max: 108723.0
+min: 875.0
+mean: 5462.76
+@1 : 1412.0
+@50: 5183.0
+@99: 10801.0
+std: 2960.940
+standard err: 0.552
+median (iqr): 5183.0 (2560.0)
+box-plot: 146.00--[3986.0-|5183.0|-6546.0]--10386.00
+meidan +- range: 5183.0 +- 5203.0
+
+
+Verdict:
+
+samples: 2609626
+max: 450003.0
+min: 1028.0
+mean: 7679.01
+@1 : 1654.0
+@50: 8422.0
+@99: 9456.0
+std: 2264.886
+standard err: 1.402
+median (iqr): 8422.0 (702.0)
+box-plot: 6960.00--[8013.0-|8422.0|-8715.0]--9768.00
+meidan +- range: 8422.0 +- 1462.0
