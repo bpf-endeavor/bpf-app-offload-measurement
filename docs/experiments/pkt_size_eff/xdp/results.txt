@@ -1,0 +1,80 @@
+command:
+    for i in 0 32 128; do echo '--------'; echo increase_$i.txt ; cat increase_$i.txt | awk '{print $2}' | ../../../latency_script.py; done
+
+
+--------
+increase_0.txt
+samples: 423152
+max: 105530.0
+min: 4427.0
+mean: 4899.46
+@1 : 4559.0
+@50: 4782.0
+@99: 6591.0
+std: 500.344
+standard err: 0.769
+median (iqr): 4782.0 (205.0)
+box-plot: 4388.50--[4696.0-|4782.0|-4901.0]--5208.50
+meidan +- range: 4782.0 +- 426.0
+
+--------
+increase_32.txt
+samples: 423731
+max: 61046.0
+min: 4435.0
+mean: 4995.35
+@1 : 4588.0
+@50: 4890.0
+@99: 6728.0
+std: 533.591
+standard err: 0.820
+median (iqr): 4890.0 (243.0)
+box-plot: 4408.50--[4773.0-|4890.0|-5016.0]--5380.50
+meidan +- range: 4890.0 +- 490.0
+
+--------
+increase_128.txt
+samples: 422829
+max: 490630.0
+min: 6552.0
+mean: 8069.85
+@1 : 7162.0
+@50: 7893.0
+@99: 11479.0
+std: 1134.690
+standard err: 1.745
+median (iqr): 7893.0 (549.0)
+box-plot: 6823.50--[7647.0-|7893.0|-8196.0]--9019.50
+meidan +- range: 7893.0 +- 1126.0
+
+--------
+increase_512.txt
+samples: 423610
+max: 54545.0
+min: 4717.0
+mean: 5199.36
+@1 : 4852.0
+@50: 5086.0
+@99: 6927.0
+std: 470.063
+standard err: 0.722
+median (iqr): 5086.0 (186.0)
+box-plot: 4727.00--[5006.0-|5086.0|-5192.0]--5471.00
+meidan +- range: 5086.0 +- 385.0
+
+--------
+increase_1024.txt
+samples: 424092
+max: 66929.0
+min: 6995.0
+mean: 8691.03
+@1 : 7629.0
+@50: 8526.0
+@99: 12161.0
+std: 841.555
+standard err: 1.292
+median (iqr): 8526.0 (677.0)
+box-plot: 7199.50--[8215.0-|8526.0|-8892.0]--9907.50
+meidan +- range: 8526.0 +- 1381.0
+
+

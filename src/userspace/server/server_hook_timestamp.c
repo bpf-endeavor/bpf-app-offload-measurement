@@ -18,6 +18,7 @@ struct client_ctx { };
 #include <linux/if.h>
 #include <sys/ioctl.h>
 
+#define USING_TIMESTAMP_FRAME_PATCH 1
 #define RECV_BUFSIZE 2048
 
 #define RECV(fd, buf, size, flag)  {                  \
@@ -64,6 +65,59 @@ static inline unsigned long int get_realtime_ns(void) {
 	return rprt_ts;
 }
 
+#ifdef USING_TIMESTAMP_FRAME_PATCH
+/* NOTE:
+ * THIS MUST MATCH WITH THE STRUCT DEFINED INSIDE THE KERNEL
+ * (include/linux/test_timer.h)
+ * */
+struct timestamp_frame {
+	uint32_t magic;
+	uint64_t timestamp;
+} __attribute__((packed));
+#define TF_MAGIC 0x7591
+
+typedef struct {
+	uint64_t duration;
+	uint32_t len;
+} tsf_sample_t ;
+
+void record_timestamp_frame(void *buf, int len)
+{
+	if (len < sizeof(struct timestamp_frame)) {
+		ERROR("Request is smaller than timestamp_frame!\n");
+		return;
+	}
+	struct timestamp_frame *tf = buf;
+	uint64_t duration = get_ns() - tf->timestamp;
+	if (tf->magic != TF_MAGIC) {
+		ERROR("The timestamp_frame MAGIC does not match!\n");
+		return;
+	}
+	size_t index = sample_index;
+	sample_index += 1;
+	struct payload *p = buf;
+	tsf_sample_t *s = (tsf_sample_t *)&samples[index];
+	s->duration = duration;
+	s->len = len;
+}
+
+
+void report_timestamp_frame(void *buf, int len)
+{
+	if (len < sizeof(struct timestamp_frame)) {
+		ERROR("Request is smaller than timestamp_frame!\n");
+		return;
+	}
+	struct timestamp_frame *tf = buf;
+	uint64_t duration = get_ns() - tf->timestamp;
+	if (tf->magic != TF_MAGIC) {
+		ERROR("The timestamp_frame MAGIC does not match!\n");
+		return;
+	}
+	INFO("Farbod: It takes %llu to reach UDP socket (len: %d)\n", duration, len);
+}
+#endif
+
 static inline
 void record_sample(void *buf, int len, uint64_t raw_hw_ts)
 {
@@ -103,6 +157,10 @@ void report_samples(void)
 {
 	INFO("Number of samples: %d\n", sample_index);
 	for (size_t i = 0; i < sample_index; i++) {
+#ifdef USING_TIMESTAMP_FRAME_PATCH
+		tsf_sample_t *s = (tsf_sample_t *)&samples[i];
+		INFO("duration: %ld    len: %d\n", s->duration, s->len);
+#else
 		sample_t *s = &samples[i];
 		/* INFO("xdp: %ld    tc: %ld    stream_verdict: %ld    socket: %ld\n", */
 		/* 		s->time_to_xdp, */
@@ -110,6 +168,7 @@ void report_samples(void)
 		/* 		s->time_to_stream_verdict, */
 		/* 		s->time_to_app); */
 		INFO("socket_layer: %ld\n", s->time_verdict_to_app);
+#endif
 	}
 }
 
@@ -135,35 +194,6 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 	ret = send(client_fd, buf, len, 0);
 	return 0;
 }
-
-/* #define USING_TIMESTAMP_FRAME_PATCH 1 */
-#ifdef USING_TIMESTAMP_FRAME_PATCH
-/* NOTE:
- * THIS MUST MATCH WITH THE STRUCT DEFINED INSIDE THE KERNEL
- * (include/linux/test_timer.h)
- * */
-struct timestamp_frame {
-	uint32_t magic;
-	uint64_t timestamp;
-} __attribute__((packed));
-#define TF_MAGIC 0x7591
-
-
-void report_timestamp_frame(void *buf, int len)
-{
-	if (len < sizeof(struct timestamp_frame)) {
-		ERROR("Request is smaller than timestamp_frame!\n");
-		return;
-	}
-	struct timestamp_frame *tf = buf;
-	uint64_t duration = get_ns() - tf->timestamp;
-	if (tf->magic != TF_MAGIC) {
-		ERROR("The timestamp_frame MAGIC does not match!\n");
-		return;
-	}
-	INFO("Farbod: It takes %llu to reach UDP socket\n", duration);
-}
-#endif
 
 int handle_client_udp(int client_fd, struct client_ctx *ctx)
 {
@@ -191,7 +221,7 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	len = ret;
 
 #ifdef USING_TIMESTAMP_FRAME_PATCH
-	report_timestamp_frame(buf, len);
+	record_timestamp_frame(buf, len);
 #else
 	record_sample(buf, len, 0);
 #endif
