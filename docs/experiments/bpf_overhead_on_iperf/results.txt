@@ -1,0 +1,77 @@
+Experiment Commands:
+
+server:     iperf -s 192.168.200.101 -p 8080
+client:     iperf -c 192.168.200.101 -p 8080 -P 48
+
+Running the experiment 100 times:
+
+    for i in `seq 100`; do echo $i; iperf -c 192.168.200.101 -p 8080 -P 48 &>> ./xdp_iperf_result.txt; sleep 1; done
+
+Processing Files:
+    cat xdp_iperf_result.txt | grep SUM | awk '{print $6}' | ../../latency_script.py
+
+
+Results:
+
+No eBPF programs attached:
+
+samples: 100
+max: 94.1
+min: 72.8
+mean: 90.87
+@1 : 74.6
+@50: 92.6
+@99: 94.1
+std: 4.435
+standard err: 0.443
+median (iqr): 92.6 (4.200000000000003)
+box-plot: 83.30--[89.6-|92.6|-93.8]--100.10
+meidan +- range: 92.6 +- 9.099999999999994
+
+
+With minimal XDP:
+
+samples: 103
+max: 93.8
+min: 68.6
+mean: 88.20
+@1 : 74.3
+@50: 89.5
+@99: 93.8
+std: 5.222
+standard err: 0.515
+median (iqr): 89.5 (6.400000000000006)
+box-plot: 76.50--[86.1-|89.5|-92.5]--102.10
+meidan +- range: 89.5 +- 11.700000000000003
+
+
+With minimal TC:
+
+samples: 100
+max: 94.1
+min: 75.8
+mean: 91.03
+@1 : 76.9
+@50: 93.0
+@99: 94.1
+std: 4.110
+standard err: 0.411
+median (iqr): 93.0 (4.0)
+box-plot: 83.80--[89.8-|93.0|-93.8]--99.80
+meidan +- range: 93.0 +- 8.799999999999997
+
+With minimal SKSKB:
+
+samples: 91
+max: 93.8
+min: 60.5
+mean: 87.19
+@1 : 60.5
+@50: 88.4
+@99: 93.8
+std: 6.278
+standard err: 0.658
+median (iqr): 88.4 (7.200000000000003)
+box-plot: 73.90--[84.7-|88.4|-91.9]--102.70
+meidan +- range: 88.4 +- 12.100000000000009
+
