@@ -1,0 +1,49 @@
+command to generate load:
+    ./build/udpgen -i 192.168.200.101 -p 3030 -t 1 -P 1 --one -d 60
+
+command to generate result:
+    for x in $(ls *_duration_*); do echo '--------'; echo $x; cat $x | awk '{print $2}' | ../../latency_script.py; done
+
+--------
+socket_duration_since_driver.txt
+samples: 845489
+max: 431357.0
+min: 3216.0
+mean: 4134.46
+@1 : 3797.0
+@50: 4015.0
+@99: 5702.0
+std: 1424.613
+standard err: 1.549
+median (iqr): 4015.0 (210.0)
+box-plot: 3600.00--[3915.0-|4015.0|-4125.0]--4440.00
+meidan +- range: 4015.0 +- 425.0
+--------
+tc_duration_since_driver.txt
+samples: 846276
+max: 4381664.0
+min: 2960.0
+mean: 25160.87
+@1 : 4706.0
+@50: 5003.0
+@99: 625311.0
+std: 108651.105
+standard err: 118.108
+median (iqr): 5003.0 (391.0)
+box-plot: 4286.50--[4873.0-|5003.0|-5264.0]--5850.50
+meidan +- range: 5003.0 +- 847.0
+--------
+xdp_duration_since_driver.txt
+samples: 845597
+max: 144675.0
+min: 3701.0
+mean: 4171.72
+@1 : 3797.0
+@50: 4054.0
+@99: 6100.0
+std: 766.775
+standard err: 0.834
+median (iqr): 4054.0 (201.0)
+box-plot: 3649.50--[3951.0-|4054.0|-4152.0]--4453.50
+meidan +- range: 4054.0 +- 399.0
+
