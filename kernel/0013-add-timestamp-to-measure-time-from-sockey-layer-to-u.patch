@@ -1,0 +1,56 @@
+From 36e4c43c63df83dd40da9197eafc786965f33ef5 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 4 Jul 2024 15:22:10 +0000
+Subject: [PATCH 13/13] add timestamp to measure time from sockey layer to user
+ app
+
+---
+ include/linux/test_timer.h |  2 +-
+ net/ipv4/udp.c             | 11 +++++++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/test_timer.h b/include/linux/test_timer.h
+index d17633b88b91..7f2590bdba2c 100644
+--- a/include/linux/test_timer.h
++++ b/include/linux/test_timer.h
+@@ -89,7 +89,7 @@ __must_hold(rcu)
+ 
+ /* macros for easier use of test timer */
+ #define TEST_TIMER_BEGIN() \
+-	static struct test_timer t = { NO_MIGRATE }; \
++	static struct test_timer t = { NO_PREEMPT }; \
+ 	const u32 sample_count = 100000; \
+ 	int tmp_err = 0; \
+ 	u32 tmp_res = 0; \
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index 38e6686d22db..bd5613034aab 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -1492,6 +1492,7 @@ static int udp_rmem_schedule(struct sock *sk, int size)
+ }
+ 
+ /* #define MEASURE_TIME_TO_SK_SKB_UDP 1 */
++/* #define MEASURETIME_SOCK_LAYER_TIME 1 */
+ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ {
+ 	struct sk_buff_head *list = &sk->sk_receive_queue;
+@@ -1541,6 +1542,16 @@ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
+ 	 */
+ 	sock_skb_set_dropcount(sk, skb);
+ 
++
++#ifdef MEASURETIME_SOCK_LAYER_TIME
++	/* This is our packet */
++	/* printk("udp recv a skb: socket port: %d, len: %d", sk->sk_num,  skb_headlen(skb)); */
++	if (sk->sk_num == 8080 && skb_headlen(skb) > 24) {
++		/* printk("Farbod: Add timestamp in socket layer: a packet for our server\n"); */
++		u64 *ts = (u64 *)skb->data;
++		ts[2] = ktime_get_ns();
++	}
++#endif
+ 	__skb_queue_tail(list, skb);
+ 	spin_unlock(&list->lock);
+ 
+-- 
+2.34.1
+
