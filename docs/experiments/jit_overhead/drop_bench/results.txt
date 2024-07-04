@@ -1,0 +1,36 @@
+command for processing data:
+
+	cat native.txt | awk '{print $6/1000000}' | ../../../latency_script.py
+	cat xdp.txt | awk '{print $7/1000000}' | ../../../latency_script.py
+
+
+results:
+
+Native:
+samples: 128
+max: 15.9741
+min: 15.7133
+mean: 15.84
+@1 : 15.7282
+@50: 15.8329
+@99: 15.9697
+std: 0.052
+standard err: 0.005
+median (iqr): 15.8329 (0.08000000000000007)
+box-plot: 15.68--[15.7955-|15.8329|-15.8755]--16.00
+meidan +- range: 15.8329 +- 0.14119999999999955
+
+XDP:
+
+samples: 176
+max: 14.8183
+min: 0.0
+mean: 14.61
+@1 : 14.5372
+@50: 14.7148
+@99: 14.8176
+std: 1.109
+standard err: 0.084
+median (iqr): 14.7148 (0.09030000000000094)
+box-plot: 14.51--[14.6442-|14.7148|-14.7345]--14.87
+meidan +- range: 14.7148 +- 0.17759999999999998
