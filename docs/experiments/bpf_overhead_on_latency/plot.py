@@ -7,8 +7,9 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 
 SOCKET = 'Socket'
+SKSKB  = 'SK_SKB'
 TC     = 'TC'
-XDP    =  'XDP'
+XDP    = 'XDP'
 
 output = 'ebpf_overhead_on_latency.pdf'
 config = {
@@ -32,7 +33,14 @@ config = {
             'label': 'XDP',
             'median': 4054,
             'linestyle': '--',
-            }
+            },
+        SKSKB: {
+            'path': 'skskb_duration_since_driver.txt',
+            'color': 'tab:green',
+            'label': 'SK_SKB',
+            'median': 4923,
+            'linestyle': '-.',
+            },
     }
 
 
@@ -53,7 +61,7 @@ ax = fig.add_subplot(1,1,1)
 
 # x_size = 10000 
 # x = list(range(x_size))
-for i, handle in enumerate([SOCKET,XDP,TC]):
+for i, handle in enumerate([SOCKET,XDP,SKSKB,TC]):
     c = config[handle]
     d = get_measures(c['path'])
     # Skip the first 10K measurments
