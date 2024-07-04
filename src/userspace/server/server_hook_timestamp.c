@@ -18,6 +18,9 @@ struct client_ctx { };
 #include <linux/if.h>
 #include <sys/ioctl.h>
 
+/* NOTE: enable ``USING_TIMESTAMP_FRAME_PATCH'' when you want to use the
+ * timestamp added in the driver. It requires kernel patch/modification.
+ * */
 #define USING_TIMESTAMP_FRAME_PATCH 1
 #define RECV_BUFSIZE 2048
 
