@@ -1,0 +1,84 @@
+From 6fe54b17d21b55c18a8e1eed59f96bba563eaa64 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 5 Jul 2024 17:02:44 +0000
+Subject: [PATCH 14/14] add a native drop benchmark to the mlx5 driver
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.c  | 53 +++++++++++++++++++
+ 1 file changed, 53 insertions(+)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+index 82b5ca1be4f3..e00ebd0cc0c7 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+@@ -37,6 +37,55 @@
+ #include <linux/bitfield.h>
+ #include <net/page_pool/helpers.h>
+ 
++/* Run a drop benchmark instead of XDP program. The benchmark is compiled with
++ * the driver source code */
++/* #define NATIVE_DROP_VS_EBPF 1 */
++
++#ifdef NATIVE_DROP_VS_EBPF
++static u64 counter = 0;
++static u64 last_report = 0;
++static inline void report_tput(void)
++{
++	u64 ts, delta;
++	/* We must run on a single core */
++	/* counter += 1; */
++	__atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
++	ts = ktime_get_coarse_ns();
++	if (last_report == 0) {
++		last_report = ts;
++		return;
++	}
++
++	delta = ts - last_report;
++	if (delta >= 1000000000L) {
++		printk("NATIVE DROP: throughput: %lld (pps)", counter);
++		counter = 0;
++		last_report = ts;
++	}
++}
++
++static int __native_drop_bench(struct xdp_buff *ctx)
++{
++	void *data, *data_end;
++	data = (void *)(u64)ctx->data;
++	data_end = (void *)(u64)ctx->data_end;
++	struct ethhdr *eth = data;
++	struct iphdr  *ip = (void *)(eth + 1);
++	struct udphdr *udp = (void *)(ip + 1);
++	if ((void *)(udp + 1) > data_end)
++		return XDP_PASS;
++	if (eth->h_proto != htons(ETH_P_IP))
++		return XDP_PASS;
++	if (ip->protocol != IPPROTO_UDP)
++		return XDP_PASS;
++	/* Server port is 8080 */
++	if (udp->dest != htons(8080))
++		return XDP_PASS;
++	report_tput();
++	return XDP_DROP;
++}
++#endif
++
+ int mlx5e_xdp_max_mtu(struct mlx5e_params *params, struct mlx5e_xsk_param *xsk)
+ {
+ 	int hr = mlx5e_get_linear_rq_headroom(params, xsk);
+@@ -315,7 +364,11 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq,
+ 	u32 act;
+ 	int err;
+ 
++#ifdef NATIVE_DROP_VS_EBPF
++	act = __native_drop_bench(xdp);
++#else
+ 	act = bpf_prog_run_xdp(prog, xdp);
++#endif
+ 	switch (act) {
+ 	case XDP_PASS:
+ 		return false;
+-- 
+2.34.1
+
