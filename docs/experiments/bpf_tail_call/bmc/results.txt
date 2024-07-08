@@ -1,0 +1,92 @@
+command for generating the report
+
+    cat original.txt | grep QPS | awk '{print $4/1000}' | ../../../latency_script.py
+
+
+command running memcached:
+    taskset -c 1 ./memcached -U 11211 -l 192.168.200.101 -m 1024 -M -k -t 1 -C
+
+bmc:
+    original: c0588196
+    no_spectre: f151257
+    no_tail_call: 800e329
+
+BMC running script:
+
+
+```bash
+#! /bin/bash
+BMC_BIN=./bmc
+if [ -z "$NET_IFACE" ]; then
+        echo "NET_IFACE has not been set"
+        exit 1
+fi
+
+echo Running BMC ...
+nohup sudo $BMC_BIN 6 &
+sleep 3
+sudo tc qdisc add dev $NET_IFACE clsact
+sudo tc filter add dev $NET_IFACE egress bpf object-pinned /sys/fs/bpf/bmc_tx_filter
+
+quit=0
+echo "Ctrl-C to stop..."
+while [ $quit -ne 1 ]; do
+    sleep 1
+done
+
+# Detach BMC
+sudo pkill -SIGINT bmc
+sudo tc filter del dev $NET_IFACE egress
+sudo tc qdisc del dev $NET_IFACE clsact
+sudo rm /sys/fs/bpf/bmc_tx_filter
+```
+
+results:
+
+No Spectre:
+
+samples: 100
+max: 883.994
+min: 871.44
+mean: 882.42
+@1 : 881.271
+@50: 882.491
+@99: 883.994
+std: 1.250
+standard err: 0.125
+median (iqr): 882.491 (0.7000000000000455)
+box-plot: 881.16--[882.209-|882.491|-882.909]--883.96
+meidan +- range: 882.491 +- 1.4600000000000364
+
+
+Original:
+
+samples: 100
+max: 934.873
+min: 918.768
+mean: 932.58
+@1 : 931.457
+@50: 932.664
+@99: 934.873
+std: 1.550
+standard err: 0.155
+median (iqr): 932.664 (1.0670000000000073)
+box-plot: 930.49--[932.095-|932.664|-933.162]--934.76
+meidan +- range: 932.664 +- 1.759999999999991
+
+
+No Tail:
+
+samples: 20
+max: 939.022
+min: 923.478
+mean: 936.91
+@1 : 923.478
+@50: 937.607
+@99: 939.022
+std: 3.203
+standard err: 0.716
+median (iqr): 937.607 (0.4660000000000082)
+box-plot: 936.62--[937.317-|937.607|-937.783]--938.48
+meidan +- range: 937.607 +- 0.9850000000000136
+
