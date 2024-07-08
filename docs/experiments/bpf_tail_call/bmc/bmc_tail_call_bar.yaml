@@ -1,0 +1,25 @@
+figsize: [5, 2.5]
+x: ["Dynamic Key", "Constant Key", "No Tail Calls"]
+y: [
+  [882.2, 0, 0],
+  [0, 932.6, 0],
+  [0, 0, 949.3],
+]
+yerr: [
+  [1.4, 0, 0],
+  [0, 1.7, 0],
+  [0, 0, 0.82],
+]
+color: ["tab:red", "tab:orange", "tab:purple"]
+hatch: ["+", '/', '.']
+ylabel: 'K Request / Second'
+yticks: [0, 200, 400, 600, 800, 1000]
+grid: true
+output: bmc_tail_call.pdf
+annotate:
+  - xy: [-0.15, 885] 
+    text: "-5.4%"
+  - xy: [0.85, 935]
+    text: "baseline"
+  - xy: [1.85, 952]
+    text: "+1.7%"
