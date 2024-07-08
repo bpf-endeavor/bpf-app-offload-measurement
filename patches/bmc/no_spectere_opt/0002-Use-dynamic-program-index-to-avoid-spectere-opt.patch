@@ -1,0 +1,351 @@
+From f151257a94c3ed6b0b91654208f72596267058ae Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 8 Jul 2024 15:20:29 +0000
+Subject: [PATCH 2/2] Use dynamic program index to avoid spectere opt
+
+---
+ bmc/bmc_kern.c |  26 ++++--
+ bmc/nohup.out  | 228 +++++++++++++++++++++++++++++++++++++++++++++++++
+ bmc/run.sh     |  24 ++++++
+ 3 files changed, 272 insertions(+), 6 deletions(-)
+ create mode 100644 bmc/nohup.out
+ create mode 100755 bmc/run.sh
+
+diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
+index c05a616..7e89d07 100644
+--- a/bmc/bmc_kern.c
++++ b/bmc/bmc_kern.c
+@@ -202,6 +202,7 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
+ 	void *data = (void *)(long)ctx->data;
+ 	char *payload = (char *) data;
+ 	unsigned int zero = 0;
++	int prog_index = 0;
+ 
+ 	if (payload >= data_end)
+ 		return XDP_PASS;
+@@ -268,8 +269,14 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
+ 
+ 	if (done_parsing) { // the end of the request has been reached
+ 		bpf_xdp_adjust_head(ctx, 0 - (sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct memcached_udp_header) + pctx->read_pkt_offset)); // pop headers + 'get ' + previous keys
++		if (pctx->key_count == 1) {
++			prog_index = BMC_PROG_XDP_PREPARE_PACKET;
++		} else {
++			/* NOTE: this path must be unreachable */
++			prog_index = 32;
++		}
+ 		if (pctx->key_count > 0) {
+-			bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_PREPARE_PACKET);
++			bpf_tail_call(ctx, &map_progs_xdp, prog_index);
+ 		}
+ 	} else { // more keys to process
+ 		off++; // move offset to the start of the next key
+@@ -291,6 +298,7 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
+ 		return XDP_DROP;
+ 	}
+ 
++	int prog_index = 0;
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+ 	struct ethhdr *eth = data;
+@@ -326,7 +334,13 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
+ 	if (bpf_xdp_adjust_head(ctx, sizeof(*eth) + sizeof(*ip) + sizeof(*udp) + sizeof(*memcached_udp_hdr))) // push new headers
+ 		return XDP_PASS;
+ 
+-	bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY);
++	if ((void *)(payload + 2000) < data_end) {
++		/* NOTE: this path must be unreachable */
++		prog_index = 32;
++	} else {
++		prog_index = BMC_PROG_XDP_WRITE_REPLY;
++	}
++	bpf_tail_call(ctx, &map_progs_xdp, prog_index);
+ 
+ 	return XDP_PASS;
+ }
+@@ -449,15 +463,15 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+ 		bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY);
+ 	}
+ 
+-	bpf_printk("bmc_write_reply_main: failed");
++	/* bpf_printk("bmc_write_reply_main: failed"); */
+ 	/* bpf_printk("current_key: %d/%d (max: %d)", pctx->current_key, pctx->key_count, BMC_MAX_KEY_IN_PACKET); */
+-	bpf_printk("written data: %d", written);
++	/* bpf_printk("written data: %d", written); */
+ 
+ 	/* void *x = payload+written+5; */
+ 	/* void *y = data_end; */
+ 	/* bpf_printk("%p >? %p = %d",  x, y, x > y); */
+-	__u16 tmp_size = (__u16)(__u64)(data_end - data);
+-	bpf_printk("packet size: %d", tmp_size);
++	/* __u16 tmp_size = (__u16)(__u64)(data_end - data); */
++	/* bpf_printk("packet size: %d", tmp_size); */
+ 	return XDP_DROP;
+ }
+ 
+diff --git a/bmc/nohup.out b/bmc/nohup.out
+new file mode 100644
+index 0000000..1e80f13
+--- /dev/null
++++ b/bmc/nohup.out
+@@ -0,0 +1,228 @@
++libbpf: loading ./bmc_kern.o
++libbpf: elf: section(2) .text, size 5848, link 0, flags 6, type=1
++libbpf: sec '.text': found program 'bmc_hash_keys_main' at insn offset 0 (0 bytes), code size 141 insns (1128 bytes)
++libbpf: sec '.text': found program 'bmc_prepare_packet_main' at insn offset 141 (1128 bytes), code size 565 insns (4520 bytes)
++libbpf: sec '.text': found program 'compute_ip_checksum' at insn offset 706 (5648 bytes), code size 25 insns (200 bytes)
++libbpf: elf: section(3) .rel.text, size 128, link 33, flags 40, type=9
++libbpf: elf: section(4) bmc_rx_filter, size 1704, link 0, flags 6, type=1
++libbpf: sec 'bmc_rx_filter': found program 'bmc_rx_filter_main' at insn offset 0 (0 bytes), code size 213 insns (1704 bytes)
++libbpf: elf: section(5) .relbmc_rx_filter, size 80, link 33, flags 40, type=9
++libbpf: elf: section(6) bmc_tx_filter, size 488, link 0, flags 6, type=1
++libbpf: sec 'bmc_tx_filter': found program 'bmc_tx_filter_main' at insn offset 0 (0 bytes), code size 61 insns (488 bytes)
++libbpf: elf: section(7) .relbmc_tx_filter, size 32, link 33, flags 40, type=9
++libbpf: elf: section(8) bmc_update_cache, size 1000, link 0, flags 6, type=1
++libbpf: sec 'bmc_update_cache': found program 'bmc_update_cache_main' at insn offset 0 (0 bytes), code size 125 insns (1000 bytes)
++libbpf: elf: section(9) .relbmc_update_cache, size 32, link 33, flags 40, type=9
++libbpf: elf: section(10) maps, size 80, link 0, flags 3, type=1
++libbpf: elf: section(11) .maps, size 64, link 0, flags 3, type=1
++libbpf: elf: section(12) license, size 4, link 0, flags 3, type=1
++libbpf: license of ./bmc_kern.o is GPL
++libbpf: elf: section(13) .rodata.str1.1, size 213, link 0, flags 32, type=1
++libbpf: elf: skipping unrecognized data section(13) .rodata.str1.1
++libbpf: elf: section(24) .BTF, size 12073, link 0, flags 0, type=1
++libbpf: elf: section(26) .BTF.ext, size 6520, link 0, flags 0, type=1
++libbpf: elf: section(33) .symtab, size 2136, link 1, flags 0, type=2
++libbpf: looking for externs among 89 symbols...
++libbpf: collected 0 externs total
++libbpf: elf: found 4 legacy map definitions (80 bytes) in ./bmc_kern.o
++libbpf: map 'map_stats' (legacy): at sec_idx 10, offset 20.
++libbpf: map 80 is "map_stats"
++libbpf: map 'map_parsing_context' (legacy): at sec_idx 10, offset 0.
++libbpf: map 81 is "map_parsing_context"
++libbpf: map 'map_progs_tc' (legacy): at sec_idx 10, offset 60.
++libbpf: map 85 is "map_progs_tc"
++libbpf: map 'map_progs_xdp' (legacy): at sec_idx 10, offset 40.
++libbpf: map 87 is "map_progs_xdp"
++libbpf: map 'map_kcache': at sec_idx 11, offset 0.
++libbpf: map 'map_kcache': found type = 2.
++libbpf: map 'map_kcache': found key [6], sz = 4.
++libbpf: map 'map_kcache': found value [9], sz = 1272.
++libbpf: map 'map_kcache': found max_entries = 3250000.
++libbpf: map 'map_keys': at sec_idx 11, offset 32.
++libbpf: map 'map_keys': found type = 6.
++libbpf: map 'map_keys': found key [7], sz = 4.
++libbpf: map 'map_keys': found value [21], sz = 208.
++libbpf: map 'map_keys': found max_entries = 4.
++libbpf: sec '.rel.text': collecting relocation for section(2) '.text'
++libbpf: sec '.rel.text': relo #0: insn #9 against 'map_parsing_context'
++libbpf: prog 'bmc_hash_keys_main': found map 1 (map_parsing_context, sec 10, off 0) for insn #9
++libbpf: sec '.rel.text': relo #1: insn #15 against 'map_keys'
++libbpf: prog 'bmc_hash_keys_main': found map 5 (map_keys, sec 11, off 32) for insn #15
++libbpf: sec '.rel.text': relo #2: insn #73 against 'map_kcache'
++libbpf: prog 'bmc_hash_keys_main': found map 4 (map_kcache, sec 11, off 0) for insn #73
++libbpf: sec '.rel.text': relo #3: insn #116 against 'map_stats'
++libbpf: prog 'bmc_hash_keys_main': found map 0 (map_stats, sec 10, off 20) for insn #116
++libbpf: sec '.rel.text': relo #4: insn #347 against 'map_parsing_context'
++libbpf: prog 'bmc_prepare_packet_main': found map 1 (map_parsing_context, sec 10, off 0) for insn #206
++libbpf: sec '.rel.text': relo #5: insn #353 against 'map_keys'
++libbpf: prog 'bmc_prepare_packet_main': found map 5 (map_keys, sec 11, off 32) for insn #212
++libbpf: sec '.rel.text': relo #6: insn #367 against 'map_kcache'
++libbpf: prog 'bmc_prepare_packet_main': found map 4 (map_kcache, sec 11, off 0) for insn #226
++libbpf: sec '.rel.text': relo #7: insn #509 against 'map_stats'
++libbpf: prog 'bmc_prepare_packet_main': found map 0 (map_stats, sec 10, off 20) for insn #368
++libbpf: sec '.relbmc_rx_filter': collecting relocation for section(4) 'bmc_rx_filter'
++libbpf: sec '.relbmc_rx_filter': relo #0: insn #30 against 'map_stats'
++libbpf: prog 'bmc_rx_filter_main': found map 0 (map_stats, sec 10, off 20) for insn #30
++libbpf: sec '.relbmc_rx_filter': relo #1: insn #40 against 'map_parsing_context'
++libbpf: prog 'bmc_rx_filter_main': found map 1 (map_parsing_context, sec 10, off 0) for insn #40
++libbpf: sec '.relbmc_rx_filter': relo #2: insn #72 against 'map_stats'
++libbpf: prog 'bmc_rx_filter_main': found map 0 (map_stats, sec 10, off 20) for insn #72
++libbpf: sec '.relbmc_rx_filter': relo #3: insn #90 against '.text'
++libbpf: sec '.relbmc_rx_filter': relo #4: insn #181 against 'map_kcache'
++libbpf: prog 'bmc_rx_filter_main': found map 4 (map_kcache, sec 11, off 0) for insn #181
++libbpf: sec '.relbmc_tx_filter': collecting relocation for section(6) 'bmc_tx_filter'
++libbpf: sec '.relbmc_tx_filter': relo #0: insn #45 against 'map_stats'
++libbpf: prog 'bmc_tx_filter_main': found map 0 (map_stats, sec 10, off 20) for insn #45
++libbpf: sec '.relbmc_tx_filter': relo #1: insn #55 against 'map_progs_tc'
++libbpf: prog 'bmc_tx_filter_main': found map 2 (map_progs_tc, sec 10, off 60) for insn #55
++libbpf: sec '.relbmc_update_cache': collecting relocation for section(8) 'bmc_update_cache'
++libbpf: sec '.relbmc_update_cache': relo #0: insn #23 against 'map_kcache'
++libbpf: prog 'bmc_update_cache_main': found map 4 (map_kcache, sec 11, off 0) for insn #23
++libbpf: sec '.relbmc_update_cache': relo #1: insn #114 against 'map_stats'
++libbpf: prog 'bmc_update_cache_main': found map 0 (map_stats, sec 10, off 20) for insn #114
++libbpf: prog 'bmc_rx_filter_main': unrecognized ELF section name 'bmc_rx_filter'
++libbpf: prog 'bmc_tx_filter_main': unrecognized ELF section name 'bmc_tx_filter'
++libbpf: prog 'bmc_update_cache_main': unrecognized ELF section name 'bmc_update_cache'
++libbpf: map:map_stats container_name:____btf_map_map_stats cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_stats': created successfully, fd=4
++libbpf: map:map_parsing_context container_name:____btf_map_map_parsing_context cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_parsing_context': created successfully, fd=5
++libbpf: map:map_progs_tc container_name:____btf_map_map_progs_tc cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_progs_tc': created successfully, fd=6
++libbpf: map:map_progs_xdp container_name:____btf_map_map_progs_xdp cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_progs_xdp': created successfully, fd=7
++libbpf: map 'map_kcache': created successfully, fd=8
++libbpf: map 'map_keys': created successfully, fd=9
++libbpf: prog 'bmc_rx_filter_main': added 141 insns from sub-prog 'bmc_hash_keys_main'
++libbpf: prog 'bmc_rx_filter_main': added 565 insns from sub-prog 'bmc_prepare_packet_main'
++libbpf: prog 'bmc_rx_filter_main': added 25 insns from sub-prog 'compute_ip_checksum'
++libbpf: prog 'bmc_prepare_packet_main': insn #543 relocated, imm 21 points to subprog 'compute_ip_checksum' (now at 919 offset)
++libbpf: prog 'bmc_hash_keys_main': insn #138 relocated, imm 2 points to subprog 'bmc_prepare_packet_main' (now at 354 offset)
++libbpf: prog 'bmc_rx_filter_main': insn #90 relocated, imm 122 points to subprog 'bmc_hash_keys_main' (now at 213 offset)
++libbpf: pinned program '/sys/fs/bpf/bmc_tx_filter'
++Main BPF program attached to XDP on interface 6
++libbpf: loading ./bmc_kern.o
++libbpf: elf: section(2) .text, size 200, link 0, flags 6, type=1
++libbpf: sec '.text': found program 'compute_ip_checksum' at insn offset 0 (0 bytes), code size 25 insns (200 bytes)
++libbpf: elf: section(3) bmc_rx_filter, size 656, link 0, flags 6, type=1
++libbpf: sec 'bmc_rx_filter': found program 'bmc_rx_filter_main' at insn offset 0 (0 bytes), code size 82 insns (656 bytes)
++libbpf: elf: section(4) .relbmc_rx_filter, size 64, link 40, flags 40, type=9
++libbpf: elf: section(5) bmc_hash_keys, size 1184, link 0, flags 6, type=1
++libbpf: sec 'bmc_hash_keys': found program 'bmc_hash_keys_main' at insn offset 0 (0 bytes), code size 148 insns (1184 bytes)
++libbpf: elf: section(6) .relbmc_hash_keys, size 80, link 40, flags 40, type=9
++libbpf: elf: section(7) bmc_prepare_packet, size 1640, link 0, flags 6, type=1
++libbpf: sec 'bmc_prepare_packet': found program 'bmc_prepare_packet_main' at insn offset 0 (0 bytes), code size 205 insns (1640 bytes)
++libbpf: elf: section(8) .relbmc_prepare_packet, size 16, link 40, flags 40, type=9
++libbpf: elf: section(9) bmc_write_reply, size 2952, link 0, flags 6, type=1
++libbpf: sec 'bmc_write_reply': found program 'bmc_write_reply_main' at insn offset 0 (0 bytes), code size 369 insns (2952 bytes)
++libbpf: elf: section(10) .relbmc_write_reply, size 96, link 40, flags 40, type=9
++libbpf: elf: section(11) bmc_invalidate_cache, size 1120, link 0, flags 6, type=1
++libbpf: sec 'bmc_invalidate_cache': found program 'bmc_invalidate_cache_main' at insn offset 0 (0 bytes), code size 140 insns (1120 bytes)
++libbpf: elf: section(12) .relbmc_invalidate_cache, size 32, link 40, flags 40, type=9
++libbpf: elf: section(13) bmc_tx_filter, size 488, link 0, flags 6, type=1
++libbpf: sec 'bmc_tx_filter': found program 'bmc_tx_filter_main' at insn offset 0 (0 bytes), code size 61 insns (488 bytes)
++libbpf: elf: section(14) .relbmc_tx_filter, size 32, link 40, flags 40, type=9
++libbpf: elf: section(15) bmc_update_cache, size 1000, link 0, flags 6, type=1
++libbpf: sec 'bmc_update_cache': found program 'bmc_update_cache_main' at insn offset 0 (0 bytes), code size 125 insns (1000 bytes)
++libbpf: elf: section(16) .relbmc_update_cache, size 32, link 40, flags 40, type=9
++libbpf: elf: section(17) maps, size 80, link 0, flags 3, type=1
++libbpf: elf: section(18) .maps, size 64, link 0, flags 3, type=1
++libbpf: elf: section(19) .rodata.str1.1, size 218, link 0, flags 32, type=1
++libbpf: elf: skipping unrecognized data section(19) .rodata.str1.1
++libbpf: elf: section(20) license, size 4, link 0, flags 3, type=1
++libbpf: license of ./bmc_kern.o is GPL
++libbpf: elf: section(31) .BTF, size 12598, link 0, flags 0, type=1
++libbpf: elf: section(33) .BTF.ext, size 6760, link 0, flags 0, type=1
++libbpf: elf: section(40) .symtab, size 2376, link 1, flags 0, type=2
++libbpf: looking for externs among 99 symbols...
++libbpf: collected 0 externs total
++libbpf: elf: found 4 legacy map definitions (80 bytes) in ./bmc_kern.o
++libbpf: map 'map_stats' (legacy): at sec_idx 17, offset 20.
++libbpf: map 86 is "map_stats"
++libbpf: map 'map_parsing_context' (legacy): at sec_idx 17, offset 0.
++libbpf: map 87 is "map_parsing_context"
++libbpf: map 'map_progs_xdp' (legacy): at sec_idx 17, offset 40.
++libbpf: map 88 is "map_progs_xdp"
++libbpf: map 'map_progs_tc' (legacy): at sec_idx 17, offset 60.
++libbpf: map 96 is "map_progs_tc"
++libbpf: map 'map_keys': at sec_idx 18, offset 0.
++libbpf: map 'map_keys': found type = 6.
++libbpf: map 'map_keys': found key [6], sz = 4.
++libbpf: map 'map_keys': found value [8], sz = 208.
++libbpf: map 'map_keys': found max_entries = 4.
++libbpf: map 'map_kcache': at sec_idx 18, offset 32.
++libbpf: map 'map_kcache': found type = 2.
++libbpf: map 'map_kcache': found key [9], sz = 4.
++libbpf: map 'map_kcache': found value [20], sz = 1272.
++libbpf: map 'map_kcache': found max_entries = 3250000.
++libbpf: sec '.relbmc_rx_filter': collecting relocation for section(3) 'bmc_rx_filter'
++libbpf: sec '.relbmc_rx_filter': relo #0: insn #29 against 'map_stats'
++libbpf: prog 'bmc_rx_filter_main': found map 0 (map_stats, sec 17, off 20) for insn #29
++libbpf: sec '.relbmc_rx_filter': relo #1: insn #38 against 'map_parsing_context'
++libbpf: prog 'bmc_rx_filter_main': found map 1 (map_parsing_context, sec 17, off 0) for insn #38
++libbpf: sec '.relbmc_rx_filter': relo #2: insn #64 against 'map_progs_xdp'
++libbpf: prog 'bmc_rx_filter_main': found map 2 (map_progs_xdp, sec 17, off 40) for insn #64
++libbpf: sec '.relbmc_rx_filter': relo #3: insn #78 against 'map_progs_xdp'
++libbpf: prog 'bmc_rx_filter_main': found map 2 (map_progs_xdp, sec 17, off 40) for insn #78
++libbpf: sec '.relbmc_hash_keys': collecting relocation for section(5) 'bmc_hash_keys'
++libbpf: sec '.relbmc_hash_keys': relo #0: insn #8 against 'map_parsing_context'
++libbpf: prog 'bmc_hash_keys_main': found map 1 (map_parsing_context, sec 17, off 0) for insn #8
++libbpf: sec '.relbmc_hash_keys': relo #1: insn #13 against 'map_keys'
++libbpf: prog 'bmc_hash_keys_main': found map 4 (map_keys, sec 18, off 0) for insn #13
++libbpf: sec '.relbmc_hash_keys': relo #2: insn #69 against 'map_kcache'
++libbpf: prog 'bmc_hash_keys_main': found map 5 (map_kcache, sec 18, off 32) for insn #69
++libbpf: sec '.relbmc_hash_keys': relo #3: insn #111 against 'map_stats'
++libbpf: prog 'bmc_hash_keys_main': found map 0 (map_stats, sec 17, off 20) for insn #111
++libbpf: sec '.relbmc_hash_keys': relo #4: insn #144 against 'map_progs_xdp'
++libbpf: prog 'bmc_hash_keys_main': found map 2 (map_progs_xdp, sec 17, off 40) for insn #144
++libbpf: sec '.relbmc_prepare_packet': collecting relocation for section(7) 'bmc_prepare_packet'
++libbpf: sec '.relbmc_prepare_packet': relo #0: insn #201 against 'map_progs_xdp'
++libbpf: prog 'bmc_prepare_packet_main': found map 2 (map_progs_xdp, sec 17, off 40) for insn #201
++libbpf: sec '.relbmc_write_reply': collecting relocation for section(9) 'bmc_write_reply'
++libbpf: sec '.relbmc_write_reply': relo #0: insn #10 against 'map_parsing_context'
++libbpf: prog 'bmc_write_reply_main': found map 1 (map_parsing_context, sec 17, off 0) for insn #10
++libbpf: sec '.relbmc_write_reply': relo #1: insn #16 against 'map_keys'
++libbpf: prog 'bmc_write_reply_main': found map 4 (map_keys, sec 18, off 0) for insn #16
++libbpf: sec '.relbmc_write_reply': relo #2: insn #30 against 'map_kcache'
++libbpf: prog 'bmc_write_reply_main': found map 5 (map_kcache, sec 18, off 32) for insn #30
++libbpf: sec '.relbmc_write_reply': relo #3: insn #169 against 'map_stats'
++libbpf: prog 'bmc_write_reply_main': found map 0 (map_stats, sec 17, off 20) for insn #169
++libbpf: sec '.relbmc_write_reply': relo #4: insn #322 against 'map_progs_xdp'
++libbpf: prog 'bmc_write_reply_main': found map 2 (map_progs_xdp, sec 17, off 40) for insn #322
++libbpf: sec '.relbmc_write_reply': relo #5: insn #348 against '.text'
++libbpf: sec '.relbmc_invalidate_cache': collecting relocation for section(11) 'bmc_invalidate_cache'
++libbpf: sec '.relbmc_invalidate_cache': relo #0: insn #8 against 'map_stats'
++libbpf: prog 'bmc_invalidate_cache_main': found map 0 (map_stats, sec 17, off 20) for insn #8
++libbpf: sec '.relbmc_invalidate_cache': relo #1: insn #107 against 'map_kcache'
++libbpf: prog 'bmc_invalidate_cache_main': found map 5 (map_kcache, sec 18, off 32) for insn #107
++libbpf: sec '.relbmc_tx_filter': collecting relocation for section(13) 'bmc_tx_filter'
++libbpf: sec '.relbmc_tx_filter': relo #0: insn #45 against 'map_stats'
++libbpf: prog 'bmc_tx_filter_main': found map 0 (map_stats, sec 17, off 20) for insn #45
++libbpf: sec '.relbmc_tx_filter': relo #1: insn #55 against 'map_progs_tc'
++libbpf: prog 'bmc_tx_filter_main': found map 3 (map_progs_tc, sec 17, off 60) for insn #55
++libbpf: sec '.relbmc_update_cache': collecting relocation for section(15) 'bmc_update_cache'
++libbpf: sec '.relbmc_update_cache': relo #0: insn #23 against 'map_kcache'
++libbpf: prog 'bmc_update_cache_main': found map 5 (map_kcache, sec 18, off 32) for insn #23
++libbpf: sec '.relbmc_update_cache': relo #1: insn #114 against 'map_stats'
++libbpf: prog 'bmc_update_cache_main': found map 0 (map_stats, sec 17, off 20) for insn #114
++libbpf: prog 'bmc_rx_filter_main': unrecognized ELF section name 'bmc_rx_filter'
++libbpf: prog 'bmc_hash_keys_main': unrecognized ELF section name 'bmc_hash_keys'
++libbpf: prog 'bmc_prepare_packet_main': unrecognized ELF section name 'bmc_prepare_packet'
++libbpf: prog 'bmc_write_reply_main': unrecognized ELF section name 'bmc_write_reply'
++libbpf: prog 'bmc_invalidate_cache_main': unrecognized ELF section name 'bmc_invalidate_cache'
++libbpf: prog 'bmc_tx_filter_main': unrecognized ELF section name 'bmc_tx_filter'
++libbpf: prog 'bmc_update_cache_main': unrecognized ELF section name 'bmc_update_cache'
++libbpf: map:map_stats container_name:____btf_map_map_stats cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_stats': created successfully, fd=4
++libbpf: map:map_parsing_context container_name:____btf_map_map_parsing_context cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_parsing_context': created successfully, fd=5
++libbpf: map:map_progs_xdp container_name:____btf_map_map_progs_xdp cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_progs_xdp': created successfully, fd=6
++libbpf: map:map_progs_tc container_name:____btf_map_map_progs_tc cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?
++libbpf: map 'map_progs_tc': created successfully, fd=7
++libbpf: map 'map_keys': created successfully, fd=8
++libbpf: map 'map_kcache': created successfully, fd=9
++libbpf: prog 'bmc_write_reply_main': added 25 insns from sub-prog 'compute_ip_checksum'
++libbpf: prog 'bmc_write_reply_main': insn #348 relocated, imm 20 points to subprog 'compute_ip_checksum' (now at 369 offset)
++libbpf: pinned program '/sys/fs/bpf/bmc_tx_filter'
++Main BPF program attached to XDP on interface 6
+diff --git a/bmc/run.sh b/bmc/run.sh
+new file mode 100755
+index 0000000..001b29d
+--- /dev/null
++++ b/bmc/run.sh
+@@ -0,0 +1,24 @@
++#! /bin/bash
++BMC_BIN=./bmc
++if [ -z "$NET_IFACE" ]; then
++	echo "NET_IFACE has not been set"
++	exit 1
++fi
++
++echo Running BMC ...
++nohup sudo $BMC_BIN 6 &
++sleep 3
++sudo tc qdisc add dev $NET_IFACE clsact
++sudo tc filter add dev $NET_IFACE egress bpf object-pinned /sys/fs/bpf/bmc_tx_filter
++
++quit=0
++echo "Ctrl-C to stop..."
++while [ $quit -ne 1 ]; do
++    sleep 1
++done
++
++# Detach BMC
++sudo pkill -SIGINT bmc
++sudo tc filter del dev $NET_IFACE egress
++sudo tc qdisc del dev $NET_IFACE clsact
++sudo rm /sys/fs/bpf/bmc_tx_filter
+-- 
+2.34.1
+
