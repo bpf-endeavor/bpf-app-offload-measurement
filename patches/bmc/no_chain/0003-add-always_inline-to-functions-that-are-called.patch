@@ -1,0 +1,93 @@
+From a5637c4fb3d8371b78cb91d967fce22de017a50b Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 8 Jul 2024 16:38:34 +0000
+Subject: [PATCH 3/3] add always_inline to functions that are called
+
+---
+ bmc/bmc_kern.c | 10 +++++-----
+ bmc/run.sh     | 24 ++++++++++++++++++++++++
+ 2 files changed, 29 insertions(+), 5 deletions(-)
+ create mode 100644 bmc/run.sh
+
+diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
+index 462c8d9..a1160ec 100644
+--- a/bmc/bmc_kern.c
++++ b/bmc/bmc_kern.c
+@@ -107,7 +107,7 @@ struct bpf_map_def SEC("maps") map_progs_tc = {
+ };
+ 
+ 
+-static inline __u16 compute_ip_checksum(struct iphdr *ip)
++static inline __attribute__((always_inline)) __u16 compute_ip_checksum(struct iphdr *ip)
+ {
+ 	__u32 csum = 0;
+ 	__u16 *next_ip___u16 = (__u16 *)ip;
+@@ -122,7 +122,7 @@ static inline __u16 compute_ip_checksum(struct iphdr *ip)
+ 	return ~((csum & 0xffff) + (csum >> 16));
+ }
+ 
+-static inline int bmc_invalidate_cache_main(struct xdp_md *ctx)
++static inline __attribute__((always_inline)) int bmc_invalidate_cache_main(struct xdp_md *ctx)
+ {
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+@@ -187,7 +187,7 @@ static inline int bmc_invalidate_cache_main(struct xdp_md *ctx)
+ 	return XDP_PASS;
+ }
+ 
+-static inline int bmc_write_reply_main(struct xdp_md *ctx)
++static inline __attribute__((always_inline)) int bmc_write_reply_main(struct xdp_md *ctx)
+ {
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+@@ -314,7 +314,7 @@ static inline int bmc_write_reply_main(struct xdp_md *ctx)
+ 	return XDP_DROP;
+ }
+ 
+-static inline int bmc_prepare_packet_main(struct xdp_md *ctx)
++static inline __attribute__((always_inline)) int bmc_prepare_packet_main(struct xdp_md *ctx)
+ {
+ 	if (bpf_xdp_adjust_head(ctx, -ADJUST_HEAD_LEN)) {
+ 		// // pop empty packet buffer memory to increase the available packet size
+@@ -362,7 +362,7 @@ static inline int bmc_prepare_packet_main(struct xdp_md *ctx)
+ 	/* return XDP_PASS; */
+ }
+ 
+-static inline int bmc_hash_keys_main(struct xdp_md *ctx)
++static inline __attribute__((always_inline)) int bmc_hash_keys_main(struct xdp_md *ctx)
+ {
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+diff --git a/bmc/run.sh b/bmc/run.sh
+new file mode 100644
+index 0000000..28c462c
+--- /dev/null
++++ b/bmc/run.sh
+@@ -0,0 +1,24 @@
++#! /bin/bash
++BMC_BIN=./bmc
++if [ -z "$NET_IFACE" ]; then
++        echo "NET_IFACE has not been set"
++        exit 1
++fi
++
++echo Running BMC ...
++nohup sudo $BMC_BIN 6 &
++sleep 3
++sudo tc qdisc add dev $NET_IFACE clsact
++sudo tc filter add dev $NET_IFACE egress bpf object-pinned /sys/fs/bpf/bmc_tx_filter
++
++quit=0
++echo "Ctrl-C to stop..."
++while [ $quit -ne 1 ]; do
++    sleep 1
++done
++
++# Detach BMC
++sudo pkill -SIGINT bmc
++sudo tc filter del dev $NET_IFACE egress
++sudo tc qdisc del dev $NET_IFACE clsact
++sudo rm /sys/fs/bpf/bmc_tx_filter
+-- 
+2.34.1
+
