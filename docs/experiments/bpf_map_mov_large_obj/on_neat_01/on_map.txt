@@ -1,0 +1,600 @@
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 650.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 655.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 616.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 504.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 455.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 783.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 484.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 442.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 494.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 504.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 455.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 655.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 483.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 672.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 480.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 493.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 881.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 454.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 528.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 501.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 496.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 486.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 590.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 496.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 460.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 454.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 541.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 638.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 454.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 475.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 491.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 486.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 685.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 461.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 714.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 577.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 577.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 571.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 431.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 492.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 396.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 487.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 487.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 435.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 442.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 540.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 438.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 583.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 435.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 454.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 398.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 544.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 418.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 387.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 459.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 435.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 436.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 604.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 590.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 381.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 466.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 478.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 396.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 436.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 625.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 446.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 436.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 482.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 726.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 456.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 531.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 448.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 424.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 391.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 680.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 448.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 472.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 735.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 589.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 455.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 438.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 542.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 457.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 465.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 459.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 498.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 501.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 474.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 394.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 453.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 454.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 486.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 432.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 576.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 627.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 528.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 498.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 494.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 491.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/mov_large_obj_to_map_no_bpf_loop.o
+Program fd: 6
+benchmark res: 695.000000
+return value: 1
+XDP_DROP

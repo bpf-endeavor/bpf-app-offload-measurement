@@ -1,0 +1,31 @@
+for x in *.txt; do echo -------; echo $x; cat $x | grep benchmark | awk '{print $3}' | ../../../latency_script.py; done
+
+-------
+on_map.txt
+samples: 100
+max: 881.0
+min: 381.0
+mean: 511.95
+@1 : 387.0
+@50: 486.0
+@99: 881.0
+std: 95.054
+standard err: 9.505
+median (iqr): 486.0 (117.0)
+box-plot: 278.50--[454.0-|486.0|-571.0]--746.50
+meidan +- range: 486.0 +- 249.0
+-------
+on_stack.txt
+samples: 100
+max: 8293.0
+min: 393.0
+mean: 567.23
+@1 : 394.0
+@50: 472.0
+@99: 8293.0
+std: 782.806
+standard err: 78.281
+median (iqr): 472.0 (95.0)
+box-plot: 302.50--[445.0-|472.0|-540.0]--682.50
+meidan +- range: 472.0 +- 164.0
+
