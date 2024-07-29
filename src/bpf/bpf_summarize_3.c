@@ -14,7 +14,7 @@
 
 #define SERVER_PORT 8080
 #define HEADER_SIZE (sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr))
-#define SUMMARY_RESULT_BYTES 16
+#define SUMMARY_RESULT_BYTES 1548
 
 /* SK_SKB Test ------------------------------------------------------------- */
 
@@ -87,23 +87,25 @@ int xdp_prog(struct xdp_md *ctx)
 	int ret;
 	char *p = data;
 	__u16 len = (__u64)ctx->data_end - (__u64)ctx->data;
-	short z_index = len - 2;
-	z_index &= 0x1fff;
-	if (z_index < 0 || z_index >= len || ((void *)p + z_index + 1) > data_end) {
-		bpf_printk("This should never happen! (len: %d index: %d)", len, z_index);
-		return XDP_ABORTED;
-	}
-	if (p[z_index] != 'Z') {
-		bpf_printk("have not received the full message!! Is message in multiple packets? len=%d @ %d", len, z_index);
-		return XDP_ABORTED;
-	}
-	short delta = HEADER_SIZE + SUMMARY_RESULT_BYTES - len;
-	ret = bpf_xdp_adjust_tail(ctx, delta);
-	if (ret != 0) {
-		bpf_printk("failed to resize the request!");
-		return XDP_ABORTED;
-	}
-	__prepare_headers_before_pass(ctx);
+	/* short z_index = len - 2; */
+	/* /1* z_index &= 0x1fff; *1/ */
+	/* if (z_index < 0 || z_index >= len || ((void *)p + z_index + 1) > data_end) { */
+	/* 	bpf_printk("This should never happen! (len: %d index: %d)", len, z_index); */
+	/* 	return XDP_ABORTED; */
+	/* } */
+	/* if (p[z_index] != 'Z') { */
+	/* 	bpf_printk("have not received the full message!! Is message in multiple packets? len=%d @ %d", len, z_index); */
+	/* 	return XDP_ABORTED; */
+	/* } */
+
+	/* short delta = HEADER_SIZE + SUMMARY_RESULT_BYTES - len; */
+	/* ret = bpf_xdp_adjust_tail(ctx, delta); */
+	/* if (ret != 0) { */
+	/* 	bpf_printk("failed to resize the request!"); */
+	/* 	return XDP_ABORTED; */
+	/* } */
+	/* __prepare_headers_before_pass(ctx); */
+
 	return XDP_PASS;
 }
 

@@ -59,7 +59,7 @@ int verdict(struct __sk_buff *skb)
 	/* We are hooked to our server socket so we are dropping the correct
 	 * traffic
 	 * */
-	report_tput();
+	/* report_tput(); */
 	return SK_PASS;
 }
 
@@ -67,7 +67,7 @@ int verdict(struct __sk_buff *skb)
 SEC("xdp")
 int xdp_prog(struct xdp_md *ctx)
 {
-	report_tput();
+	/* report_tput(); */
 	return XDP_PASS;
 }
 
@@ -75,7 +75,7 @@ int xdp_prog(struct xdp_md *ctx)
 SEC("tc")
 int tc_prog(struct __sk_buff *skb)
 {
-	report_tput();
+	/* report_tput(); */
 	return TC_ACT_OK;
 }
 
