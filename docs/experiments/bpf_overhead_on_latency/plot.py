@@ -55,7 +55,7 @@ def get_measures(path):
 
 
 
-figsize = [5, 2.5]
+figsize = [3, 2.5]
 fig = plt.figure(figsize=figsize)
 ax = fig.add_subplot(1,1,1)
 
@@ -77,8 +77,8 @@ for i, handle in enumerate([SOCKET,XDP,SKSKB,TC]):
     # ax.set_ylim([0, 20000])
     # ax.yaxis.set_ticks([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000])
     # ax.xaxis.set_ticklabels([])
-    ax.set_xlim([0, 20.000])
-    ax.xaxis.set_ticks([0, 2.500, 5.000, 7.500, 10.000, 12.500, 15.000, 17.500, 20.000])
+    ax.set_xlim([0, 15.000])
+    ax.xaxis.set_ticks([0, 2.500, 5.000, 7.500, 10.000, 12.500, 15.000]) # , 17.500, 20.000
 
     ax.ecdf(d, label=c['label'], color=c['color'], linestyle=c['linestyle'])
     ax.grid(True)

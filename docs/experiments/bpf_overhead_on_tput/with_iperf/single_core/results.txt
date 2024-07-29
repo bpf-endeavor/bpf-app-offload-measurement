@@ -1,0 +1,60 @@
+command for generating the report:
+
+	for f in *_result.txt; do echo $f; cat $f | grep SUM | awk '{print $6}' | ../../../../latency_script.py ; done
+
+
+iperf_result.txt
+samples: 102
+max: 7.45
+min: 5.24
+mean: 7.09
+@1 : 5.44
+@50: 7.24
+@99: 7.41
+std: 0.393
+standard err: 0.039
+median (iqr): 7.24 (0.33000000000000007)
+box-plot: 6.50--[6.99-|7.24|-7.32]--7.82
+meidan +- range: 7.24 +- 0.6400000000000006
+
+skskb_iperf_result.txt
+samples: 102
+max: 6.4
+min: 5.2
+mean: 6.15
+@1 : 5.36
+@50: 6.22
+@99: 6.36
+std: 0.223
+standard err: 0.022
+median (iqr): 6.22 (0.15000000000000036)
+box-plot: 5.90--[6.13-|6.22|-6.28]--6.51
+meidan +- range: 6.22 +- 0.3099999999999996
+
+tc_iperf_result.txt
+samples: 102
+max: 7.21
+min: 5.69
+mean: 6.87
+@1 : 6.05
+@50: 7.02
+@99: 7.2
+std: 0.325
+standard err: 0.032
+median (iqr): 7.02 (0.39999999999999947)
+box-plot: 6.10--[6.7-|7.02|-7.1]--7.70
+meidan +- range: 7.02 +- 0.8999999999999995
+
+xdp_iperf_result.txt
+samples: 102
+max: 7.28
+min: 5.13
+mean: 7.00
+@1 : 5.16
+@50: 7.14
+@99: 7.26
+std: 0.449
+standard err: 0.044
+median (iqr): 7.14 (0.10999999999999943)
+box-plot: 6.91--[7.07-|7.14|-7.18]--7.34
+meidan +- range: 7.14 +- 0.22999999999999954
