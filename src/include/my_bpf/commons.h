@@ -92,9 +92,10 @@ __prepare_headers_before_pass(struct xdp_md *xdp)
 	struct ethhdr *eth = (void *)(__u64)xdp->data;
 	struct iphdr *ip = (struct iphdr *)(eth + 1);
 	struct udphdr *udp = (struct udphdr *)(ip + 1);
-	if ((void *)(udp + 1) > (void *)(__u64)xdp->data_end)
+	void *data_end = (void *)(__u64)xdp->data_end;
+	if ((void *)(udp + 1) > data_end)
 		return -1;
-	const __u32 new_packet_len = ((__u64)xdp->data_end - (__u64)xdp->data);
+	const __u32 new_packet_len = ((__u64)data_end - (__u64)xdp->data);
 	const __u32 new_ip_len  = new_packet_len - sizeof(struct ethhdr);
 	const __u32 new_udp_len = new_ip_len - sizeof(struct iphdr);
 	/* bpf_printk("ip len: %d", new_ip_len); */
@@ -112,6 +113,10 @@ __prepare_headers_before_pass(struct xdp_md *xdp)
 	/* UDP  fields */
 	udp->len = bpf_htons(new_udp_len);
 	udp->check = 0;
+
+	/* csum = 0; */
+	/* ipv4_l4_csum_inline(data_end, udp, ip, &csum); */
+	/* udp->check = bpf_htons(csum); */
 	return 0;
 }
 #endif

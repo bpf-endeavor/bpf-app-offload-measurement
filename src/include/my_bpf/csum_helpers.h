@@ -51,7 +51,7 @@ static inline
 void ipv4_l4_csum_inline(void *data_end, void *l4_hdr,
 		struct iphdr *iph, __u64 *csum)
 {
-	/* __u32 i; */
+	__u32 i;
 	__u32 ip_addr;
 	__u16 *next_iph_u16;
 	__u8 *last_byte;
@@ -66,28 +66,35 @@ void ipv4_l4_csum_inline(void *data_end, void *l4_hdr,
 
 	next_iph_u16 = (__u16 *)l4_hdr;
 	// Use an upper bound to avoid variable size loops
-/* #pragma clang loop unroll(disable) */
-/* 	for (i = 0; i < MAX_PACKET_SIZE >> 1; i++) { */
-/* 		if ((void *)(next_iph_u16 + 1) > data_end) { */
-/* 			break; */
-/* 		} */
-/* 		*csum += bpf_ntohs(*next_iph_u16); */
-/* 		next_iph_u16++; */
-/* 	} */
-	const __u16 length = (__u64)data_end - (__u64)next_iph_u16;
-	const __u16 nr = length / 2;
-	struct csum_loop_ctx loop_ctx = {
-		.next_iph_u16 = next_iph_u16,
-		.data_end = data_end,
-		.csum = csum,
-	};
-	bpf_loop(nr, csum_loop, &loop_ctx, 0);
-	if (loop_ctx.next_iph_u16 != data_end) {
+#pragma clang loop unroll(disable)
+	for (i = 0; i < MAX_PACKET_SIZE >> 1; i++) {
+		if ((void *)(next_iph_u16 + 1) > data_end) {
+			break;
+		}
+		*csum += bpf_ntohs(*next_iph_u16);
+		next_iph_u16++;
+	}
+	if (next_iph_u16 < data_end) {
 		last_byte = (__u8 *)next_iph_u16;
 		if ((void *)(last_byte + 1) <= data_end) {
 			*csum += (__u16)(*last_byte) << 8;
 		}
 	}
+
+	/* const __u16 length = (__u64)data_end - (__u64)next_iph_u16; */
+	/* const __u16 nr = length / 2; */
+	/* struct csum_loop_ctx loop_ctx = { */
+	/* 	.next_iph_u16 = next_iph_u16, */
+	/* 	.data_end = data_end, */
+	/* 	.csum = csum, */
+	/* }; */
+	/* bpf_loop(nr, csum_loop, &loop_ctx, 0); */
+	/* if (loop_ctx.next_iph_u16 != data_end) { */
+	/* 	last_byte = (__u8 *)next_iph_u16; */
+	/* 	if ((void *)(last_byte + 1) <= data_end) { */
+	/* 		*csum += (__u16)(*last_byte) << 8; */
+	/* 	} */
+	/* } */
 	*csum = csum_fold_helper(*csum);
 }
 #endif

@@ -98,13 +98,13 @@ int xdp_prog(struct xdp_md *ctx)
 	/* 	return XDP_ABORTED; */
 	/* } */
 
-	/* short delta = HEADER_SIZE + SUMMARY_RESULT_BYTES - len; */
-	/* ret = bpf_xdp_adjust_tail(ctx, delta); */
-	/* if (ret != 0) { */
-	/* 	bpf_printk("failed to resize the request!"); */
-	/* 	return XDP_ABORTED; */
-	/* } */
-	/* __prepare_headers_before_pass(ctx); */
+	short delta = HEADER_SIZE + SUMMARY_RESULT_BYTES - len;
+	ret = bpf_xdp_adjust_tail(ctx, delta);
+	if (ret != 0) {
+		bpf_printk("failed to resize the request!");
+		return XDP_ABORTED;
+	}
+	__prepare_headers_before_pass(ctx);
 
 	return XDP_PASS;
 }
