@@ -1,0 +1,15 @@
+Load generator command:
+        sudo ./build/app -a 17:00.0 -l 1 -- --client --ip-local 192.168.200.102 --ip-dest 192.168.200.101 --port-dest 8080 --duration 30 --payload 22 --batch 32
+
+Use report.sh for processing experiment raw data
+
+Result:
+
+XDP:
+x: [0,2,4,8,16,32,64,128,256]
+y: [13.6422,11.9251,12.0644,11.6684,11.1762,10.4449,8.70105,6.08197,3.87128]
+
+Native:
+x: [0,2,4,8,16,32,64,128,256]
+y: [15.9455,14.2624,13.4446,12.3926,10.9295,8.84893,6.31739,3.93896,2.20586]
+
