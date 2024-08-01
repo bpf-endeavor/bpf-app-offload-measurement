@@ -1,0 +1,25 @@
+From 15c39b94e1e44e1081dcddf3ff2025bc4c1468c1 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 1 Aug 2024 09:37:42 +0000
+Subject: [PATCH 15/16] increase bpf instruction limit to 100M
+
+---
+ include/linux/bpf.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+index e30100597d0a..ba31847a5dd2 100644
+--- a/include/linux/bpf.h
++++ b/include/linux/bpf.h
+@@ -1784,7 +1784,7 @@ struct bpf_array {
+ 	};
+ };
+ 
+-#define BPF_COMPLEXITY_LIMIT_INSNS      1000000 /* yes. 1M insns */
++#define BPF_COMPLEXITY_LIMIT_INSNS      100000000LL /* yes. 100M insns */
+ #define MAX_TAIL_CALL_CNT 33
+ 
+ /* Maximum number of loops for bpf_loop and bpf_iter_num.
+-- 
+2.34.1
+

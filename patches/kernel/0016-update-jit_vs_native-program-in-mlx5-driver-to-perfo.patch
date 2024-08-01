@@ -1,0 +1,197 @@
+From cd8d677e2ebea67e9f4a9b4f305f53a594390a72 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 1 Aug 2024 11:52:24 +0000
+Subject: [PATCH 16/16] update jit_vs_native program in mlx5 driver to perform
+ a more complex operation
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.c  | 46 +++++++++++++--
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.h  |  9 +++
+ .../net/ethernet/mellanox/mlx5/core/main.c    | 57 ++++++++++++++++++-
+ 3 files changed, 107 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+index e00ebd0cc0c7..fbb87809befb 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+@@ -37,11 +37,8 @@
+ #include <linux/bitfield.h>
+ #include <net/page_pool/helpers.h>
+ 
+-/* Run a drop benchmark instead of XDP program. The benchmark is compiled with
+- * the driver source code */
+-/* #define NATIVE_DROP_VS_EBPF 1 */
+-
+ #ifdef NATIVE_DROP_VS_EBPF
++volatile int _checksum_repeat = 0;
+ static u64 counter = 0;
+ static u64 last_report = 0;
+ static inline void report_tput(void)
+@@ -64,6 +61,32 @@ static inline void report_tput(void)
+ 	}
+ }
+ 
++static inline __u16 csum_fold_helper(__u64 csum)
++{
++	int i;
++/* #pragma clang loop unroll(full) */
++#pragma GCC unroll 4
++	for (i = 0; i < 4; i++) {
++		if (csum >> 16)
++			csum = (csum & 0xffff) + (csum >> 16);
++	}
++	return ~csum;
++}
++
++static inline
++void ipv4_csum_inline(void *iph, __u64 *csum)
++{
++	__u32 i;
++	__u16 *next_iph_u16 = (__u16 *)iph;
++/* #pragma clang loop unroll(full) */
++#pragma GCC unroll 10
++	for (i = 0; i < sizeof(struct iphdr) >> 1; i++) {
++		*csum += ntohs(*next_iph_u16);
++		next_iph_u16++;
++	}
++	*csum = csum_fold_helper(*csum);
++}
++
+ static int __native_drop_bench(struct xdp_buff *ctx)
+ {
+ 	void *data, *data_end;
+@@ -72,6 +95,8 @@ static int __native_drop_bench(struct xdp_buff *ctx)
+ 	struct ethhdr *eth = data;
+ 	struct iphdr  *ip = (void *)(eth + 1);
+ 	struct udphdr *udp = (void *)(ip + 1);
++	u64 csum = 0;
++	u64 tmp = 0;
+ 	if ((void *)(udp + 1) > data_end)
+ 		return XDP_PASS;
+ 	if (eth->h_proto != htons(ETH_P_IP))
+@@ -82,6 +107,19 @@ static int __native_drop_bench(struct xdp_buff *ctx)
+ 	if (udp->dest != htons(8080))
+ 		return XDP_PASS;
+ 	report_tput();
++/* #pragma clang loop unroll(disable) */
++#pragma GCC unroll 0
++	for (int  i = 0; i < _checksum_repeat; i++) {
++		csum = 0;
++		ip->check = 0;
++		ipv4_csum_inline(ip, &csum);
++		tmp += htons(csum);
++	}
++	ip->check = csum;
++	if (tmp == 123) {
++		printk("this must not have happend");
++		return XDP_ABORTED;
++	}
+ 	return XDP_DROP;
+ }
+ #endif
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+index e054db1e10f8..c218ec892e87 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+@@ -243,4 +243,13 @@ mlx5e_xdpi_fifo_pop(struct mlx5e_xdp_info_fifo *fifo)
+ {
+ 	return fifo->xi[(*fifo->cc)++ & fifo->mask];
+ }
++
++
++/* Run a drop benchmark instead of XDP program. The benchmark is compiled with
++ * the driver source code */
++/* #define NATIVE_DROP_VS_EBPF 1 */
++#ifdef NATIVE_DROP_VS_EBPF
++volatile extern int _checksum_repeat;
++#endif
++
+ #endif
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/main.c b/drivers/net/ethernet/mellanox/mlx5/core/main.c
+index 4db2f5b69f17..e58158d1c0a0 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/main.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/main.c
+@@ -75,6 +75,8 @@
+ #include "hwmon.h"
+ #include "lag/lag.h"
+ 
++#include "en/xdp.h"
++
+ MODULE_AUTHOR("Eli Cohen <eli@mellanox.com>");
+ MODULE_DESCRIPTION("Mellanox 5th generation network adapters (ConnectX series) core driver");
+ MODULE_LICENSE("Dual BSD/GPL");
+@@ -2304,10 +2306,58 @@ static void mlx5_core_verify_params(void)
+ 	}
+ }
+ 
++#ifdef NATIVE_DROP_VS_EBPF
++#include <linux/proc_fs.h>
++static struct proc_dir_entry *ent = NULL;
++
++static ssize_t _write_csum_repeat(struct file *file, const char __user *ubuf, size_t count, loff_t *ppos)
++{
++	int num, i, c;
++	char buf[32];
++	if(*ppos > 0 || count > 32)
++		return -EFAULT;
++	if(copy_from_user(buf, ubuf, count))
++		return -EFAULT;
++	num = sscanf(buf, "%d", &i);
++	if(num != 1)
++		return -EFAULT;
++	/* Update the number of times the checksum must get calculated in XDP
++	 * program */
++	_checksum_repeat = i;
++	c = strlen(buf);
++	*ppos = c;
++	return c;
++}
++
++static ssize_t _read_csum_repeat(struct file *file, char __user *ubuf,size_t count, loff_t *ppos)
++{
++	char buf[32];
++	int len=0;
++	if(*ppos > 0 || count < 32)
++		return 0;
++	int csum_repeat = _checksum_repeat;
++	len += sprintf(buf,"csum repeat = %d\n", csum_repeat);
++	if(copy_to_user(ubuf,buf,len))
++		return -EFAULT;
++	*ppos = len;
++	return len;
++}
++
++static struct proc_ops _csum_repeat_proc_file_op =
++{
++	.proc_read = _read_csum_repeat,
++	.proc_write = _write_csum_repeat,
++};
++#endif
++
+ static int __init mlx5_init(void)
+ {
+ 	int err;
+-	printk("Modified MLX5\n");
++	printk("Farbod: Modified MLX5\n");
++#ifdef NATIVE_DROP_VS_EBPF
++	/* Create the proc file */
++	ent = proc_create("mlx5_csum_repeat", 0660, NULL, &_csum_repeat_proc_file_op);
++#endif
+ 
+ 	WARN_ONCE(strcmp(MLX5_ADEV_NAME, KBUILD_MODNAME),
+ 		  "mlx5_core name not in sync with kernel module name");
+@@ -2342,6 +2392,11 @@ static int __init mlx5_init(void)
+ 
+ static void __exit mlx5_cleanup(void)
+ {
++#ifdef NATIVE_DROP_VS_EBPF
++	/* Remove the proc file */
++	if (ent != NULL)
++		proc_remove(ent);
++#endif
+ 	pci_unregister_driver(&mlx5_core_driver);
+ 	mlx5_sf_driver_unregister();
+ 	mlx5e_cleanup();
+-- 
+2.34.1
+
