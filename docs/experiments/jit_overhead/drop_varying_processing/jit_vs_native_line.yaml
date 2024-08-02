@@ -1,0 +1,26 @@
+figsize: [4.0,2.1]
+subplots:
+  - lines:
+      - label: 'eBPF (XDP)'
+        x: [0,2,4,8,16,32,64,128,256]
+        y: [13.6422,11.9251,12.0644,11.6684,11.1762,10.4449,8.70105,6.08197,3.87128]
+          # yerr: [3595.0, 2066.0, 1762.0, 1496.0, 12526.0, 1547.0, 2850.0, 6095.0, 5907.0, 3747.0, 1029.0]
+        marker: 's'
+        markersize: 3
+        color: 'tab:red'
+      - label: 'Hard-coded'
+        x: [0,2,4,8,16,32,64,128,256]
+        y: [15.9455,14.2624,13.4446,12.3926,10.9295,8.84893,6.31739,3.93896,2.20586]
+        marker: 'o'
+        markersize: 3
+        color: 'black'
+        linestyle: 'dotted'
+    ylabel: "Throughput (Mpps)"
+    xlabel: "Operation Complexity"
+    yticks: [0, 5, 10, 15, 20]
+    # xticks: [0, 20, 40, 60, 80, 100]
+    # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
+    # xlim: [-1, 100]
+    ax_below: true
+    legend: true
+output: "jit_vs_native.pdf"
