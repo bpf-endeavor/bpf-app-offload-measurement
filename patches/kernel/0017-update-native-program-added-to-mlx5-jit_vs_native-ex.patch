@@ -1,0 +1,166 @@
+From 4519737b625a422635add5a9484475c11e4ee863 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 2 Aug 2024 07:40:07 +0000
+Subject: [PATCH 17/17] update native program added to mlx5 (jit_vs_native exp)
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.c  | 70 ++++++++++++++++---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.h  |  2 +-
+ 2 files changed, 61 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+index fbb87809befb..be808d1be672 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+@@ -41,18 +41,19 @@
+ volatile int _checksum_repeat = 0;
+ static u64 counter = 0;
+ static u64 last_report = 0;
+-static inline void report_tput(void)
++
++static inline __attribute__((always_inline))
++void report_tput(void)
+ {
+ 	u64 ts, delta;
+ 	/* We must run on a single core */
+ 	/* counter += 1; */
+-	__atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
++	__sync_fetch_and_add(&counter, 1);
+ 	ts = ktime_get_coarse_ns();
+ 	if (last_report == 0) {
+ 		last_report = ts;
+ 		return;
+ 	}
+-
+ 	delta = ts - last_report;
+ 	if (delta >= 1000000000L) {
+ 		printk("NATIVE DROP: throughput: %lld (pps)", counter);
+@@ -61,11 +62,12 @@ static inline void report_tput(void)
+ 	}
+ }
+ 
+-static inline __u16 csum_fold_helper(__u64 csum)
++static inline __attribute__((always_inline))
++__u16 csum_fold_helper(__u64 csum)
+ {
+ 	int i;
+ /* #pragma clang loop unroll(full) */
+-#pragma GCC unroll 4
++#pragma GCC unroll 8
+ 	for (i = 0; i < 4; i++) {
+ 		if (csum >> 16)
+ 			csum = (csum & 0xffff) + (csum >> 16);
+@@ -73,13 +75,13 @@ static inline __u16 csum_fold_helper(__u64 csum)
+ 	return ~csum;
+ }
+ 
+-static inline
++static inline __attribute__((always_inline))
+ void ipv4_csum_inline(void *iph, __u64 *csum)
+ {
+ 	__u32 i;
+ 	__u16 *next_iph_u16 = (__u16 *)iph;
+ /* #pragma clang loop unroll(full) */
+-#pragma GCC unroll 10
++#pragma GCC unroll 20
+ 	for (i = 0; i < sizeof(struct iphdr) >> 1; i++) {
+ 		*csum += ntohs(*next_iph_u16);
+ 		next_iph_u16++;
+@@ -87,7 +89,8 @@ void ipv4_csum_inline(void *iph, __u64 *csum)
+ 	*csum = csum_fold_helper(*csum);
+ }
+ 
+-static int __native_drop_bench(struct xdp_buff *ctx)
++static int inline
++__native_drop_bench(struct xdp_buff *ctx)
+ {
+ 	void *data, *data_end;
+ 	data = (void *)(u64)ctx->data;
+@@ -109,7 +112,7 @@ static int __native_drop_bench(struct xdp_buff *ctx)
+ 	report_tput();
+ /* #pragma clang loop unroll(disable) */
+ #pragma GCC unroll 0
+-	for (int  i = 0; i < _checksum_repeat; i++) {
++	for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
+ 		csum = 0;
+ 		ip->check = 0;
+ 		ipv4_csum_inline(ip, &csum);
+@@ -122,6 +125,52 @@ static int __native_drop_bench(struct xdp_buff *ctx)
+ 	}
+ 	return XDP_DROP;
+ }
++
++#define WORKING_PKT_SIZE 64
++static int inline
++__native_drop_bench_2(struct xdp_buff *ctx)
++{
++	/* bpf_printk("THIS MUST NOT PRINT (in mlx5 driver mode)"); */
++	void *data, *data_end;
++	data = (void *)(__u64)ctx->data;
++	data_end = (void *)(__u64)ctx->data_end;
++	struct ethhdr *eth = data;
++	struct iphdr  *ip = (void *)(eth + 1);
++	struct udphdr *udp = (void *)(ip + 1);
++	__u64 tmp = 0;
++
++	if ((void *)(udp + 1) > data_end)
++		return XDP_PASS;
++	if (eth->h_proto != htons(ETH_P_IP))
++		return XDP_PASS;
++	if (ip->protocol != IPPROTO_UDP)
++		return XDP_PASS;
++	if (udp->dest != htons(8080))
++		return XDP_PASS;
++	report_tput();
++
++	__u8 *val = data;
++	if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
++		printk("small packet size. expect 256 B packets!");
++		return XDP_ABORTED;
++	}
++
++/* #pragma clang loop unroll(disable) */
++#pragma GCC unroll 0
++	for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
++		/* Max iteration is 1024 times */
++		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
++			tmp += val[j];
++		}
++	}
++
++	if (tmp == 123) {
++		printk("this must not have happend");
++		return XDP_ABORTED;
++	}
++
++	return XDP_DROP;
++}
+ #endif
+ 
+ int mlx5e_xdp_max_mtu(struct mlx5e_params *params, struct mlx5e_xsk_param *xsk)
+@@ -403,7 +452,8 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq,
+ 	int err;
+ 
+ #ifdef NATIVE_DROP_VS_EBPF
+-	act = __native_drop_bench(xdp);
++	/* act = __native_drop_bench(xdp); */
++	act = __native_drop_bench_2(xdp);
+ #else
+ 	act = bpf_prog_run_xdp(prog, xdp);
+ #endif
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+index c218ec892e87..1ff38a4c97a4 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+@@ -247,7 +247,7 @@ mlx5e_xdpi_fifo_pop(struct mlx5e_xdp_info_fifo *fifo)
+ 
+ /* Run a drop benchmark instead of XDP program. The benchmark is compiled with
+  * the driver source code */
+-/* #define NATIVE_DROP_VS_EBPF 1 */
++#define NATIVE_DROP_VS_EBPF 1
+ #ifdef NATIVE_DROP_VS_EBPF
+ volatile extern int _checksum_repeat;
+ #endif
+-- 
+2.34.1
+
