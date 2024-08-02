@@ -1,6 +1,21 @@
 Load generator command:
         sudo ./build/app -a 17:00.0 -l 1 -- --client --ip-local 192.168.200.102 --ip-dest 192.168.200.101 --port-dest 8080 --duration 30 --payload 22 --batch 32
 
+Configuring the operation complexity
+
+Native: update /proc/mlx5_csum_repeat file
+XDP:
+	sudo bpftool map update name map_csum_repeat key 0x00 0x00 0x00 0x00 value 0x01 0x00 0x00 0x00
+	sudo bpftool map dump name map_csum_repeat
+
+use python to convert value to hex
+```
+>>> a = 256
+>>> a.to_bytes(4, 'little')
+b'\x00\x01\x00\x00'
+```
+
+
 Use report.sh for processing experiment raw data
 
 Result:
