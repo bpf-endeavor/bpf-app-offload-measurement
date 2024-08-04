@@ -16,7 +16,7 @@ config = {
         SOCKET: {
             'path': 'socket_duration_since_driver.txt',
             'color': 'black',
-            'label': 'Socket',
+            'label': 'No eBPF',
             'median': 4015,
             'linestyle': '-',
             },
