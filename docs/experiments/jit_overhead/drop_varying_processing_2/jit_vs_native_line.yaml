@@ -1,4 +1,4 @@
-figsize: [4.0,2.1]
+figsize: [2.8,2.8]
 subplots:
   - lines:
       - label: 'Hard-coded'
@@ -15,15 +15,16 @@ subplots:
         marker: 's'
         markersize: 3
         color: 'tab:red'
+    title: 'Program 2'
     ylabel: "Throughput (Mpps)"
     xlabel: "Operation Complexity"
     yticks: [0, 5, 10, 15, 20]
-    # xticks: [0, 20, 40, 60, 80, 100]
+    xticks: [0, 2, 4, 6, 8]
     # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
     # xlim: [-1, 100]
     ax_below: true
     legend: true
-output: "jit_vs_native.pdf"
+output: "jit_vs_native_2.pdf"
 annotate:
   - xy: [0, 15.3]
     text: "14%"
@@ -40,13 +41,7 @@ annotate:
   - xy: [4, 5.5]
     text: "62%"
     fontsize: 9
-  - xy: [5, 4.5]
-    text: "51%"
-    fontsize: 9
   - xy: [6, 4.0]
-    text: "52%"
-    fontsize: 9
-  - xy: [7, 3.6]
     text: "52%"
     fontsize: 9
   - xy: [8, 3.1]
