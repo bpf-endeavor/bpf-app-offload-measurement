@@ -150,7 +150,7 @@ int xdp_prog_2(struct xdp_md *ctx)
 		return XDP_ABORTED;
 	}
 
-#pragma clang loop unroll(disable)
+/* #pragma clang loop unroll(disable) */
 	for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
 		/* Max iteration is 1024 times */
 		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
