@@ -34,16 +34,16 @@ void ipv4_csum_inline(void *iph, __u64 *csum)
 	*csum = csum_fold_helper(*csum);
 }
 
-static long csum_loop(__u32 i, void *_ctx)
-{
-	struct csum_loop_ctx *ctx = _ctx;
-	if ((void *)(ctx->next_iph_u16 + 1) > ctx->data_end) {
-		return 1;
-	}
-	*ctx->csum += bpf_ntohs(*ctx->next_iph_u16);
-	ctx->next_iph_u16++;
-	return 0;
-}
+/* static long csum_loop(__u32 i, void *_ctx) */
+/* { */
+/* 	struct csum_loop_ctx *ctx = _ctx; */
+/* 	if ((void *)(ctx->next_iph_u16 + 1) > ctx->data_end) { */
+/* 		return 1; */
+/* 	} */
+/* 	*ctx->csum += bpf_ntohs(*ctx->next_iph_u16); */
+/* 	ctx->next_iph_u16++; */
+/* 	return 0; */
+/* } */
 
 /* TODO: this value is too low! I need to increase it */
 #define MAX_PACKET_SIZE 1470

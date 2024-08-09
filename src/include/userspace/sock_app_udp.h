@@ -101,9 +101,20 @@ int run_udp_server(struct socket_app *app)
 
 	/* The main logic would be here */
 	while (running) {
+#ifdef BUSY_LOOP_MODE
+		/* Data ready, handle the socket data */
+		ret = arg->sock_handler(arg->list[0].fd, &cctx[0]);
+		if (ret != 0) {
+			/* Probably an error happend on the socket */
+			ERROR("Handler encountered an error\n");
+			free(arg->list);
+			return 1;
+		}
+#else
 		num_event = poll(arg->list, num_conn, -1);
 		if (num_event < 0) {
 			ERROR("Polling failed! (%s)\n", strerror(errno));
+			free(arg->list);
 			return 1;
 		}
 
@@ -123,11 +134,13 @@ int run_udp_server(struct socket_app *app)
 			if (ret != 0) {
 				/* Probably an error happend on the socket */
 				ERROR("Handler encountered an error\n");
+				free(arg->list);
 				return 1;
 			}
 		}
+#endif //  BUSY_LOOP_MODE
 	}
-
+	free(arg->list);
 	return 0;
 }
 #endif
