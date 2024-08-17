@@ -1,0 +1,37 @@
+figsize: [5.0, 2.5]
+subplots:
+  - lines:
+    - label: "Without eBPF offload"
+      data: './m2_baseline.txt'
+      color: "black"
+    - label: "With eBPF offload"
+      data: './m2_with_bpf_offload.txt'
+      color: "tab:red"
+      linestyle: '--'
+    ylabel: 'Empirical CDF'
+    xlabel: 'Req. Completion (us)'
+    xlim: [0, 300]
+    legend: true
+    # legend:
+    #   outside: true
+    #   ncol: 2
+    #   loc: 'upper left'
+
+    # annotate:
+    #   - xy: [70.2, 0.5]
+    #     xytext: [55, 0.6]
+    #     text: '70.2'
+    #     fontsize: 9
+    #     arrowprops:
+    #       arrowstyle: "->"
+    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+    #   - xy: [72.4, 0.5]
+    #     xytext: [80, 0.3]
+    #     text: '72.4'
+    #     fontsize: 9
+    #     arrowprops:
+    #       arrowstyle: "->"
+    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+# tight_layout:
+#   rect: [0, 0, 1, 0.90]
+output: "bpf_holb_ecdf.pdf"
