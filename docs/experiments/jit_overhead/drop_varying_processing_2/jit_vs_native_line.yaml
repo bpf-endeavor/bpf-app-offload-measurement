@@ -15,7 +15,7 @@ subplots:
         marker: 's'
         markersize: 3
         color: 'tab:red'
-    title: 'Program 2'
+    title: 'Program 1'
     ylabel: "Throughput (Mpps)"
     xlabel: "Operation Complexity"
     yticks: [0, 5, 10, 15, 20]
@@ -24,7 +24,7 @@ subplots:
     # xlim: [-1, 100]
     ax_below: true
     legend: true
-output: "jit_vs_native_2.pdf"
+output: "jit_vs_native.pdf"
 annotate:
   - xy: [0, 15.3]
     text: "14%"

@@ -55,7 +55,7 @@ def get_measures(path):
 
 
 
-figsize = [3, 2.5]
+figsize = [4, 2.0]
 fig = plt.figure(figsize=figsize)
 ax = fig.add_subplot(1,1,1)
 
@@ -72,17 +72,17 @@ for i, handle in enumerate([SOCKET,XDP,SKSKB,TC]):
     # ax.set_title('Measurements for '+c['label'])
     # m = c['median']
     # ax.plot([0, x_size], [m, m], color='purple', label='Median of samples')
-    ax.set_xlabel('Time to user-space (microseconds)')
+    ax.set_xlabel('In-kernel Processing Time (us)')
     ax.set_ylabel('Empirical CDF')
     # ax.set_ylim([0, 20000])
-    # ax.yaxis.set_ticks([0, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000])
+    ax.yaxis.set_ticks([0, 0.25, 0.5, 0.75, 1])
     # ax.xaxis.set_ticklabels([])
-    ax.set_xlim([0, 15.000])
-    ax.xaxis.set_ticks([0, 2.500, 5.000, 7.500, 10.000, 12.500, 15.000]) # , 17.500, 20.000
+    ax.set_xlim([0, 10.000])
+    ax.xaxis.set_ticks([0, 2.500, 5.000, 7.500, 10.000]) # , 17.500, 20.000
 
     ax.ecdf(d, label=c['label'], color=c['color'], linestyle=c['linestyle'])
     ax.grid(True)
-    ax.legend()
+    ax.legend(loc='lower right', ncol=1)
 
 plt.tight_layout()
 outdir = './out'
