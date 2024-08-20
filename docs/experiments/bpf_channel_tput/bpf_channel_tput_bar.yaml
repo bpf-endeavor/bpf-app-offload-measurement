@@ -1,0 +1,13 @@
+figsize: [2.5, 2]
+x: ['XDP', 'TC', 'SK_SKB']
+y: [[4.8, 0, 0],
+    [0, 2.3, 0],
+    [0, 0, 1.0]]
+ylabel: 'Throughput (Mpps)'
+xlabel: ''
+yticks: [0, 1, 2, 3, 4, 5]
+color: ['tab:red', 'tab:green', 'orange']
+hatch: ['//', 'oo', 'xx']
+grid: true
+output: 'bpf_channel_tput.pdf'
+
