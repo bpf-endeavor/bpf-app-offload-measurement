@@ -1,0 +1,17 @@
+using a fixed key 0
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       86.4    65.6    21.1    27.9    29.2    61.5   197.7   214.8   242.7   296.8   360.6
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 4984.6 (99692 / 20.0s)
+
+Total Issued Gets = 4984.6 (99693 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 0
+Skipped TXs = 0 (0.0%)
+
+RX  132590360 bytes :    6.3 MB/s
+TX   21433995 bytes :    1.0 MB/s
+Saving latency samples to /tmp/m2_lat_samples_1.txt.
