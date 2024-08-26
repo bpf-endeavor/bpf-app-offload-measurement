@@ -20,9 +20,9 @@ $SOCK_APP_DIR/build/server_bounce 7 192.168.200.101 8080 0 &> /dev/null &
 SOCK_APP_PID=$!
 
 # Run memcached
-taskset -c 1,3 \
+taskset -c 1 \
 	$MEMCD_DIR_BIN -U 11211 -l 192.168.200.101 \
-	-m 1024 -M -k -P /tmp/M1_PID -d -t 2 -C
+	-m 1024 -M -k -P /tmp/M1_PID -d -t 1 -C
 
 # Run BMC if specified
 HAS_BMC=0
@@ -52,4 +52,4 @@ if [ $HAS_BMC -eq 1 ]; then
 fi
 
 # Kill socket-app
-kill -SIGINT $SOCK_APP_PID
+pkill server_bounce

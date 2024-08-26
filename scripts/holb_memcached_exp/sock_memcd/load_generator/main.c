@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 	begin = get_ns();
 	while (running) {
 		do_req(s);
-		usleep(50);
+		usleep(100);
 	}
 	duration = get_ns() - begin;
 	float sec = (float)duration / 1000000000.0f;
