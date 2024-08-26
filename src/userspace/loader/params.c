@@ -148,10 +148,10 @@ int parse_args(int argc, char *argv[])
 		return 1;
 	}
 
-	if (count_prog < 1) {
-		ERROR("Should provided at least one program (--bpf_prog)\n");
-		return 1;
-	}
+	/* if (count_prog < 1) { */
+	/* 	ERROR("Should provided at least one program (--bpf_prog)\n"); */
+	/* 	return 1; */
+	/* } */
 
 	for (uint32_t i = 0; i < count_prog; i++) {
 		req = &context.bpf_prog[i];

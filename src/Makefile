@@ -50,7 +50,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_comm_map.o \
 	bpf_empty_hook_test.o \
 	bpf_resize_perf.o \
-	bpf_jit_vs_native.o
+	bpf_jit_vs_native.o \
+	bpf_demux.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/
