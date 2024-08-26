@@ -51,12 +51,11 @@ function remove_all_flow_rules {
 
 function add_flow_rules {
 	DEV=$1
-	# sudo ethtool -U $DEV flow-type udp4 dst-port 11211 action 3
+	sudo ethtool -U $DEV flow-type udp4 dst-port 11211 action 3
 	# sudo ethtool -U $DEV flow-type udp4 dst-port 22122 action 3
 
 	sudo ethtool -U $DEV flow-type udp4 dst-port 8080 action 3
-	sudo ethtool -U $DEV flow-type tcp4 dst-port 8080 action 3
-
+	# sudo ethtool -U $DEV flow-type tcp4 dst-port 8080 action 3
 
 	# sudo ethtool -U $DEV flow-type udp4 dst-port 3030 action 3
 }
@@ -75,7 +74,7 @@ function main {
 	report_nic_numa_node $NET_IFACE
 	remove_all_flow_rules $NET_IFACE
 	add_flow_rules $NET_IFACE
-	sudo cpupower frequency-set -g performance &> /dev/null
+	sudo cpupower frequency-set -g performance
 	sudo x86_energy_perf_policy performance
 	sudo cpupower idle-set -D 1
 	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
