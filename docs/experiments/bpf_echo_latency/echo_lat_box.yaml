@@ -1,0 +1,15 @@
+figsize: [4, 2]
+scale: 0.001
+values: [
+  './sock_samples.txt',
+  './skskb_samples.txt',
+  './tc_samples.txt',
+  './xdp_samples.txt',
+]
+labels: ['Socket', 'SK_SKB', 'TC', 'XDP']
+showfliers: false
+ylabel: 'Req. Time (us)'
+yticks: [30, 40, 50]
+label_percision: 1
+grid: true
+output: 'echo_lat_box.pdf'
