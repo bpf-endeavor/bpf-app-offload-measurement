@@ -1,19 +1,21 @@
 figsize: [4.0, 2.0]
 subplots:
   - lines:
-    - label: "Without eBPF offload"
+    - label: "no offload"
       data: './gold_data/baseline/samples.txt'
       scale: 0.001
       color: "black"
-    - label: "With eBPF offload"
+    - label: "offload"
       data: './gold_data/with_bpf_offload/samples.txt'
-      color: "tab:red"
+      color: "tab:green"
       scale: 0.001
       linestyle: '--'
     ylabel: 'Empirical CDF'
     xlabel: 'Req. Completion (us)'
     xlim: [0, 300]
     yticks: [0, 0.25, 0.5, 0.75, 1.0]
+    title: "(2) HOLB of other applications"
+    legend: true
     # legend:
     #   outside: true
     #   ncol: 2
@@ -22,14 +24,14 @@ subplots:
     annotate:
       - xy: [57.9, 0.5]
         xytext: [10, 0.6]
-        text: '57.9 (us)'
+        text: '57.9 us'
         fontsize: 9
         arrowprops:
           arrowstyle: "->"
           connectionstyle: "angle,angleA=90,angleB=0,rad=10"
       - xy: [89.0, 0.5]
         xytext: [110, 0.35]
-        text: '89.0 (us)'
+        text: '89.0 us'
         fontsize: 9
         arrowprops:
           arrowstyle: "->"
