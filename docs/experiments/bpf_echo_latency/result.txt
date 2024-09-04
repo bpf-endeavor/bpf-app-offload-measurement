@@ -1,0 +1,63 @@
+for x in $(ls); do echo $x; cat $x | ../../latency_script.py ; echo ------; done
+
+skskb_samples.txt
+failed to convert to fload: sample at line 0
+samples: 177089
+max: 15423808.0
+min: 39733.0
+mean: 43736.34
+@1 : 41566.0
+@50: 43063.0
+@99: 51313.0
+std: 36983.615
+standard err: 87.885
+median (iqr): 43063.0 (1221.0)
+box-plot: 40681.50--[42513.0-|43063.0|-43734.0]--45565.50
+meidan +- range: 43063.0 +- 2502.0
+------
+sock_samples.txt
+failed to convert to fload: sample at line 0
+samples: 192511
+max: 2905706.0
+min: 39853.0
+mean: 46628.02
+@1 : 42671.0
+@50: 44332.0
+@99: 119884.0
+std: 18634.983
+standard err: 42.472
+median (iqr): 44332.0 (1364.0)
+box-plot: 41684.00--[43730.0-|44332.0|-45094.0]--47140.00
+meidan +- range: 44332.0 +- 2808.0
+------
+tc_samples.txt
+failed to convert to fload: sample at line 0
+samples: 183478
+max: 94362166.0
+min: 34766.0
+mean: 39538.40
+@1 : 37022.0
+@50: 38479.0
+@99: 43994.0
+std: 220282.221
+standard err: 514.266
+median (iqr): 38479.0 (1181.0)
+box-plot: 36181.50--[37953.0-|38479.0|-39134.0]--40905.50
+meidan +- range: 38479.0 +- 2426.0
+------
+xdp_samples.txt
+failed to convert to fload: sample at line 0
+samples: 130702
+max: 15625803.0
+min: 30243.0
+mean: 38453.05
+@1 : 36384.0
+@50: 37834.0
+@99: 44653.0
+std: 43402.522
+standard err: 120.053
+median (iqr): 37834.0 (1107.0)
+box-plot: 35671.50--[37332.0-|37834.0|-38439.0]--40099.50
+meidan +- range: 37834.0 +- 2265.0
+------
+
