@@ -1,0 +1,12 @@
+figsize: [3, 3]
+values: [
+  './ebpf_samples.txt',
+  './user_samples.txt',
+]
+labels: ['eBPF program', 'C program']
+showfliers: false
+ylabel: 'Exec. Time (ns)'
+# yticks: [30, 40, 50]
+label_percision: 0
+grid: true
+output: 'memcpy_box.pdf'
