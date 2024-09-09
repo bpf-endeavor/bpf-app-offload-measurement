@@ -1,0 +1,44 @@
+command:
+for x in *samples.txt; do echo $x; cat $x | ../../latency_script.py ; done &> results.txt
+
+ebpf_samples.txt
+samples: 100
+max: 341.67
+min: 338.43
+mean: 340.08
+@1 : 338.62
+@50: 340.31
+@99: 341.67
+std: 0.755
+standard err: 0.076
+median (iqr): 340.31 (0.9399999999999977)
+box-plot: 338.15--[339.56-|340.31|-340.5]--341.91
+meidan +- range: 340.31 +- 1.8799999999999955
+
+user_no_simd_samples.txt
+samples: 100
+max: 360.0
+min: 279.0
+mean: 290.38
+@1 : 279.0
+@50: 279.0
+@99: 360.0
+std: 25.567
+standard err: 2.557
+median (iqr): 279.0 (0.0)
+box-plot: 279.00--[279.0-|279.0|-279.0]--279.00
+meidan +- range: 279.0 +- 0.0
+
+user_simd_samples.txt
+samples: 100
+max: 30.0
+min: 27.0
+mean: 28.56
+@1 : 28.0
+@50: 29.0
+@99: 30.0
+std: 0.538
+standard err: 0.054
+median (iqr): 29.0 (1.0)
+box-plot: 26.50--[28.0-|29.0|-29.0]--30.50
+meidan +- range: 29.0 +- 2.0
