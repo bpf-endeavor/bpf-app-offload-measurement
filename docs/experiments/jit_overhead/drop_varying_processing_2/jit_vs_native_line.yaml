@@ -44,6 +44,6 @@ annotate:
   - xy: [6, 4.0]
     text: "52%"
     fontsize: 9
-  - xy: [8, 3.1]
+  - xy: [7.3, 3.1]
     text: "52%"
     fontsize: 9
