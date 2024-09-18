@@ -1,0 +1,11 @@
+NOCTORNAL QUEUE:
+xdp: 4.8
+tc:  2.3
+sk_skb: 1.00
+
+RING:
+xdp: 2.09
+tc: 1.68
+sk_skb: 0.67
+
+
