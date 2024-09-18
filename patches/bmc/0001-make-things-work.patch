@@ -1,21 +1,21 @@
-From c0588196a298e4f28ed6aa65074e836e431b0c30 Mon Sep 17 00:00:00 2001
+From 6fc8bc92709e9443ea69584c28aed13bd96333b3 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Thu, 20 Jun 2024 15:43:12 +0000
 Subject: [PATCH] make things work
 
 ---
- bmc/Makefile     | 134 +++--------------------------------------------
+ bmc/Makefile     | 136 +++++------------------------------------------
  bmc/Makefile.old | 131 +++++++++++++++++++++++++++++++++++++++++++++
  bmc/bmc_common.h |   4 +-
  bmc/bmc_kern.c   |  89 +++++++++++++++++++++----------
- 4 files changed, 202 insertions(+), 156 deletions(-)
+ 4 files changed, 206 insertions(+), 154 deletions(-)
  create mode 100644 bmc/Makefile.old
 
 diff --git a/bmc/Makefile b/bmc/Makefile
-index 61a8f5d..6b6a8ec 100644
+index 61a8f5d..3df5d95 100644
 --- a/bmc/Makefile
 +++ b/bmc/Makefile
-@@ -1,131 +1,13 @@
+@@ -1,131 +1,19 @@
 -# Software Name : bmc-cache
 -# SPDX-FileCopyrightText: Copyright (c) 2021 Orange
 -# SPDX-License-Identifier: LGPL-2.1-only
@@ -41,21 +41,17 @@ index 61a8f5d..6b6a8ec 100644
 +BPF_CFLAGS =
  
 -TARGETS += bmc
-+default: bmc_kern.o bmc
++.PHONY: default clean
  
 -CLANG ?= clang-9
 -LLC ?= llc-9
 -CC := gcc
-+bmc_kern.o: bmc_kern.c bmc_common.h
-+	export CFLAGS="$(BPF_CFLAGS)" && bash $(BPF_COMPILE_SCRIPT) bmc_kern.c $@
- 
+-
 -KERN_SOURCES = ${TARGETS:=_kern.c}
 -USER_SOURCES = ${TARGETS:=_user.c}
 -KERN_OBJECTS = ${KERN_SOURCES:.c=.o}
 -USER_OBJECTS = ${USER_SOURCES:.c=.o}
-+bmc: bmc_user.c bmc_common.h
-+	gcc -O2 -g -Wall -o $@ bmc_user.c -lbpf -lelf -lz -lpthread
- 
+-
 -LIBBPF = $(LIBBPF_PATH)/libbpf.a
 -
 -CFLAGS := -g -O2 -Wall
@@ -86,8 +82,9 @@ index 61a8f5d..6b6a8ec 100644
 -all: dependencies $(TARGETS) $(KERN_OBJECTS)
 -
 -.PHONY: clean dependencies verify_cmds verify_target_bpf $(CLANG) $(LLC)
--
--clean:
++default: bmc_kern.o bmc
+ 
+ clean:
 -	@find . -type f \
 -		\( -name '*~' \
 -		-o -name '*.ll' \
@@ -131,7 +128,8 @@ index 61a8f5d..6b6a8ec 100644
 -
 -$(LIBBPF): $(wildcard $(LIBBPF_PATH)/*.[ch] $(LIBBPF_PATH)/Makefile)
 -	make -C $(LIBBPF_PATH)
--
++	rm bmc bmc_kern.o
+ 
 -# Compiling of eBPF restricted-C code with LLVM
 -#  clang option -S generated output file with suffix .ll
 -#   which is the non-binary LLVM assembly language format
@@ -152,9 +150,15 @@ index 61a8f5d..6b6a8ec 100644
 -	    -Wno-address-of-packed-member \
 -	    -O2 -g -emit-llvm -c $< -o ${@:.o=.ll}
 -	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
--
++bmc_kern.o: bmc_kern.c bmc_common.h
++	export CFLAGS="$(BPF_CFLAGS)" && bash $(BPF_COMPILE_SCRIPT) bmc_kern.c $@
+ 
 -$(TARGETS): %: %_user.c $(OBJECTS) $(LIBBPF)
 -	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LIBBPF) $(LDFLAGS)
++OLD_LIBBPF_HEADER=$(HOME)/old_libbpf/src/build/usr/include/
++OLD_LIBBPF_LIB=$(HOME)/old_libbpf/src/build/usr/lib64/
++bmc: bmc_user.c bmc_common.h
++	gcc -O2 -g -Wall -I $(OLD_LIBBPF_HEADER) -o $@ bmc_user.c -L$(OLD_LIBBPF_LIB)  -lbpf  -lelf -lz -lpthread
 diff --git a/bmc/Makefile.old b/bmc/Makefile.old
 new file mode 100644
 index 0000000..61a8f5d

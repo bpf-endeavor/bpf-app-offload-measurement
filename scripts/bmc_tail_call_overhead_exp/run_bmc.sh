@@ -1,7 +1,7 @@
 #! /bin/bash
 
 MEMCD_DIR_BIN=$HOME/memcached/memcached
-taskset -c 1 $MEMCD_DIR_BIN -p 11211 -U 11211 -l 192.168.200.101 -m 1024 -M -k -P /tmp/M1_PID -d -t 1
+taskset -c 1 $MEMCD_DIR_BIN -p 11211 -U 11211 -l 192.168.200.101 -m 1024 -M -k -P /tmp/M1_PID -d -t 1 -C
 sleep 1
 
 BMC_BIN=$HOME/bmc/bmc/bmc

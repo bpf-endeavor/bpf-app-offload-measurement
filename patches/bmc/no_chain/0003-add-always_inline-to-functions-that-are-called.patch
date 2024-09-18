@@ -1,14 +1,38 @@
-From a5637c4fb3d8371b78cb91d967fce22de017a50b Mon Sep 17 00:00:00 2001
+From 796eeb71cd7263e9b91a0ef45016694ea2a5ff50 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Mon, 8 Jul 2024 16:38:34 +0000
 Subject: [PATCH 3/3] add always_inline to functions that are called
 
 ---
+ bmc/Makefile   |  7 +++++--
  bmc/bmc_kern.c | 10 +++++-----
  bmc/run.sh     | 24 ++++++++++++++++++++++++
- 2 files changed, 29 insertions(+), 5 deletions(-)
+ 3 files changed, 34 insertions(+), 7 deletions(-)
  create mode 100644 bmc/run.sh
 
+diff --git a/bmc/Makefile b/bmc/Makefile
+index 9a4efe4..3df5d95 100644
+--- a/bmc/Makefile
++++ b/bmc/Makefile
+@@ -3,6 +3,8 @@ BPF_COMPILE_SCRIPT=$(BPF_GEN_DIR)/compile_scripts/compile_bpf_source.sh
+ 
+ BPF_CFLAGS =
+ 
++.PHONY: default clean
++
+ default: bmc_kern.o bmc
+ 
+ clean:
+@@ -11,6 +13,7 @@ clean:
+ bmc_kern.o: bmc_kern.c bmc_common.h
+ 	export CFLAGS="$(BPF_CFLAGS)" && bash $(BPF_COMPILE_SCRIPT) bmc_kern.c $@
+ 
++OLD_LIBBPF_HEADER=$(HOME)/old_libbpf/src/build/usr/include/
++OLD_LIBBPF_LIB=$(HOME)/old_libbpf/src/build/usr/lib64/
+ bmc: bmc_user.c bmc_common.h
+-	gcc -O2 -g -Wall -o $@ bmc_user.c -lbpf -lelf -lz -lpthread
+-
++	gcc -O2 -g -Wall -I $(OLD_LIBBPF_HEADER) -o $@ bmc_user.c -L$(OLD_LIBBPF_LIB)  -lbpf  -lelf -lz -lpthread
 diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
 index 462c8d9..a1160ec 100644
 --- a/bmc/bmc_kern.c

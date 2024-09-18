@@ -1,16 +1,41 @@
-From f151257a94c3ed6b0b91654208f72596267058ae Mon Sep 17 00:00:00 2001
+From 7bedaae42ba5cc3f687fd8128aa6190a6855c880 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Mon, 8 Jul 2024 15:20:29 +0000
 Subject: [PATCH 2/2] Use dynamic program index to avoid spectere opt
 
 ---
+ bmc/Makefile   |   9 +-
  bmc/bmc_kern.c |  26 ++++--
  bmc/nohup.out  | 228 +++++++++++++++++++++++++++++++++++++++++++++++++
  bmc/run.sh     |  24 ++++++
- 3 files changed, 272 insertions(+), 6 deletions(-)
+ 4 files changed, 280 insertions(+), 7 deletions(-)
  create mode 100644 bmc/nohup.out
  create mode 100755 bmc/run.sh
 
+diff --git a/bmc/Makefile b/bmc/Makefile
+index 6b6a8ec..8438894 100644
+--- a/bmc/Makefile
++++ b/bmc/Makefile
+@@ -3,11 +3,18 @@ BPF_COMPILE_SCRIPT=$(BPF_GEN_DIR)/compile_scripts/compile_bpf_source.sh
+ 
+ BPF_CFLAGS =
+ 
++.PHONY: default clean
++
+ default: bmc_kern.o bmc
+ 
++clean:
++	rm bmc bmc_kern.o
++
+ bmc_kern.o: bmc_kern.c bmc_common.h
+ 	export CFLAGS="$(BPF_CFLAGS)" && bash $(BPF_COMPILE_SCRIPT) bmc_kern.c $@
+ 
++OLD_LIBBPF_HEADER=$(HOME)/old_libbpf/src/build/usr/include/
++OLD_LIBBPF_LIB=$(HOME)/old_libbpf/src/build/usr/lib64/
+ bmc: bmc_user.c bmc_common.h
+-	gcc -O2 -g -Wall -o $@ bmc_user.c -lbpf -lelf -lz -lpthread
++	gcc -O2 -g -Wall -I $(OLD_LIBBPF_HEADER) -o $@ bmc_user.c -L$(OLD_LIBBPF_LIB)  -lbpf  -lelf -lz -lpthread
+ 
 diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
 index c05a616..7e89d07 100644
 --- a/bmc/bmc_kern.c
