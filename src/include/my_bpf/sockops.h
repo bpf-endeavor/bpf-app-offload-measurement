@@ -48,10 +48,13 @@ struct {
 } count_sock_map SEC(".maps");
 
 struct {
-	__uint(type,  BPF_MAP_TYPE_SK_STORAGE);
-	__type(key,   __u32);
+	/* __uint(type,  BPF_MAP_TYPE_SK_STORAGE); */
+	__uint(type,  BPF_MAP_TYPE_HASH);
+	/* __type(key,   __u32); */
+	__type(key,   __u64);
 	__type(value, struct sock_context);
-	__uint(map_flags, BPF_F_NO_PREALLOC);
+	__uint(max_entries, MAX_CONN);
+	/* __uint(map_flags, BPF_F_NO_PREALLOC); */
 } sock_ctx_map SEC(".maps");
 /* BPF maps ---------------*/
 
@@ -82,17 +85,27 @@ int monitor_connections(struct bpf_sock_ops *skops)
 		return 0;
 	}
 
-	ctx = bpf_sk_storage_get(&sock_ctx_map, skops->sk, NULL,
-			BPF_LOCAL_STORAGE_GET_F_CREATE);
+	/* ctx = bpf_sk_storage_get(&sock_ctx_map, skops->sk, NULL, */
+	/* 		BPF_LOCAL_STORAGE_GET_F_CREATE); */
+
+	__u64 cookie = bpf_get_socket_cookie(skops);
+	ctx = bpf_map_lookup_elem(&sock_ctx_map, &cookie);
 	if (!ctx) {
-		/* Should never happen */
-		return 0;
+		struct sock_context tmp;
+		memset(&tmp, 0, sizeof(tmp));
+		bpf_map_update_elem(&sock_ctx_map, &cookie, &tmp, BPF_NOEXIST);
+		ctx = bpf_map_lookup_elem(&sock_ctx_map, &cookie);
+		if (!ctx) {
+			bpf_printk("did not get the context even after atempting to create it!");
+			return 0;
+		}
 	}
 
 	/* Check for socket close event */
 	if (skops->op == BPF_SOCK_OPS_STATE_CB) {
 		if (skops->args[1] == BPF_TCP_CLOSE) {
 			bpf_map_delete_elem(&sock_map, &ctx->sock_map_index);
+			bpf_map_delete_elem(&sock_ctx_map, &cookie);
 		}
 		return 0;
 	}

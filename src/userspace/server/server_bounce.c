@@ -46,6 +46,7 @@ int handle_client(int client_fd, struct client_ctx *ctx)
 
 	/* Send a reply */
 	ret = send(client_fd, buf, len, 0);
+	/* ret = send(client_fd, "HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nabc", 41, 0); */
 	return 0;
 }
 
