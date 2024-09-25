@@ -1,14 +1,14 @@
-From 37787fd71309e712d8750232fa1175b278473ebf Mon Sep 17 00:00:00 2001
+From 29c956b849a822db830179df4c9232a7b456b9e6 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Mon, 8 Jul 2024 15:20:29 +0000
 Subject: [PATCH 2/2] Use dynamic program index to avoid spectere opt
 
 ---
  bmc/Makefile   |   9 +-
- bmc/bmc_kern.c |  34 ++++++--
+ bmc/bmc_kern.c |  45 ++++++++--
  bmc/nohup.out  | 228 +++++++++++++++++++++++++++++++++++++++++++++++++
  bmc/run.sh     |  24 ++++++
- 4 files changed, 287 insertions(+), 8 deletions(-)
+ 4 files changed, 298 insertions(+), 8 deletions(-)
  create mode 100644 bmc/nohup.out
  create mode 100755 bmc/run.sh
 
@@ -37,7 +37,7 @@ index a7dd9c1..9d9708e 100644
 +	gcc -O2 -g -Wall -I $(OLD_LIBBPF_HEADER) -o $@ bmc_user.c -L$(OLD_LIBBPF_LIB)  -lbpf  -lelf -lz -lpthread
  
 diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
-index c05a616..e0c8ed0 100644
+index c05a616..73a7dc1 100644
 --- a/bmc/bmc_kern.c
 +++ b/bmc/bmc_kern.c
 @@ -133,6 +133,7 @@ int bmc_rx_filter_main(struct xdp_md *ctx)
@@ -48,21 +48,32 @@ index c05a616..e0c8ed0 100644
  	__be16 dport;
  
  	if (ip + 1 > data_end)
-@@ -183,7 +184,12 @@ int bmc_rx_filter_main(struct xdp_md *ctx)
+@@ -180,13 +181,23 @@ int bmc_rx_filter_main(struct xdp_md *ctx)
+ 			for (off = 4; off < BMC_MAX_PACKET_LENGTH && payload+off+1 <= data_end && payload[off] == ' '; off++) {} // move offset to the start of the first key
+ 			if (off < BMC_MAX_PACKET_LENGTH) {
+ 				pctx->read_pkt_offset = off; // save offset
++				if (udp->source == 123) {
++					bpf_printk("wrong: rx main");
++					prog_index = BMC_PROG_XDP_INVALIDATE_CACHE;
++				} else {
++					prog_index = BMC_PROG_XDP_HASH_KEYS;
++				}
  				if (bpf_xdp_adjust_head(ctx, (int)(sizeof(*eth) + sizeof(*ip) + sizeof(*udp) + sizeof(struct memcached_udp_header) + off))) { // push headers + 'get ' keyword
  					return XDP_PASS;
  				}
 -				bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS);
-+				if (off > 8) {
-+					prog_index = BMC_PROG_XDP_HASH_KEYS;
-+				} else {
-+					prog_index = 213;
-+				}
++				prog_index &= 0xff;
 +				bpf_tail_call(ctx, &map_progs_xdp, prog_index);
++				/* bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS); */
  			}
  		}
  		else if (ip->protocol == IPPROTO_TCP) {
-@@ -202,6 +208,7 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
++			/* prog_index = BMC_PROG_XDP_INVALIDATE_CACHE; */
++			/* bpf_tail_call(ctx, &map_progs_xdp, prog_index); */
+ 			bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_INVALIDATE_CACHE);
+ 		}
+ 	}
+@@ -202,6 +213,7 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
  	void *data = (void *)(long)ctx->data;
  	char *payload = (char *) data;
  	unsigned int zero = 0;
@@ -70,23 +81,32 @@ index c05a616..e0c8ed0 100644
  
  	if (payload >= data_end)
  		return XDP_PASS;
-@@ -268,8 +275,14 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
- 
+@@ -269,13 +281,23 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
  	if (done_parsing) { // the end of the request has been reached
  		bpf_xdp_adjust_head(ctx, 0 - (sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct memcached_udp_header) + pctx->read_pkt_offset)); // pop headers + 'get ' + previous keys
-+		if (pctx->key_count == 1) {
-+			prog_index = BMC_PROG_XDP_PREPARE_PACKET;
-+		} else {
-+			/* NOTE: this path must be unreachable */
-+			prog_index = 32;
-+		}
  		if (pctx->key_count > 0) {
 -			bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_PREPARE_PACKET);
++			if (key->len > 16) {
++				prog_index = BMC_PROG_XDP_PREPARE_PACKET;
++			} else {
++				bpf_printk("wrong: hash");
++				prog_index = BMC_PROG_XDP_INVALIDATE_CACHE;
++			}
++			prog_index &= 0xff;
 +			bpf_tail_call(ctx, &map_progs_xdp, prog_index);
++			/* bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_PREPARE_PACKET); */
  		}
  	} else { // more keys to process
  		off++; // move offset to the start of the next key
-@@ -291,6 +304,7 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
+ 		pctx->read_pkt_offset += off;
+ 		if (bpf_xdp_adjust_head(ctx, off)) // push the previous key
+ 			return XDP_PASS;
++		/* prog_index = BMC_PROG_XDP_HASH_KEYS; */
++		/* bpf_tail_call(ctx, &map_progs_xdp, prog_index); */
+ 		bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS);
+ 	}
+ 
+@@ -291,6 +313,7 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
  		return XDP_DROP;
  	}
  
@@ -94,22 +114,24 @@ index c05a616..e0c8ed0 100644
  	void *data_end = (void *)(long)ctx->data_end;
  	void *data = (void *)(long)ctx->data;
  	struct ethhdr *eth = data;
-@@ -326,7 +340,13 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
+@@ -326,7 +349,15 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
  	if (bpf_xdp_adjust_head(ctx, sizeof(*eth) + sizeof(*ip) + sizeof(*udp) + sizeof(*memcached_udp_hdr))) // push new headers
  		return XDP_PASS;
  
 -	bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY);
-+	if ((void *)(payload + 2000) < data_end) {
-+		/* NOTE: this path must be unreachable */
-+		prog_index = 32;
++	if (tmp_port == 123) {
++		bpf_printk("wrong: prepare");
++		prog_index = BMC_PROG_XDP_INVALIDATE_CACHE;
 +	} else {
 +		prog_index = BMC_PROG_XDP_WRITE_REPLY;
 +	}
++	prog_index &= 0xff;
 +	bpf_tail_call(ctx, &map_progs_xdp, prog_index);
++	/* bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY); */
  
  	return XDP_PASS;
  }
-@@ -449,15 +469,15 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+@@ -449,15 +480,15 @@ int bmc_write_reply_main(struct xdp_md *ctx)
  		bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY);
  	}
  

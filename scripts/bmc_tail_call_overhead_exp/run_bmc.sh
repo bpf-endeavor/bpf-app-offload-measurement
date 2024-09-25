@@ -18,7 +18,7 @@ fi
 IFINDEX=$(ip -j addr show $NET_IFACE | jq '.[0].ifindex')
 
 # echo Running BMC ...
-echo "Using $BMC_BIN"
+echo "Using $BMC_BIN and interface index: $IFINDEX" 
 $(nohup sudo $BMC_BIN $IFINDEX) &
 sleep 3
 sudo tc qdisc add dev $NET_IFACE clsact
