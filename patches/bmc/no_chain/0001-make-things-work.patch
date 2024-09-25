@@ -31,7 +31,7 @@ index 61a8f5d..6b6a8ec 100644
 -#
 -#	bmc_kern.c depends on kernel headers and bpf_helpers.h
 -#	bmc_user.c depends on libbpf
-+BPF_GEN_DIR=/home/farbod/kashk/
++BPF_GEN_DIR=$(KASHK_DIR)
 +BPF_COMPILE_SCRIPT=$(BPF_GEN_DIR)/compile_scripts/compile_bpf_source.sh
  
 -LINUX_PATH ?= ./linux

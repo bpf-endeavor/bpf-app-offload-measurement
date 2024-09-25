@@ -1,10 +1,16 @@
 #! /bin/bash
 
+SERVER_IP=192.168.1.1
+echo "Server ip is $SERVER_IP"
 MEMCD_DIR_BIN=$HOME/memcached/memcached
-taskset -c 1 $MEMCD_DIR_BIN -p 11211 -U 11211 -l 192.168.200.101 -m 1024 -M -k -P /tmp/M1_PID -d -t 1 -C
+taskset -c 1 $MEMCD_DIR_BIN -p 11211 -U 11211 -l $SERVER_IP -m 1024 -M -k -P /tmp/M1_PID -d -t 1 -C
 sleep 1
 
-BMC_BIN=$HOME/bmc/bmc/bmc
+if [ $# -gt 0 ]; then
+	BMC_BIN=$1
+else
+	BMC_BIN=$HOME/bmc/bmc/bmc
+fi
 if [ -z "$NET_IFACE" ]; then
 	echo "NET_IFACE has not been set"
 	exit 1
@@ -12,6 +18,7 @@ fi
 IFINDEX=$(ip -j addr show $NET_IFACE | jq '.[0].ifindex')
 
 # echo Running BMC ...
+echo "Using $BMC_BIN"
 $(nohup sudo $BMC_BIN $IFINDEX) &
 sleep 3
 sudo tc qdisc add dev $NET_IFACE clsact
