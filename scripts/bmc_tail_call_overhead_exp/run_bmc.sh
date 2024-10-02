@@ -22,7 +22,14 @@ echo "Using $BMC_BIN and interface index: $IFINDEX"
 $(nohup sudo $BMC_BIN $IFINDEX) &
 sleep 3
 sudo tc qdisc add dev $NET_IFACE clsact
-sudo tc filter add dev $NET_IFACE egress bpf object-pinned /sys/fs/bpf/bmc_tx_filter
+PINNED_FILE=/sys/fs/bpf/bmc_tx_filter
+sudo tc filter add dev $NET_IFACE egress bpf object-pinned $PINNED_FILE
+if [ $? -ne 0 ]; then
+	# for the global version we have changed stuff
+	PINNED_FILE=/sys/fs/bpf/bmc_tx_filter_main
+	sudo tc filter add dev $NET_IFACE egress bpf object-pinned $PINNED_FILE
+	echo "It is probably the global version"
+fi
 
 trap 'quit=1' SIGINT
 quit=0
@@ -35,6 +42,6 @@ done
 sudo pkill -SIGINT bmc
 sudo tc filter del dev $NET_IFACE egress
 sudo tc qdisc del dev $NET_IFACE clsact
-sudo rm /sys/fs/bpf/bmc_tx_filter
+sudo rm $PINNED_FILE
 # Stop Memcached
 kill -SIGINT $(cat /tmp/M1_PID)
