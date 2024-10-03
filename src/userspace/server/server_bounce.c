@@ -81,6 +81,20 @@ int handle_client_udp(int client_fd, struct client_ctx *ctx)
 	return 0;
 }
 
+/* void on_sockready(int fd) */
+/* { */
+/* 	int ret; */
+/* 	int bufsize; */
+/* 	bufsize = 1 << 20; */
+/* 	ret = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)); */
+/* 	if (ret != 0) printf("failed to set sndbuf\n"); */
+/* 	/1* Creating a mismatch between Rx and Tx buffer *1/ */
+/* 	bufsize = 1 << 10; */
+/* 	ret = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)); */
+/* 	if (ret != 0) printf("failed to set rcvbuf\n"); */
+/* 	printf("increase socket buffers\n"); */
+/* } */
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -111,6 +125,7 @@ int main(int argc, char *argv[])
 	} else {
 		app.sock_handler = handle_client;
 	}
+	/* app.on_sockready = on_sockready; */
 	app.on_sockready = NULL;
 	app.on_sockclose = NULL;
 	app.on_events = NULL;
