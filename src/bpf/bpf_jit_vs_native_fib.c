@@ -60,7 +60,7 @@ int xdp_prog(struct xdp_md *ctx)
 		return XDP_PASS;
 	if (*limit > UPPER_BOUND_ON_LIMIT_REQ)
 		return XDP_ABORTED;
-	__u64 a = 1, b = 1 , c;
+	__u64 a = 1, b = 1 , c = 0;
 	for (__u32 i = 2; i < *limit; i++) {
 		c = a + b;
 		a = b;

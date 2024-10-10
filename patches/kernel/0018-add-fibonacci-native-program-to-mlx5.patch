@@ -1,0 +1,113 @@
+From ae7b4fe1084b665cee1e885ee811ac41ddf2259a Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 10 Oct 2024 09:28:59 +0000
+Subject: [PATCH 18/18] add fibonacci native program to mlx5
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.c  | 46 +++++++++++++++++--
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.h  |  2 +-
+ 2 files changed, 44 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+index be808d1be672..4bd11e6b2a74 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+@@ -37,6 +37,8 @@
+ #include <linux/bitfield.h>
+ #include <net/page_pool/helpers.h>
+ 
++/* Select which native program to run */
++#define NATIVE_PROG 3
+ #ifdef NATIVE_DROP_VS_EBPF
+ volatile int _checksum_repeat = 0;
+ static u64 counter = 0;
+@@ -62,6 +64,8 @@ void report_tput(void)
+ 	}
+ }
+ 
++#if NATIVE_PROG == 1
++
+ static inline __attribute__((always_inline))
+ __u16 csum_fold_helper(__u64 csum)
+ {
+@@ -126,9 +130,11 @@ __native_drop_bench(struct xdp_buff *ctx)
+ 	return XDP_DROP;
+ }
+ 
++#elif NATIVE_PROG == 2
++
+ #define WORKING_PKT_SIZE 64
+ static int inline
+-__native_drop_bench_2(struct xdp_buff *ctx)
++__native_drop_bench(struct xdp_buff *ctx)
+ {
+ 	/* bpf_printk("THIS MUST NOT PRINT (in mlx5 driver mode)"); */
+ 	void *data, *data_end;
+@@ -171,6 +177,41 @@ __native_drop_bench_2(struct xdp_buff *ctx)
+ 
+ 	return XDP_DROP;
+ }
++
++#else
++static int
++__native_drop_bench(struct xdp_buff *ctx)
++{
++	void *data, *data_end;
++	data = (void *)(__u64)ctx->data;
++	data_end = (void *)(__u64)ctx->data_end;
++	struct ethhdr *eth = data;
++	struct iphdr  *ip = (void *)(eth + 1);
++	struct udphdr *udp = (void *)(ip + 1);
++	__u32 *limit = (__u32 *)(udp + 1);
++	if ((void *)(limit + 1) > data_end)
++		return XDP_PASS;
++	if (eth->h_proto != htons(ETH_P_IP))
++		return XDP_PASS;
++	if (ip->protocol != IPPROTO_UDP)
++		return XDP_PASS;
++	if (udp->dest != htons(8080))
++		return XDP_PASS;
++	if (*limit > 10000)
++		return XDP_ABORTED;
++	__u64 a = 1, b = 1 , c = 0;
++	for (__u32 i = 2; i < *limit; i++) {
++		c = a + b;
++		a = b;
++		b = c;
++	}
++	if (c == 4)  /* to avoid optimizing the loop */
++		printk("calculated fib %u to be %llu", *limit, c);
++	report_tput();
++	return XDP_DROP;
++}
++
++#endif
+ #endif
+ 
+ int mlx5e_xdp_max_mtu(struct mlx5e_params *params, struct mlx5e_xsk_param *xsk)
+@@ -452,8 +493,7 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq,
+ 	int err;
+ 
+ #ifdef NATIVE_DROP_VS_EBPF
+-	/* act = __native_drop_bench(xdp); */
+-	act = __native_drop_bench_2(xdp);
++	act = __native_drop_bench(xdp);
+ #else
+ 	act = bpf_prog_run_xdp(prog, xdp);
+ #endif
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+index 1ff38a4c97a4..c218ec892e87 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.h
+@@ -247,7 +247,7 @@ mlx5e_xdpi_fifo_pop(struct mlx5e_xdp_info_fifo *fifo)
+ 
+ /* Run a drop benchmark instead of XDP program. The benchmark is compiled with
+  * the driver source code */
+-#define NATIVE_DROP_VS_EBPF 1
++/* #define NATIVE_DROP_VS_EBPF 1 */
+ #ifdef NATIVE_DROP_VS_EBPF
+ volatile extern int _checksum_repeat;
+ #endif
+-- 
+2.34.1
+

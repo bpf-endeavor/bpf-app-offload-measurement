@@ -1,7 +1,7 @@
 From 15c39b94e1e44e1081dcddf3ff2025bc4c1468c1 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Thu, 1 Aug 2024 09:37:42 +0000
-Subject: [PATCH 15/17] increase bpf instruction limit to 100M
+Subject: [PATCH 15/18] increase bpf instruction limit to 100M
 
 ---
  include/linux/bpf.h | 2 +-

@@ -1,7 +1,7 @@
 From 6fe54b17d21b55c18a8e1eed59f96bba563eaa64 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Fri, 5 Jul 2024 17:02:44 +0000
-Subject: [PATCH 14/17] add a native drop benchmark to the mlx5 driver
+Subject: [PATCH 14/18] add a native drop benchmark to the mlx5 driver
 
 ---
  .../net/ethernet/mellanox/mlx5/core/en/xdp.c  | 53 +++++++++++++++++++

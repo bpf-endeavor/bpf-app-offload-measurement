@@ -1,7 +1,7 @@
 From cd8d677e2ebea67e9f4a9b4f305f53a594390a72 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Thu, 1 Aug 2024 11:52:24 +0000
-Subject: [PATCH 16/17] update jit_vs_native program in mlx5 driver to perform
+Subject: [PATCH 16/18] update jit_vs_native program in mlx5 driver to perform
  a more complex operation
 
 ---

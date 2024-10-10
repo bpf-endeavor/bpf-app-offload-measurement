@@ -1,7 +1,7 @@
 From 121aa5eabccc35619bd651aa66ddd67d19f7c08c Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Fri, 24 May 2024 15:30:16 +0000
-Subject: [PATCH 07/17] add a patch script
+Subject: [PATCH 07/18] add a patch script
 
 ---
  script_format_patch.sh | 1 +
