@@ -1,4 +1,6 @@
-/* This code declares the maps (will be created by libbpf when it is loaded)
+/*  This benchmark test the throughput of reading data throuhg maps
+ *
+ * This code declares the maps (will be created by libbpf when it is loaded)
  * also there is a TC program for preparing some of the maps (i.e. inserting
  * some values).
  *
