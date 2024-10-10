@@ -1,0 +1,1000 @@
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32278858
+Avg. array copy = 3227.885800
+Avg. memcpy = 32.278858
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32358056
+Avg. array copy = 3235.805600
+Avg. memcpy = 32.358056
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32298606
+Avg. array copy = 3229.860600
+Avg. memcpy = 32.298606
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32463760
+Avg. array copy = 3246.376000
+Avg. memcpy = 32.463760
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32302767
+Avg. array copy = 3230.276700
+Avg. memcpy = 32.302767
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32502307
+Avg. array copy = 3250.230700
+Avg. memcpy = 32.502307
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32416533
+Avg. array copy = 3241.653300
+Avg. memcpy = 32.416533
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31605396
+Avg. array copy = 3160.539600
+Avg. memcpy = 31.605396
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32249221
+Avg. array copy = 3224.922100
+Avg. memcpy = 32.249221
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31557086
+Avg. array copy = 3155.708600
+Avg. memcpy = 31.557086
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32283276
+Avg. array copy = 3228.327600
+Avg. memcpy = 32.283276
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32423236
+Avg. array copy = 3242.323600
+Avg. memcpy = 32.423236
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32364915
+Avg. array copy = 3236.491500
+Avg. memcpy = 32.364915
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32364507
+Avg. array copy = 3236.450700
+Avg. memcpy = 32.364507
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32393963
+Avg. array copy = 3239.396300
+Avg. memcpy = 32.393963
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32153317
+Avg. array copy = 3215.331700
+Avg. memcpy = 32.153317
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32088045
+Avg. array copy = 3208.804500
+Avg. memcpy = 32.088045
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32313801
+Avg. array copy = 3231.380100
+Avg. memcpy = 32.313801
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31992845
+Avg. array copy = 3199.284500
+Avg. memcpy = 31.992845
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32323602
+Avg. array copy = 3232.360200
+Avg. memcpy = 32.323602
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32478789
+Avg. array copy = 3247.878900
+Avg. memcpy = 32.478789
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32123177
+Avg. array copy = 3212.317700
+Avg. memcpy = 32.123177
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31649710
+Avg. array copy = 3164.971000
+Avg. memcpy = 31.649710
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32193000
+Avg. array copy = 3219.300000
+Avg. memcpy = 32.193000
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32682553
+Avg. array copy = 3268.255300
+Avg. memcpy = 32.682553
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32252777
+Avg. array copy = 3225.277700
+Avg. memcpy = 32.252777
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31701374
+Avg. array copy = 3170.137400
+Avg. memcpy = 31.701374
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32008629
+Avg. array copy = 3200.862900
+Avg. memcpy = 32.008629
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32154041
+Avg. array copy = 3215.404100
+Avg. memcpy = 32.154041
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32225894
+Avg. array copy = 3222.589400
+Avg. memcpy = 32.225894
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31584375
+Avg. array copy = 3158.437500
+Avg. memcpy = 31.584375
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32405031
+Avg. array copy = 3240.503100
+Avg. memcpy = 32.405031
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32267748
+Avg. array copy = 3226.774800
+Avg. memcpy = 32.267748
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32443865
+Avg. array copy = 3244.386500
+Avg. memcpy = 32.443865
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32448313
+Avg. array copy = 3244.831300
+Avg. memcpy = 32.448313
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31933680
+Avg. array copy = 3193.368000
+Avg. memcpy = 31.933680
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32332791
+Avg. array copy = 3233.279100
+Avg. memcpy = 32.332791
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32595563
+Avg. array copy = 3259.556300
+Avg. memcpy = 32.595563
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32587336
+Avg. array copy = 3258.733600
+Avg. memcpy = 32.587336
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32071521
+Avg. array copy = 3207.152100
+Avg. memcpy = 32.071521
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32338966
+Avg. array copy = 3233.896600
+Avg. memcpy = 32.338966
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32470329
+Avg. array copy = 3247.032900
+Avg. memcpy = 32.470329
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32283571
+Avg. array copy = 3228.357100
+Avg. memcpy = 32.283571
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32421025
+Avg. array copy = 3242.102500
+Avg. memcpy = 32.421025
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32376031
+Avg. array copy = 3237.603100
+Avg. memcpy = 32.376031
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32602119
+Avg. array copy = 3260.211900
+Avg. memcpy = 32.602119
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32375261
+Avg. array copy = 3237.526100
+Avg. memcpy = 32.375261
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31713445
+Avg. array copy = 3171.344500
+Avg. memcpy = 31.713445
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31525798
+Avg. array copy = 3152.579800
+Avg. memcpy = 31.525798
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31566050
+Avg. array copy = 3156.605000
+Avg. memcpy = 31.566050
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31904941
+Avg. array copy = 3190.494100
+Avg. memcpy = 31.904941
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32237732
+Avg. array copy = 3223.773200
+Avg. memcpy = 32.237732
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32582962
+Avg. array copy = 3258.296200
+Avg. memcpy = 32.582962
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31893508
+Avg. array copy = 3189.350800
+Avg. memcpy = 31.893508
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32327040
+Avg. array copy = 3232.704000
+Avg. memcpy = 32.327040
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32759224
+Avg. array copy = 3275.922400
+Avg. memcpy = 32.759224
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31573601
+Avg. array copy = 3157.360100
+Avg. memcpy = 31.573601
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31936856
+Avg. array copy = 3193.685600
+Avg. memcpy = 31.936856
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32090375
+Avg. array copy = 3209.037500
+Avg. memcpy = 32.090375
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32136343
+Avg. array copy = 3213.634300
+Avg. memcpy = 32.136343
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31844287
+Avg. array copy = 3184.428700
+Avg. memcpy = 31.844287
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32267714
+Avg. array copy = 3226.771400
+Avg. memcpy = 32.267714
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32195736
+Avg. array copy = 3219.573600
+Avg. memcpy = 32.195736
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32412001
+Avg. array copy = 3241.200100
+Avg. memcpy = 32.412001
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32196388
+Avg. array copy = 3219.638800
+Avg. memcpy = 32.196388
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31779433
+Avg. array copy = 3177.943300
+Avg. memcpy = 31.779433
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32302312
+Avg. array copy = 3230.231200
+Avg. memcpy = 32.302312
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32246947
+Avg. array copy = 3224.694700
+Avg. memcpy = 32.246947
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32505565
+Avg. array copy = 3250.556500
+Avg. memcpy = 32.505565
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31608925
+Avg. array copy = 3160.892500
+Avg. memcpy = 31.608925
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32832982
+Avg. array copy = 3283.298200
+Avg. memcpy = 32.832982
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32333034
+Avg. array copy = 3233.303400
+Avg. memcpy = 32.333034
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31803113
+Avg. array copy = 3180.311300
+Avg. memcpy = 31.803113
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32264223
+Avg. array copy = 3226.422300
+Avg. memcpy = 32.264223
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32186865
+Avg. array copy = 3218.686500
+Avg. memcpy = 32.186865
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31686157
+Avg. array copy = 3168.615700
+Avg. memcpy = 31.686157
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32367496
+Avg. array copy = 3236.749600
+Avg. memcpy = 32.367496
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32418618
+Avg. array copy = 3241.861800
+Avg. memcpy = 32.418618
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32202774
+Avg. array copy = 3220.277400
+Avg. memcpy = 32.202774
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31676437
+Avg. array copy = 3167.643700
+Avg. memcpy = 31.676437
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32411887
+Avg. array copy = 3241.188700
+Avg. memcpy = 32.411887
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32569480
+Avg. array copy = 3256.948000
+Avg. memcpy = 32.569480
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32334229
+Avg. array copy = 3233.422900
+Avg. memcpy = 32.334229
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31561203
+Avg. array copy = 3156.120300
+Avg. memcpy = 31.561203
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32207886
+Avg. array copy = 3220.788600
+Avg. memcpy = 32.207886
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32027440
+Avg. array copy = 3202.744000
+Avg. memcpy = 32.027440
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32443435
+Avg. array copy = 3244.343500
+Avg. memcpy = 32.443435
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32353995
+Avg. array copy = 3235.399500
+Avg. memcpy = 32.353995
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32330036
+Avg. array copy = 3233.003600
+Avg. memcpy = 32.330036
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32130259
+Avg. array copy = 3213.025900
+Avg. memcpy = 32.130259
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32107641
+Avg. array copy = 3210.764100
+Avg. memcpy = 32.107641
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31999124
+Avg. array copy = 3199.912400
+Avg. memcpy = 31.999124
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32490943
+Avg. array copy = 3249.094300
+Avg. memcpy = 32.490943
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32296426
+Avg. array copy = 3229.642600
+Avg. memcpy = 32.296426
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32321062
+Avg. array copy = 3232.106200
+Avg. memcpy = 32.321062
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32409770
+Avg. array copy = 3240.977000
+Avg. memcpy = 32.409770
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32425445
+Avg. array copy = 3242.544500
+Avg. memcpy = 32.425445
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 31632148
+Avg. array copy = 3163.214800
+Avg. memcpy = 31.632148
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32607103
+Avg. array copy = 3260.710300
+Avg. memcpy = 32.607103
+ret = 0
+errno = 0
+sudo rmmod memcpy_bench | true
+sudo insmod /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/memcpy_bench.ko
+DEBUG_FILE_PATH=/sys/kernel/debug/lkmc_ioctl/f && \
+		sudo /home/farbod/kashk/cost_benchmark/memcpy_bench/in_kernel/build/run_bench $DEBUG_FILE_PATH
+Benchmark results:
+Total duration = 32199933
+Avg. array copy = 3219.993300
+Avg. memcpy = 32.199933
+ret = 0
+errno = 0
