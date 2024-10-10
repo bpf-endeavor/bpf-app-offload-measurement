@@ -1,4 +1,4 @@
-From c0588196a298e4f28ed6aa65074e836e431b0c30 Mon Sep 17 00:00:00 2001
+From 49edcd11a50f5ab8de9b83a30da77e919b12ab85 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Thu, 20 Jun 2024 15:43:12 +0000
 Subject: [PATCH 1/2] make things work
@@ -12,7 +12,7 @@ Subject: [PATCH 1/2] make things work
  create mode 100644 bmc/Makefile.old
 
 diff --git a/bmc/Makefile b/bmc/Makefile
-index 61a8f5d..6b6a8ec 100644
+index 61a8f5d..a7dd9c1 100644
 --- a/bmc/Makefile
 +++ b/bmc/Makefile
 @@ -1,131 +1,13 @@
@@ -31,7 +31,7 @@ index 61a8f5d..6b6a8ec 100644
 -#
 -#	bmc_kern.c depends on kernel headers and bpf_helpers.h
 -#	bmc_user.c depends on libbpf
-+BPF_GEN_DIR=/home/farbod/kashk/
++BPF_GEN_DIR=$(KASHK_DIR)
 +BPF_COMPILE_SCRIPT=$(BPF_GEN_DIR)/compile_scripts/compile_bpf_source.sh
  
 -LINUX_PATH ?= ./linux

@@ -52,6 +52,7 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_resize_perf.o \
 	bpf_jit_vs_native.o \
 	bpf_demux.o \
+	bpf_skskb_redir.o \
 	bpf_jit_vs_native_prime.o \
 	bpf_jit_vs_native_fib.o
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))

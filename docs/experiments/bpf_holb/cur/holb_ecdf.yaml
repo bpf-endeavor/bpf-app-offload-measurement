@@ -8,7 +8,7 @@ subplots:
       data: './m2_with_bpf_offload.txt'
       color: "tab:red"
       linestyle: '--'
-    title: '(1) HOLB of non-accelerated flows'
+    # title: '(1) HOLB of non-accelerated flows'
     ylabel: 'Empirical CDF'
     xlabel: 'Req. Completion (us)'
     xlim: [0, 300]

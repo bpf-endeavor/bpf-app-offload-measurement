@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-SERVER_HOST=192.168.200.101
+SERVER_HOST=192.168.1.1
 SERVER_PORT=11211
 # NOTE: Experiment duration in seconds
 TIME=10
-REPEAT=1
+REPEAT=40
 
 LOCALHOST=`hostname`
 AGENT=$LOCALHOST
@@ -13,8 +13,13 @@ AGENT=$LOCALHOST
 # WORKLOAD_DESC="--records=1000000 --keysize=fb_key --valuesize=fb_value --iadist=fb_ia --update=0"
 WORKLOAD_DESC="--records=1 -K 128 -V 64 -i fixed:0"
 
-trap "handle_signal" SIGINT SIGHUP
+if [ $# -gt 0 ]; then
+    OUTPUT_FILE=$1
+else
+    OUTPUT_FILE=/tmp/bmc_performance.txt
+fi
 
+trap "handle_signal" SIGINT SIGHUP
 
 function handle_signal {
         pkill mutilateudp
@@ -25,11 +30,11 @@ echo Loading ...
 
 for i in $(seq $REPEAT); do
         echo Running agents ...
-        taskset -c '2-40:2' ./mutilateudp -A --threads 10 &
+        ./mutilateudp -A --threads 8 &
         echo Running experiment $i ...
         taskset -c 0 ./mutilateudp --time=$TIME --qps=0 $WORKLOAD_DESC \
-                --server=$SERVER_HOST:$SERVER_PORT --noload --threads=1 --connections=32 \
-                --measure_connections=1 --measure_qps=100 --agent=$AGENT | tee -a /tmp/bmc_performance.txt
+                --server=$SERVER_HOST:$SERVER_PORT --noload --threads=1 --connections=16 \
+                --measure_connections=1 --measure_qps=100 --agent=$AGENT | tee -a $OUTPUT_FILE
         # Terminate
         handle_signal
         sleep 1

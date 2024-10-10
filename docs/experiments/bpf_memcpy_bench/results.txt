@@ -42,3 +42,19 @@ standard err: 0.054
 median (iqr): 29.0 (1.0)
 box-plot: 26.50--[28.0-|29.0|-29.0]--30.50
 meidan +- range: 29.0 +- 2.0
+
+in_kernel_samples.txt
+farbod@neat-01:~/auto_kern_offload_bench/docs/experiments/bpf_memcpy_bench$ cat in_kernel_samples.txt  | grep "Avg. memcpy" | awk '{print $4}' | ../..//latency_script.py
+samples: 100
+max: 32.832982
+min: 31.525798
+mean: 32.20
+@1 : 31.557086
+@50: 32.283276
+@99: 32.832982
+std: 0.305
+standard err: 0.031
+median (iqr): 32.283276 (0.34036600000000305)
+box-plot: 31.56--[32.071521-|32.283276|-32.411887]--32.92
+meidan +- range: 32.283276 +- 0.7220730000000017
+

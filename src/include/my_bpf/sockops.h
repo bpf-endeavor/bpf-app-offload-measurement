@@ -92,7 +92,7 @@ int monitor_connections(struct bpf_sock_ops *skops)
 	ctx = bpf_map_lookup_elem(&sock_ctx_map, &cookie);
 	if (!ctx) {
 		struct sock_context tmp;
-		memset(&tmp, 0, sizeof(tmp));
+		__builtin_memset(&tmp, 0, sizeof(tmp));
 		bpf_map_update_elem(&sock_ctx_map, &cookie, &tmp, BPF_NOEXIST);
 		ctx = bpf_map_lookup_elem(&sock_ctx_map, &cookie);
 		if (!ctx) {

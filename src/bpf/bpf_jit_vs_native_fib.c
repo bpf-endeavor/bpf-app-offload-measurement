@@ -66,7 +66,8 @@ int xdp_prog(struct xdp_md *ctx)
 		a = b;
 		b = c;
 	}
-	/* bpf_printk("calculated fib %u to be %llu", *limit, c); */
+	if (c == 4)  /* to avoid optimizing the loop */
+		bpf_printk("calculated fib %u to be %llu", *limit, c);
 	report_tput();
 	return XDP_DROP;
 }
