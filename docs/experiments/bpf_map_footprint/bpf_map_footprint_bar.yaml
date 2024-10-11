@@ -1,0 +1,51 @@
+figsize: [5, 2.5]
+subplots:
+  - x: ['100', '5K', '10K', '50K', '100K']
+    experiments:
+      - label: 'Array'
+        y: [13.8, 13.5, 13.4, 13.1, 12.3]
+        color: 'tab:blue'
+        hatch: '++'
+      - label: 'Hash map'
+        y: [8.5, 8.1, 7.7, 6.3, 5.9]
+        color: 'tab:purple'
+        hatch: '\\'
+      - label: 'LRU hash map'
+        y: [8.4, 8.3, 8.1, 6.7, 6.5]
+        color: 'tab:orange'
+        hatch: '--'
+    xlabel: 'Number of flows'
+    ylabel: 'Throughput (Mpps)'
+    yticks: [0, 6, 12, 18]
+    grid: true
+    annotate_line:
+      - xy1: [0, 14.7]
+        slope: 0
+        color: 'tab:red'
+        linestyle: '-.'
+        linewidth: 2
+    annotate:
+      - xy: [-0.2, 15.7]
+        text: 'baseline'
+
+  # - title: '(B)'
+  #   x: ['100', '5K', '10K', '50K', '100K']
+  #   y: [[3.27, 3.28], [4.49, 4.5], [4.5, 4.51], [4.5, 4.58], [4.3, 4.98]]
+  #   xlabel: 'Working set'
+  #   ylabel: 'L1+LLC misses (%)'
+  #   label: ['L1', 'LLC']
+    # yticks: [0, 6, 12, 18]
+  #   color: ['tab:red', 'tab:green']
+  #   hatch: ['//', 'xx']
+  #   legend:
+  #     ncol: 2
+  #     loc: 'lower center'
+  #   grid: true
+legend:
+  ncol: 3
+  loc: 'upper center'
+  # frameon: false
+  # fancybox: false
+tight_layout:
+  rect: [0, 0, 1, 0.90]
+output: 'bpf_map_footprint.pdf'
