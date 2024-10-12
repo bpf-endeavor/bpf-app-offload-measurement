@@ -1,4 +1,4 @@
-figsize: [4, 2]
+figsize: [3, 3]
 subplots:
   - lines:
       - label: 'Hard-coded'
@@ -25,10 +25,10 @@ subplots:
     # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
     # xlim: [-1, 100]
     ax_below: true
-    legend: true
-output: "jit_vs_native_wide.pdf"
+    legend:
+      loc: 'upper right'
 annotate:
-  - xy: [0, 15.3]
+  - xy: [0.1, 14.5]
     text: "14%"
     fontsize: 9
   - xy: [1, 10.3]
@@ -49,3 +49,7 @@ annotate:
   - xy: [7.3, 3.1]
     text: "52%"
     fontsize: 9
+# tight_layout:
+#   rect: [0, 0, 1, 0.90]
+# output: "jit_vs_native_wide.pdf"
+output: "jit_vs_native.pdf"

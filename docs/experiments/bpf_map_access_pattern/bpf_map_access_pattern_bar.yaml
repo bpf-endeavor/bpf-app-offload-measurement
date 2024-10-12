@@ -1,0 +1,35 @@
+figsize: [5, 2.5]
+subplots:
+  - x: ['0', '0.5', '1', '1.5', '2']
+    experiments:
+      - label: 'Array'
+        y: [12.4, 12.5, 13.3, 13.8, 13.8]
+        color: 'tab:blue'
+        hatch: '++'
+      - label: 'Hash map'
+        y: [5.5, 5.7, 7.5, 9.5, 9.8]
+        color: 'tab:purple'
+        hatch: '\\'
+      - label: 'LRU hash map'
+        y: [5.7, 5.8, 7.6, 9.6, 9.7]
+        color: 'tab:orange'
+        hatch: '--'
+    xlabel: 'Skewness (Zipfian parameter)'
+    ylabel: "Throughput\n(Mpps)"
+    yticks: [0, 6, 12, 18]
+    grid: true
+    annotate_line:
+      - xy1: [0, 14.7]
+        slope: 0
+        color: 'tab:red'
+        linestyle: '-.'
+        linewidth: 2
+    annotate:
+      - xy: [-0.2, 15.7]
+        text: 'baseline'
+legend:
+  ncol: 3
+  loc: 'upper center'
+tight_layout:
+  rect: [0, 0, 1, 0.90]
+output: 'bpf_map_access_pattern.pdf'

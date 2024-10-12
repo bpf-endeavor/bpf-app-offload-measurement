@@ -15,7 +15,7 @@ subplots:
         color: 'tab:orange'
         hatch: '--'
     xlabel: 'Number of flows'
-    ylabel: 'Throughput (Mpps)'
+    ylabel: "Throughput\n(Mpps)"
     yticks: [0, 6, 12, 18]
     grid: true
     annotate_line:

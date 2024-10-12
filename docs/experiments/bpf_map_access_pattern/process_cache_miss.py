@@ -9,9 +9,9 @@ def parse(f):
     tmp = {}
     looking = True
     for line in f:
-        if line.startswith('-- flows'):
+        if line.startswith('-- zipf'):
             tmp = {}
-            flows = int(line.split(':')[1].strip())
+            flows = float(line.split(':')[1].strip())
             tmp['flows'] = flows
             looking=False
         if looking:
@@ -38,7 +38,6 @@ def report(file_path, data, bsline):
     bs_l1_load = bsline['l1-load']
     bs_tput = bsline['throughput'] * 1000000
     bs_l1_miss_per_packet = bs_l1_miss / bs_tput
-    # print(bs_l1_miss_per_packet)
 
     keys = list(data.keys())
     keys.sort()
