@@ -37,11 +37,12 @@ typedef struct {
 	char data[KEY_SIZE];
 } __attribute__((packed)) my_key_t;
 
-/* #define MAP_ARRAY 1 */
+#define MAP_ARRAY 1
 /* #define MAP_HASH 1 */
-#define MAP_RING 1
+/* #define MAP_RING 1 */
+/* #define MAP_LRU_HASH 1 */
 
-/* #define PERCPU 1 */
+#define PERCPU 1
 /* #define MMAPED 1 */
 
 
@@ -88,6 +89,19 @@ static __u64 counter = 0;
 
 #endif
 
+#ifdef MAP_LRU_HASH
+struct {
+#ifdef PERCPU
+	__uint(type, BPF_MAP_TYPE_LRU_PERCPU_HASH);
+#else
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+#endif
+	__type(key,  my_key_t);
+	__type(value, value_t);
+	__uint(max_entries, 1);
+} comm_channel_map SEC(".maps");
+#endif
+
 SEC("tc")
 int tc_prog(struct __sk_buff *skb)
 {
@@ -106,7 +120,7 @@ int tc_prog(struct __sk_buff *skb)
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return TC_ACT_OK;
 
-#ifdef MAP_HASH
+#if defined(MAP_HASH) || defined(MAP_LRU_HASH)
 	/* Triggering this function once would be enough
 	 * command:
 	 *   nc -u 192.168.200.101 8080

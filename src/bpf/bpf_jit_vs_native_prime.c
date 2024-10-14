@@ -4,17 +4,19 @@
  * https://en.wikipedia.org/wiki/Sieve_of_Atkin
  * https://www.geeksforgeeks.org/sieve-of-atkin/
  * */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <linux/tcp.h>
-#include <linux/bpf.h>
+/* #include <sys/types.h> */
+/* #include <sys/socket.h> */
+/* #include <linux/tcp.h> */
+/* #include <linux/bpf.h> */
+/* #include <linux/if_ether.h> */
+/* #include <linux/ip.h> */
+/* #include <linux/udp.h> */
+/* #include <linux/in.h> */
+/* #include <linux/pkt_cls.h> */
+#include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
-#include <linux/if_ether.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
-#include <linux/in.h>
-#include <linux/pkt_cls.h>
+#define ETH_P_IP  0x0800
 
 # define __nobuiltin(X) __attribute__((no_builtin(X)))
 #define UPPER_BOUND_ON_LIMIT_REQ 100
@@ -81,8 +83,13 @@ void __calc_prime(int limit)
 		s->vals[i] = 0;
 	}
 
-	for (__u32 x = 1; x * x <= limit; x++) {
-		for (__u32 y = 1; y * y <= limit; y++) {
+	__u32 x;
+	/* for (__u32 x = 1; x * x <= limit; x++) { */
+	bpf_for (x, 1, limit) {
+		/* for (__u32 y = 1; y * y <= limit; y++) { */
+		__u32 y;
+		/* __u32 end = y * y <= limit */
+		bpf_for(y, 1, limit) {
 			// Condition 1
 			n = (4 * x * x) + (y * y);
 			if (n >= 7 && n <= limit && (n % 12 == 1 || n % 12 == 5)) {

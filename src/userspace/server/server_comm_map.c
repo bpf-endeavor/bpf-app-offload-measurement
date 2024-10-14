@@ -228,6 +228,14 @@ int measure_accessing_map(void)
 			map_type = "RINGBUF";
 			measure_ringbuf(map_fd, &map_info, &duration);
 			break;
+		case BPF_MAP_TYPE_LRU_HASH:
+			map_type = "LRU HASH";
+			measure_hash(map_fd, &map_info, &duration);
+			break;
+		case BPF_MAP_TYPE_LRU_PERCPU_HASH:
+			map_type = "LRU PERCPU HASH";
+			measure_percpu_hash(map_fd, &map_info, &duration);
+			break;
 		default:
 			ERROR("Unexpected map type: %d\n", map_info.type);
 			return 1;

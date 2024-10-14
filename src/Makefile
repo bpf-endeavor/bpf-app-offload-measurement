@@ -64,13 +64,16 @@ KERN_HEADERS = $(wildcard ./include/bpf/*.h) $(wildcard ./include/*.h)
 # All the binary object that should be created
 OUTPUTS = ${SERVER_BINS} ${OUTPUT_DIR}/loader ${_KERN_OBJECTS}
 
+VMLINUX = ./include/vmlinux.h
+
 
 .PHONY: all clean check_output_dir
 
-all: check_output_dir ${OUTPUTS}
+all: check_output_dir $(VMLINUX) ${OUTPUTS}
 
 clean:
 	rm -r build/
+	rm -f $(VMLINUX)
 
 check_output_dir:
 	@if [ ! -d ${OUTPUT_DIR} ]; then  mkdir -p ${OUTPUT_DIR} ; fi
@@ -99,3 +102,8 @@ $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 		-Wno-compare-distinct-pointer-types \
 		-O2 -g -emit-llvm -c $< -o $$LL_FILE; \
 		$(LLC) -mcpu=v3 -march=bpf -filetype=obj -o "$@" $$LL_FILE;
+
+$(VMLINUX): $(KFUNC_MEMCPY_TARGET)
+	# Remove the old vmlinux.h
+	if [ -f $@ ]; then rm $@; fi
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@
