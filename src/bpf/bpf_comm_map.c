@@ -26,7 +26,8 @@
 
 #define SERVER_PORT 8080
 
-#define VALUE_SIZE 64
+/* #define VALUE_SIZE 64 */
+#define VALUE_SIZE 1500
 typedef struct {
 	char data[VALUE_SIZE];
 } __attribute__((packed)) value_t;
@@ -37,10 +38,10 @@ typedef struct {
 	char data[KEY_SIZE];
 } __attribute__((packed)) my_key_t;
 
-#define MAP_ARRAY 1
+/* #define MAP_ARRAY 1 */
 /* #define MAP_HASH 1 */
 /* #define MAP_RING 1 */
-/* #define MAP_LRU_HASH 1 */
+#define MAP_LRU_HASH 1
 
 #define PERCPU 1
 /* #define MMAPED 1 */
@@ -55,7 +56,7 @@ struct {
 #endif
 	__type(key,  __u32);
 	__type(value, value_t);
-	__uint(max_entries, 1);
+	__uint(max_entries, 1); // 100000
 #ifdef MMAPED
 	__uint(map_flags, BPF_F_MMAPABLE);
 #endif
@@ -126,13 +127,13 @@ int tc_prog(struct __sk_buff *skb)
 	 *   nc -u 192.168.200.101 8080
 	 *   <send something>
 	 * */
-	bpf_printk("here in tc_prog (bpf_comm_map)");
-	/* Add a value to hash map for user space to read */
-	my_key_t key;
-	value_t v;
-	__builtin_memcpy(&key.data, THE_KEY, KEY_SIZE);
-	__builtin_memset(&v.data, 0xAB, VALUE_SIZE);
-	bpf_map_update_elem(&comm_channel_map, &key, &v, BPF_ANY);
+	/* bpf_printk("here in tc_prog (bpf_comm_map)"); */
+	/* /1* Add a value to hash map for user space to read *1/ */
+	/* my_key_t key; */
+	/* value_t v; */
+	/* __builtin_memcpy(&key.data, THE_KEY, KEY_SIZE); */
+	/* __builtin_memset(&v.data, 0xAB, VALUE_SIZE); */
+	/* bpf_map_update_elem(&comm_channel_map, &key, &v, BPF_ANY); */
 #endif
 
 #ifdef MAP_RING

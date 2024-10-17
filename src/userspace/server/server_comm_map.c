@@ -16,7 +16,8 @@
 #define THE_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
 #define COMM_MAP "comm_channel_ma"
 #define REPEAT 100000
-#define VALUE_SIZE 64
+/* #define VALUE_SIZE 64 */
+#define VALUE_SIZE 1500
 #define KEY_SIZE 4
 
 /* These types should match the ones defined in bpf program */
@@ -27,6 +28,7 @@ typedef struct {
 typedef struct {
 	char data[KEY_SIZE];
 } __attribute__((packed)) my_key_t;
+
 
 int measure_array(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
@@ -54,16 +56,23 @@ int measure_mmapped_array(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 	}
 	const int index = 0;
 	const int value_size = sizeof(value_t);
-	volatile value_t *val = (value_t *)((uint8_t *)m + (index * value_size));
+	/* volatile value_t *val = (value_t *)((uint8_t *)m + (index * value_size)); */
 
 	uint64_t begin;
 	begin = get_ns();
+	/* #pragma GCC novector */
 	for (int i = 0; i < REPEAT; i++) {
+		volatile value_t *val = (value_t *)((uint8_t *)m + ((0) * value_size));
+		/* if (val->data[1] == 589) { */
+		/* 	return 1; */
+		/* } */
 		if (val->data[0] == 123) {
 			INFO("this!\n");
 		}
 	}
-	*d = (get_ns() - begin) / REPEAT;
+	uint64_t t = (get_ns() - begin);
+	printf("%lu (%f)\n", t, (double)t/ REPEAT);
+	*d = t / REPEAT;
 	return 0;
 }
 
@@ -88,8 +97,23 @@ int measure_percpu_array(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 	return 0;
 }
 
+void init_hash_map(int map_fd)
+{
+	my_key_t key;
+	memcpy(&key.data, THE_KEY, KEY_SIZE);
+	value_t val;
+	memset(val.data, 0xab, VALUE_SIZE);
+	int ret = bpf_map_update_elem(map_fd, &key, &val, BPF_NOEXIST);
+	/* if (ret != 0) { */
+	/* 	perror("Failed to init hash-map"); */
+	/* 	exit(1); */
+	/* } */
+}
+
 int measure_hash(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
+	init_hash_map(map_fd);
+
 	uint64_t begin;
 	begin = get_ns();
 	my_key_t key;
@@ -107,6 +131,8 @@ int measure_hash(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 
 int measure_percpu_hash(int map_fd, struct bpf_map_info *map_info, int64_t *d)
 {
+	init_hash_map(map_fd);
+
 	uint64_t begin;
 	begin = get_ns();
 	my_key_t key;
@@ -240,8 +266,12 @@ int measure_accessing_map(void)
 			ERROR("Unexpected map type: %d\n", map_info.type);
 			return 1;
 	}
+	int64_t bytes = REPEAT * map_info.value_size;
+	printf("value size: %d\n", map_info.value_size);
+	double tput = (double)bytes * 8.0 / duration;
 	INFO("Map type: %s\n", map_type);
-	INFO("Access time: %ld\n", duration);
+	INFO("Access time: %ld (ns)\n", duration);
+	INFO("Throughput (Gbps): %f\n", tput);
 	return 0;
 }
 
