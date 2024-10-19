@@ -1,0 +1,51 @@
+NATIVE:
+    11d2:	45 8b 48 2a          	mov    0x2a(%r8),%r9d
+    ...
+    11e2:	31 c9                	xor    %ecx,%ecx
+    11e4:	31 ff                	xor    %edi,%edi
+    11e6:	45 85 c9             	test   %r9d,%r9d
+ +--11e9:	7e 2c                	jle    1217 <mlx5e_xdp_handle+0xa7>
+ |+>11eb:	4c 89 c0             	mov    %r8,%rax
+ || 11ee:	0f b6 10             	movzbl (%rax),%edx
+ || 11f1:	48 83 c0 01          	add    $0x1,%rax
+ || 11f5:	48 01 d1             	add    %rdx,%rcx
+ || 11f8:	48 39 c6             	cmp    %rax,%rsi
+ || 11fb:	75 f1                	jne    11ee <mlx5e_xdp_handle+0x7e>
+ || 11fd:	83 c7 01             	add    $0x1,%edi
+ || 1200:	41 39 f9             	cmp    %edi,%r9d
++||-1203:	7e 08                	jle    120d <mlx5e_xdp_handle+0x9d>
+||| 1205:	81 ff ff 03 00 00    	cmp    $0x3ff,%edi
+.|+-120b:	7e de                	jle    11eb <mlx5e_xdp_handle+0x7b>
+.|
+.| ....
+ +->1217:	f0 48 83 05 00 00 00 	lock addq $0x1,0x0(%rip)        # 1220 <mlx5e_xdp_handle+0xb0>
+    121e:	00 01 
+
+JIT:
+     78:	movl	42(%rdi), %esi
+     7b:	cmpl	$1, %esi
++----7e:	jl  	0xee
+|    80:	xorl	%edx, %edx
+|    82:	xorl	%r8d, %r8d
+| +--85:	jmp 	0x9d
+|++->87:	movl	%ecx, %r8d
+|||  8a:	addl	$1, %r8d
+|||  8e:	cmpl	%esi, %r8d
+|||  91:	jge 	0xce
+|||  93:	cmpl	$1023, %ecx
+|||+-99:	jb  	0x9d
+|||| 9b:	jmp 	0xce
+||++>9d:	movl	%r8d, %ecx
+||   a0:	xorl	%r8d, %r8d
+|| +>a3:	movq	%rdi, %rax
+|| | a6:	addq	%r8, %rax
+|| | a9:	movzbq	(%rax), %rax
+|| | ae:	addq	%rax, %rdx
+|| | b1:	addq	$1, %r8
+|| | b5:	cmpq	$64, %r8
+|+---b9:	je  	0x87
+|  +-bb:	jmp 	0xa3
+|   
+.   
+.   
+.   

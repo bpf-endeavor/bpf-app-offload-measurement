@@ -1,0 +1,139 @@
+// extracted from mlx5_xdp.txt
+0000000000001170 <mlx5e_xdp_handle>:
+{
+    1170:	f3 0f 1e fa          	endbr64 
+    1174:	e8 00 00 00 00       	call   1179 <mlx5e_xdp_handle+0x9>
+    1179:	55                   	push   %rbp
+    117a:	48 89 e5             	mov    %rsp,%rbp
+    117d:	41 54                	push   %r12
+    117f:	53                   	push   %rbx
+    1180:	48 83 ec 18          	sub    $0x18,%rsp
+    1184:	4c 8b 02             	mov    (%rdx),%r8
+    1187:	48 8b 52 08          	mov    0x8(%rdx),%rdx
+    118b:	65 48 8b 04 25 28 00 	mov    %gs:0x28,%rax
+    1192:	00 00 
+    1194:	48 89 45 e8          	mov    %rax,-0x18(%rbp)
+    1198:	31 c0                	xor    %eax,%eax
+	if ((void *)(repeat + 1) > data_end)
+    119a:	49 8d 48 2e          	lea    0x2e(%r8),%rcx
+    119e:	48 39 ca             	cmp    %rcx,%rdx
+    11a1:	0f 82 dd 00 00 00    	jb     1284 <mlx5e_xdp_handle+0x114>
+	if (eth->h_proto != htons(ETH_P_IP))
+    11a7:	66 41 83 78 0c 08    	cmpw   $0x8,0xc(%r8)
+    11ad:	0f 85 d1 00 00 00    	jne    1284 <mlx5e_xdp_handle+0x114>
+	if (ip->protocol != IPPROTO_UDP)
+    11b3:	41 80 78 17 11       	cmpb   $0x11,0x17(%r8)
+    11b8:	0f 85 c6 00 00 00    	jne    1284 <mlx5e_xdp_handle+0x114>
+	if (udp->dest != htons(8080))
+    11be:	66 41 81 78 24 1f 90 	cmpw   $0x901f,0x24(%r8)
+    11c5:	0f 85 b9 00 00 00    	jne    1284 <mlx5e_xdp_handle+0x114>
+    11cb:	49 89 f4             	mov    %rsi,%r12
+	if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
+    11ce:	49 8d 70 40          	lea    0x40(%r8),%rsi
+	_repeat = *repeat;
+    11d2:	45 8b 48 2a          	mov    0x2a(%r8),%r9d
+	if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
+    11d6:	48 89 fb             	mov    %rdi,%rbx
+    11d9:	48 39 f2             	cmp    %rsi,%rdx
+    11dc:	0f 82 e9 00 00 00    	jb     12cb <mlx5e_xdp_handle+0x15b>
+	__u64 tmp = 0;
+    11e2:	31 c9                	xor    %ecx,%ecx
+	for (int  i = 0; i < _repeat && i < 1024; i++) {
+    11e4:	31 ff                	xor    %edi,%edi
+    11e6:	45 85 c9             	test   %r9d,%r9d
+    11e9:	7e 2c                	jle    1217 <mlx5e_xdp_handle+0xa7>
+		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+    11eb:	4c 89 c0             	mov    %r8,%rax
+			tmp += val[j];
+    11ee:	0f b6 10             	movzbl (%rax),%edx
+		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+    11f1:	48 83 c0 01          	add    $0x1,%rax
+			tmp += val[j];
+    11f5:	48 01 d1             	add    %rdx,%rcx
+		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+    11f8:	48 39 c6             	cmp    %rax,%rsi
+    11fb:	75 f1                	jne    11ee <mlx5e_xdp_handle+0x7e>
+	for (int  i = 0; i < _repeat && i < 1024; i++) {
+    11fd:	83 c7 01             	add    $0x1,%edi
+    1200:	41 39 f9             	cmp    %edi,%r9d
+    1203:	7e 08                	jle    120d <mlx5e_xdp_handle+0x9d>
+    1205:	81 ff ff 03 00 00    	cmp    $0x3ff,%edi
+    120b:	7e de                	jle    11eb <mlx5e_xdp_handle+0x7b>
+	if (tmp == 123) {
+    120d:	48 83 f9 7b          	cmp    $0x7b,%rcx
+    1211:	0f 84 1a 01 00 00    	je     1331 <mlx5e_xdp_handle+0x1c1>
+	__sync_fetch_and_add(&counter, 1);
+    1217:	f0 48 83 05 00 00 00 	lock addq $0x1,0x0(%rip)        # 1220 <mlx5e_xdp_handle+0xb0>
+    121e:	00 01 
+
+static inline ktime_t ktime_get_coarse(void)
+{
+	struct timespec64 ts;
+
+	ktime_get_coarse_ts64(&ts);
+    1220:	49 bc ff ff ff ff ff 	movabs $0x7fffffffffffffff,%r12
+    1227:	ff ff 7f 
+    122a:	48 8d 7d d8          	lea    -0x28(%rbp),%rdi
+    122e:	e8 00 00 00 00       	call   1233 <mlx5e_xdp_handle+0xc3>
+	return timespec64_to_ktime(ts);
+    1233:	48 8b 45 d8          	mov    -0x28(%rbp),%rax
+    1237:	48 8b 55 e0          	mov    -0x20(%rbp),%rdx
+ *
+ * Return: The ktime_t representation of the value.
+ */
+static inline ktime_t ktime_set(const s64 secs, const unsigned long nsecs)
+{
+	if (unlikely(secs >= KTIME_SEC_MAX))
+    123b:	48 b9 03 7d c1 25 02 	movabs $0x225c17d03,%rcx
+    1242:	00 00 00 
+    1245:	48 39 c8             	cmp    %rcx,%rax
+    1248:	7f 0b                	jg     1255 <mlx5e_xdp_handle+0xe5>
+		return KTIME_MAX;
+
+	return secs * NSEC_PER_SEC + (s64)nsecs;
+    124a:	48 69 c0 00 ca 9a 3b 	imul   $0x3b9aca00,%rax,%rax
+    1251:	4c 8d 24 10          	lea    (%rax,%rdx,1),%r12
+	if (last_report == 0) {
+    1255:	48 8b 05 00 00 00 00 	mov    0x0(%rip),%rax        # 125c <mlx5e_xdp_handle+0xec>
+    125c:	48 85 c0             	test   %rax,%rax
+    125f:	74 61                	je     12c2 <mlx5e_xdp_handle+0x152>
+	delta = ts - last_report;
+    1261:	4c 89 e2             	mov    %r12,%rdx
+    1264:	48 29 c2             	sub    %rax,%rdx
+	if (delta >= 1000000000L) {
+    1267:	48 81 fa ff c9 9a 3b 	cmp    $0x3b9ac9ff,%rdx
+    126e:	77 34                	ja     12a4 <mlx5e_xdp_handle+0x134>
+		rq->stats->xdp_drop++;
+    1270:	48 8b 83 00 01 00 00 	mov    0x100(%rbx),%rax
+    1277:	48 83 80 90 00 00 00 	addq   $0x1,0x90(%rax)
+    127e:	01 
+		return true;
+    127f:	b8 01 00 00 00       	mov    $0x1,%eax
+}
+    1284:	48 8b 55 e8          	mov    -0x18(%rbp),%rdx
+    1288:	65 48 2b 14 25 28 00 	sub    %gs:0x28,%rdx
+    128f:	00 00 
+    1291:	0f 85 a8 00 00 00    	jne    133f <mlx5e_xdp_handle+0x1cf>
+    1297:	48 83 c4 18          	add    $0x18,%rsp
+    129b:	5b                   	pop    %rbx
+    129c:	41 5c                	pop    %r12
+    129e:	5d                   	pop    %rbp
+    129f:	e9 00 00 00 00       	jmp    12a4 <mlx5e_xdp_handle+0x134>
+		printk("throughput: %lld (pps)", counter);
+    12a4:	48 8b 35 00 00 00 00 	mov    0x0(%rip),%rsi        # 12ab <mlx5e_xdp_handle+0x13b>
+    12ab:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+    12b2:	e8 00 00 00 00       	call   12b7 <mlx5e_xdp_handle+0x147>
+		counter = 0;
+    12b7:	48 c7 05 00 00 00 00 	movq   $0x0,0x0(%rip)        # 12c2 <mlx5e_xdp_handle+0x152>
+    12be:	00 00 00 00 
+		last_report = ts;
+    12c2:	4c 89 25 00 00 00 00 	mov    %r12,0x0(%rip)        # 12c9 <mlx5e_xdp_handle+0x159>
+	switch (act) {
+    12c9:	eb a5                	jmp    1270 <mlx5e_xdp_handle+0x100>
+		printk("small packet size. expect 256 B packets!");
+    12cb:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+    12d2:	e8 00 00 00 00       	call   12d7 <mlx5e_xdp_handle+0x167>
+		trace_xdp_exception(rq->netdev, prog, act);
+    12d7:	48 8b b3 f8 00 00 00 	mov    0xf8(%rbx),%rsi
+
+

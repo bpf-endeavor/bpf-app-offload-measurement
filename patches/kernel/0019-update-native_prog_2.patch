@@ -1,0 +1,76 @@
+From 64e0200830dfa1c6cf857fb2ad96de73c16c7c39 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Sat, 19 Oct 2024 22:15:20 +0000
+Subject: [PATCH 19/19] update native_prog_2
+
+---
+ .../net/ethernet/mellanox/mlx5/core/en/xdp.c    | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+index 4bd11e6b2a74..3fc48e329d39 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/en/xdp.c
+@@ -58,7 +58,8 @@ void report_tput(void)
+ 	}
+ 	delta = ts - last_report;
+ 	if (delta >= 1000000000L) {
+-		printk("NATIVE DROP: throughput: %lld (pps)", counter);
++		/* printk("NATIVE DROP: throughput: %lld (pps)", counter); */
++		printk("throughput: %lld (pps)", counter);
+ 		counter = 0;
+ 		last_report = ts;
+ 	}
+@@ -137,15 +138,17 @@ static int inline
+ __native_drop_bench(struct xdp_buff *ctx)
+ {
+ 	/* bpf_printk("THIS MUST NOT PRINT (in mlx5 driver mode)"); */
++	int _repeat;
+ 	void *data, *data_end;
+ 	data = (void *)(__u64)ctx->data;
+ 	data_end = (void *)(__u64)ctx->data_end;
+ 	struct ethhdr *eth = data;
+ 	struct iphdr  *ip = (void *)(eth + 1);
+ 	struct udphdr *udp = (void *)(ip + 1);
++	__u32 *repeat = (__u32 *)(udp + 1);
+ 	__u64 tmp = 0;
+ 
+-	if ((void *)(udp + 1) > data_end)
++	if ((void *)(repeat + 1) > data_end)
+ 		return XDP_PASS;
+ 	if (eth->h_proto != htons(ETH_P_IP))
+ 		return XDP_PASS;
+@@ -153,17 +156,18 @@ __native_drop_bench(struct xdp_buff *ctx)
+ 		return XDP_PASS;
+ 	if (udp->dest != htons(8080))
+ 		return XDP_PASS;
+-	report_tput();
+ 
+-	__u8 *val = data;
++	_repeat = *repeat;
++	volatile __u8 *val = data;
+ 	if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
+ 		printk("small packet size. expect 256 B packets!");
+ 		return XDP_ABORTED;
+ 	}
+ 
+ /* #pragma clang loop unroll(disable) */
+-#pragma GCC unroll 0
+-	for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
++/* #pragma GCC unroll 0 */
++	/* for (int  i = 0; i < _checksum_repeat && i < 1024; i++) { */
++	for (int  i = 0; i < _repeat && i < 1024; i++) {
+ 		/* Max iteration is 1024 times */
+ 		for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+ 			tmp += val[j];
+@@ -175,6 +179,7 @@ __native_drop_bench(struct xdp_buff *ctx)
+ 		return XDP_ABORTED;
+ 	}
+ 
++	report_tput();
+ 	return XDP_DROP;
+ }
+ 
+-- 
+2.34.1
+

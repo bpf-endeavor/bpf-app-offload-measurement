@@ -238,6 +238,7 @@ void detach_sk_skb(void)
 	bpf_prog_detach2(bpf_program__fd(progs.verdict), map_fd, BPF_SK_SKB_STREAM_VERDICT);
 }
 
+void detach_xdp(struct attach_request *bpf_req, uint32_t xdp_flags);
 int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req,
 		uint32_t xdp_flags)
 {
@@ -253,6 +254,8 @@ int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req,
 	if (bpf_xdp_attach(bpf_req->ifindex, prog_fd, xdp_flags, NULL) != 0) {
 		DEBUG("if: %d prog fd: %d\n", bpf_req->ifindex, prog_fd);
 		ERROR("Failed to attach XDP program! %s\n", strerror(errno));
+		detach_xdp(bpf_req, xdp_flags);
+		INFO("It is likely another program is attached, attempted to remove it.");
 		return 1;
 	}
 	return 0;

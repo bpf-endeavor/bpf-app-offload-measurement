@@ -1,0 +1,134 @@
+int xdp_prog_2(struct xdp_md * ctx):
+bpf_prog_1a57e79eadbc99a8_xdp_prog_2:
+; int xdp_prog_2(struct xdp_md *ctx)
+   0:	endbr64
+   4:	nopl	(%rax,%rax)
+   9:	nop
+   b:	pushq	%rbp
+   c:	movq	%rsp, %rbp
+   f:	endbr64
+  13:	pushq	%rbx
+  14:	pushq	%r13
+  16:	pushq	%r14
+  18:	movl	$2, %eax
+; data_end = (void *)(__u64)ctx->data_end;
+  1d:	movq	8(%rdi), %rsi
+; data = (void *)(__u64)ctx->data;
+  21:	movq	(%rdi), %rdi
+; if ((void *)(repeat + 1) > data_end)
+  25:	movq	%rdi, %rdx
+  28:	addq	$46, %rdx
+; if ((void *)(repeat + 1) > data_end)
+  2c:	cmpq	%rsi, %rdx
+  2f:	ja	0x162
+; if (eth->h_proto != bpf_htons(ETH_P_IP))
+  35:	movzbq	12(%rdi), %rdx
+  3a:	movzbq	13(%rdi), %rcx
+  3f:	shll	$8, %ecx
+  42:	orl	%edx, %ecx
+; if (eth->h_proto != bpf_htons(ETH_P_IP))
+  44:	cmpl	$8, %ecx
+  47:	jne	0x162
+; if (ip->protocol != IPPROTO_UDP)
+  4d:	movzbq	23(%rdi), %rdx
+; if (ip->protocol != IPPROTO_UDP)
+  52:	cmpl	$17, %edx
+  55:	jne	0x162
+; if (udp->dest != bpf_htons(SERVER_PORT))
+  5b:	movzwq	36(%rdi), %rdx
+; if (udp->dest != bpf_htons(SERVER_PORT))
+  60:	cmpl	$36895, %edx
+  66:	jne	0x162
+; if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
+  6c:	movq	%rdi, %rdx
+  6f:	addq	$64, %rdx
+; if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
+  73:	cmpq	%rsi, %rdx
+  76:	ja	0xbd
+; 
+  78:	movl	42(%rdi), %esi
+; for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
+  7b:	cmpl	$1, %esi
+  7e:	jl	0xee
+  80:	xorl	%edx, %edx
+  82:	xorl	%r8d, %r8d
+  85:	jmp	0x9d
+; for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
+  87:	movl	%ecx, %r8d
+  8a:	addl	$1, %r8d
+; for (int  i = 0; i < _checksum_repeat && i < 1024; i++) {
+  8e:	cmpl	%esi, %r8d
+  91:	jge	0xce
+  93:	cmpl	$1023, %ecx
+  99:	jb	0x9d
+  9b:	jmp	0xce
+  9d:	movl	%r8d, %ecx
+  a0:	xorl	%r8d, %r8d
+; tmp += val[j];
+  a3:	movq	%rdi, %rax
+  a6:	addq	%r8, %rax
+  a9:	movzbq	(%rax), %rax
+; tmp += val[j];
+  ae:	addq	%rax, %rdx
+; for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+  b1:	addq	$1, %r8
+; for (int j = 0; j < WORKING_PKT_SIZE; j++) {
+  b5:	cmpq	$64, %r8
+  b9:	je	0x87
+  bb:	jmp	0xa3
+; bpf_printk("small packet size. expect 256 B packets!");
+  bd:	movabsq	$-55476479202576597, %rdi
+  c7:	movl	$41, %esi
+  cc:	jmp	0xe5
+; if (tmp == 123) {
+  ce:	cmpq	$123, %rdx
+  d2:	je	0xd6
+  d4:	jmp	0xee
+; bpf_printk("this must not have happend");
+  d6:	movabsq	$-55476479202576556, %rdi
+  e0:	movl	$27, %esi
+; 
+  e5:	callq	0xfffffffff9f955bc
+  ea:	xorl	%eax, %eax
+  ec:	jmp	0x162
+  ee:	movl	$1, %edi
+; __sync_fetch_and_add(&counter, 1);
+  f3:	movabsq	$-55476479202575600, %rsi
+  fd:	lock
+  fe:	addq	%rdi, (%rsi)
+; ts = bpf_ktime_get_coarse_ns();
+ 102:	callq	0xfffffffff9fe478c
+ 107:	movq	%rax, %rbx
+; if (last_report == 0) {
+ 10a:	movabsq	$-55476479202575592, %r13
+ 114:	movq	(%r13), %rdi
+; if (last_report == 0) {
+ 118:	testq	%rdi, %rdi
+ 11b:	je	0x159
+; delta = ts - last_report;
+ 11d:	movq	%rbx, %rsi
+ 120:	subq	%rdi, %rsi
+ 123:	movl	$1, %eax
+; if (delta >= 1000000000L) {
+ 128:	cmpq	$1000000000, %rsi
+ 12f:	jb	0x162
+; bpf_printk("throughput: %ld (pps)", counter);
+ 131:	movabsq	$-55476479202575600, %r14
+ 13b:	movq	(%r14), %rdx
+ 13f:	movabsq	$-55476479202576529, %rdi
+ 149:	movl	$22, %esi
+ 14e:	callq	0xfffffffff9f955bc
+ 153:	xorl	%edi, %edi
+; counter = 0;
+ 155:	movq	%rdi, (%r14)
+; 
+ 159:	movq	%rbx, (%r13)
+ 15d:	movl	$1, %eax
+; }
+ 162:	popq	%r14
+ 164:	popq	%r13
+ 166:	popq	%rbx
+ 167:	leave
+ 168:	retq
+ 169:	int3
+

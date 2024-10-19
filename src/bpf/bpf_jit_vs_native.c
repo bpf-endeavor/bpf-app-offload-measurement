@@ -120,15 +120,17 @@ SEC("xdp")
 int xdp_prog_2(struct xdp_md *ctx)
 {
 	/* bpf_printk("THIS MUST NOT PRINT (in mlx5 driver mode)"); */
+	int _checksum_repeat;
 	void *data, *data_end;
 	data = (void *)(__u64)ctx->data;
 	data_end = (void *)(__u64)ctx->data_end;
 	struct ethhdr *eth = data;
 	struct iphdr  *ip = (void *)(eth + 1);
 	struct udphdr *udp = (void *)(ip + 1);
+	__u32 *repeat = (__u32 *)(udp + 1);
 	__u64 tmp = 0;
 
-	if ((void *)(udp + 1) > data_end)
+	if ((void *)(repeat + 1) > data_end)
 		return XDP_PASS;
 	if (eth->h_proto != bpf_htons(ETH_P_IP))
 		return XDP_PASS;
@@ -136,15 +138,16 @@ int xdp_prog_2(struct xdp_md *ctx)
 		return XDP_PASS;
 	if (udp->dest != bpf_htons(SERVER_PORT))
 		return XDP_PASS;
-	report_tput();
 
-	int z = 0;
-	int *v = bpf_map_lookup_elem(&map_csum_repeat, &z);
-	if (v == NULL)
-		return XDP_ABORTED;
-	int _checksum_repeat = *v;
+	/* int z = 0; */
+	/* int *v = bpf_map_lookup_elem(&map_csum_repeat, &z); */
+	/* if (v == NULL) */
+	/* 	return XDP_ABORTED; */
+	/* int _checksum_repeat = *v; */
 
-	__u8 *val = data;
+	_checksum_repeat = *repeat;
+
+	volatile __u8 *val = data;
 	if ((void *)(val + WORKING_PKT_SIZE) > data_end) {
 		bpf_printk("small packet size. expect 256 B packets!");
 		return XDP_ABORTED;
@@ -163,6 +166,7 @@ int xdp_prog_2(struct xdp_md *ctx)
 		return XDP_ABORTED;
 	}
 
+	report_tput();
 	return XDP_DROP;
 }
 
