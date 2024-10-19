@@ -19,35 +19,95 @@ subplots:
     ylogscale: 2
     ylabel: "Throughput (Mpps)"
     xlabel: "Repetition"
-    yticks: [2, 4, 8, 16]
-    ytick_labels: ["2", "4", "8", "16"]
-    xticks: [0, 2, 4, 6, 8]
+    yticks: [0.25, 0.5, 1, 2, 4, 8, 16]
+    ytick_labels: ['0.25', '0.5', '1', '2', '4', '8', '16']
+    # xticks: [0, 2, 4, 6, 8]
     # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
     # xlim: [-1, 100]
     ax_below: true
     legend:
       loc: 'upper right'
 annotate:
-  - xy: [0.1, 14.5]
-    text: "14%"
+  # - xy: [0.1, 14.5]
+  #   text: "14%"
+  #   fontsize: 9
+  # - xy: [1, 10.3]
+  #   text: "32%"
+  #   fontsize: 9
+  # - xy: [2, 8.0]
+  #   text: "44%"
+  #   fontsize: 9
+  # - xy: [3, 6.5]
+  #   text: "50%"
+  #   fontsize: 9
+  # - xy: [4, 5.5]
+  #   text: "62%"
+  #   fontsize: 9
+  # - xy: [6, 4.0]
+  #   text: "52%"
+  #   fontsize: 9
+  # - xy: [7.3, 3.1]
+  #   text: "52%"
+  #   fontsize: 9
+  # #  1
+  - xy: [2, 15]
+    text: "14.15%"
     fontsize: 9
-  - xy: [1, 10.3]
-    text: "32%"
+  # #  1
+  # - xy: [1, 10]
+  #   text: "28.05%"
+  #   fontsize: 9
+  # #  2
+  # - xy: [2, 8]
+  #   text: "36.92%"
+  #   fontsize: 9
+  # #  3
+  # - xy: [3, 7]
+  #   text: "41.77%"
+  #   fontsize: 9
+  # #  4
+  - xy: [4, 4.7]
+    text: "49.35%"
     fontsize: 9
-  - xy: [2, 8.0]
-    text: "44%"
+  # #  5
+  # - xy: [5, 5]
+  #   text: "46.12%"
+  #   fontsize: 9
+  # #  6
+  # - xy: [6, 4]
+  #   text: "46.64%"
+  #   fontsize: 9
+  # #  7
+  # - xy: [7, 4]
+  #   text: "49.49%"
+  #   fontsize: 9
+  # #  8
+  # - xy: [8, 4]
+  #   text: "50.86%"
+  #   fontsize: 9
+  # #  10
+  # - xy: [10, 3]
+  #   text: "52.78%"
+  #   fontsize: 9
+  # #  16
+  - xy: [16, 1.55]
+    text: "55.32%"
     fontsize: 9
-  - xy: [3, 6.5]
-    text: "50%"
+  # #   20
+  # - xy: [20, 1.5]
+  #   text: "56.45%"
+  #   fontsize: 9
+  # #   28
+  # - xy: [28, 1]
+  #   text: "58.18%"
+  #   fontsize: 9
+  # #   32
+  - xy: [32, 0.8]
+    text: "57.14%"
     fontsize: 9
-  - xy: [4, 5.5]
-    text: "62%"
-    fontsize: 9
-  - xy: [6, 4.0]
-    text: "52%"
-    fontsize: 9
-  - xy: [7.3, 3.1]
-    text: "52%"
+  # #   64
+  - xy: [53, 0.5]
+    text: "60.0%"
     fontsize: 9
 # tight_layout:
 #   rect: [0, 0, 1, 0.90]

@@ -35,6 +35,19 @@ subplots:
         grid: true
         yticks: [12, 14, 16, 18]
         xticks: [0, 25, 50]
+        annotate:
+          - xy: [0, 16.1]
+            text: '8.9%'
+            fontsize: 9
+          - xy: [15, 15.0]
+            text: '9.4%'
+            fontsize: 9
+          - xy: [25, 13.5]
+            text: '7.8%'
+            fontsize: 9
+          - xy: [40, 11.8]
+            text: '0%'
+            fontsize: 9
 # annotate:
 #       # 0
 #   - xy: [0, 16.5]
