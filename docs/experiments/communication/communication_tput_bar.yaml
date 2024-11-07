@@ -1,5 +1,5 @@
-figsize: [5.0, 2.5]
-x: ['Array', 'Ring', 'MMap Array']
+figsize: [5, 2.5]
+x: ['Array', 'Ring', 'MMap Ring']
 y: [[0.948, 0, 0],
     [0, 2.17, 0],
     [0, 0, 5.4]]
@@ -15,4 +15,4 @@ annotate:
   - xy: [1.95, 5.6]
     text: '5.4'
 grid: true
-output: 'communication_tput_bar.pdf'
+output: 'communication_tput_wide_bar.pdf'

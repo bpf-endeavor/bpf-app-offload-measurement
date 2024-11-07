@@ -1,0 +1,25 @@
+figsize: [2.5, 2.5]
+subplots:
+  - lines:
+    - label: 'Arrays'
+      x: [0, 512, 1024, 16384, 262144, 524288, 1048576, 2097152, 4194304]
+      y: [100, 100,100,100,100,100,100,100,100]
+      xscale: 0.000001
+      color: 'black'
+      linestyle: ':'
+      marker: 'o'
+    - label: 'Ring'
+      x: [0, 512, 1024, 16384, 262144, 524288, 1048576, 2097152, 4194304]
+      y: [0, 0, 1, 1, 12, 27, 53, 98, 98]
+      xscale: 0.000001
+      color: 'tab:blue'
+      linestyle: '--'
+      marker: 's'
+    yticks: [0, 25, 50, 75, 100]
+    xticks: [0, 0.5, 1, 2, 3, 4]
+    xtick_labels: ['0', ".5", 1, 2, 3, 4]
+    ylabel: 'CPU Core Utilization (%)'
+    xlabel: 'Generated load (Mpps)'
+    grid: true
+    legend: true
+output: 'cpu_usage_line.pdf'
