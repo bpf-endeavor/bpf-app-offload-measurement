@@ -6,6 +6,8 @@ values: [
   './tc_samples.txt',
   './xdp_samples.txt',
 ]
+medianprops:
+  color: 'tab:red'
 labels: ['Socket', 'SK_SKB', 'TC', 'XDP']
 showfliers: false
 ylabel: 'Req. Time (us)'

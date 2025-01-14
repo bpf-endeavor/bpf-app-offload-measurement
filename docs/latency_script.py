@@ -38,6 +38,7 @@ print(f'mean: {mean:.2f}')
 print('@1 :', samples[int(count_smaples * 0.01)])
 print('@50:', samples[int(count_smaples * 0.50)])
 print('@99:', samples[int(count_smaples * 0.99)])
+print('@99.9:', samples[int(count_smaples * 0.999)])
 
 
 N = count_smaples
