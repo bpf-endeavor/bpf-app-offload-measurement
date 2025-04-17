@@ -57,7 +57,7 @@ function add_flow_rules {
 	# sudo ethtool -U $DEV flow-type udp4 dst-port 8080 action 4
 	# sudo ethtool -U $DEV flow-type tcp4 dst-port 8080 action 4
 
-	sudo ethtool -U $DEV flow-type udp4 action 4
+	sudo ethtool -U $DEV flow-type udp4 action 3
 
 	# sudo ethtool -U $DEV flow-type udp4 dst-port 3030 action 3
 }
