@@ -1,0 +1,640 @@
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       68.0    16.5    37.4    47.2    51.0    65.9    83.2    99.4   148.0   168.5   171.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 490265.4 (9805309 / 20.0s)
+
+Total Issued Gets = 490268.0 (9805360 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 7
+Skipped TXs = 0 (0.0%)
+
+RX  500070759 bytes :   23.8 MB/s
+TX  303966160 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       83.0   117.9    45.3    55.6    57.8    72.6    93.8   103.8   186.3  1825.6  1858.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 503242.3 (10066197 / 20.0s)
+
+Total Issued Gets = 503244.5 (10066242 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 0
+Skipped TXs = 0 (0.0%)
+
+RX  513376047 bytes :   24.5 MB/s
+TX  312053502 bytes :   14.9 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      324.0  3606.7    37.4    48.4    54.5    71.3   108.1   162.5   216.7 56434.7 57452.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 497246.8 (9945059 / 20.0s)
+
+Total Issued Gets = 497269.1 (9945506 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 403
+Skipped TXs = 0 (0.0%)
+
+RX  507198009 bytes :   24.2 MB/s
+TX  308310686 bytes :   14.7 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read     1005.8 13776.7    37.4    47.7    51.3    64.9    80.5    88.6   111.2 214310.6 218173.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 486365.5 (9728212 / 20.0s)
+
+Total Issued Gets = 486411.0 (9729123 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 866
+Skipped TXs = 0 (0.0%)
+
+RX  496138812 bytes :   23.7 MB/s
+TX  301602813 bytes :   14.4 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      106.7   326.5    34.0    44.6    49.6    65.8   111.7   138.2  1035.9  4304.7  4382.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 502082.1 (10043005 / 20.0s)
+
+Total Issued Gets = 502089.0 (10043143 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 93
+Skipped TXs = 0 (0.0%)
+
+RX  512193255 bytes :   24.4 MB/s
+TX  311337433 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      413.4  4821.5    37.4    52.8    56.6    72.9    95.5   104.2   169.4 75114.5 76468.6
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 497646.0 (9952920 / 20.0s)
+
+Total Issued Gets = 497670.3 (9953406 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 444
+Skipped TXs = 0 (0.0%)
+
+RX  507598920 bytes :   24.2 MB/s
+TX  308555586 bytes :   14.7 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       86.1   267.9    30.9    46.8    50.3    66.0    85.6    94.7   128.2  4304.7  4382.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 489232.2 (9784645 / 20.0s)
+
+Total Issued Gets = 489235.0 (9784700 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 9
+Skipped TXs = 0 (0.0%)
+
+RX  499016895 bytes :   23.8 MB/s
+TX  303325700 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      423.5  4838.6    34.0    47.3    51.8    67.6    83.9    90.8  2018.6 75114.5 76468.6
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 500419.4 (10009854 / 20.0s)
+
+Total Issued Gets = 500444.6 (10010357 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 457
+Skipped TXs = 0 (0.0%)
+
+RX  510502554 bytes :   24.3 MB/s
+TX  310321067 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      485.4  5649.3    34.0    51.5    55.4    71.2    90.1   101.3  2347.9 82626.0 84115.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 500984.4 (10019690 / 20.0s)
+
+Total Issued Gets = 501016.6 (10020334 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 598
+Skipped TXs = 0 (0.0%)
+
+RX  511004190 bytes :   24.4 MB/s
+TX  310630354 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       86.1   268.5    28.1    43.8    49.6    62.8    87.7   130.0   171.2  4304.7  4382.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 491605.6 (9832113 / 20.0s)
+
+Total Issued Gets = 491608.3 (9832166 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 8
+Skipped TXs = 0 (0.0%)
+
+RX  501437763 bytes :   23.9 MB/s
+TX  304797146 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      637.8  7317.6    34.0    47.7    51.8    68.8    98.3   152.5  2955.4 109975.2 111957.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 489932.5 (9800220 / 20.0s)
+
+Total Issued Gets = 489964.5 (9800859 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 594
+Skipped TXs = 0 (0.0%)
+
+RX  499811220 bytes :   23.8 MB/s
+TX  303826629 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      974.7 13184.6    41.1    51.6    55.3    70.6   101.1   123.8   207.0 194827.8 198339.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 482447.4 (9648949 / 20.0s)
+
+Total Issued Gets = 482491.0 (9649820 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 825
+Skipped TXs = 0 (0.0%)
+
+RX  492096399 bytes :   23.5 MB/s
+TX  299144420 bytes :   14.3 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      431.5  5271.4    30.9    48.5    51.5    65.9   100.3   126.8   197.0 82626.0 84115.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 488190.6 (9764255 / 20.0s)
+
+Total Issued Gets = 488218.1 (9764806 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 507
+Skipped TXs = 0 (0.0%)
+
+RX  497977005 bytes :   23.7 MB/s
+TX  302708986 bytes :   14.4 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      283.1  2466.5    37.4    49.0    52.6    68.3   139.7   170.1  4159.4 38545.6 39240.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 490704.6 (9814092 / 20.0s)
+
+Total Issued Gets = 490722.2 (9814444 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 307
+Skipped TXs = 0 (0.0%)
+
+RX  500518692 bytes :   23.9 MB/s
+TX  304247764 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      621.8  7968.9    37.4    48.2    52.9    66.8    86.0    93.5  1035.9 120972.7 123153.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 488503.1 (9771432 / 20.0s)
+
+Total Issued Gets = 488532.7 (9772024 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 547
+Skipped TXs = 0 (0.0%)
+
+RX  498343032 bytes :   23.8 MB/s
+TX  302932744 bytes :   14.4 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      722.6  8955.3    37.4    50.0    53.4    66.7    86.9   118.0  3251.0 133070.0 135468.8
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 490279.3 (9805587 / 20.0s)
+
+Total Issued Gets = 490314.9 (9806299 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 667
+Skipped TXs = 0 (0.0%)
+
+RX  500084937 bytes :   23.8 MB/s
+TX  303995269 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      276.9  2723.8    34.0    50.1    54.2    68.1   100.3   143.5   225.4 42400.2 43164.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 495244.2 (9907830 / 20.0s)
+
+Total Issued Gets = 495262.6 (9908197 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 322
+Skipped TXs = 0 (0.0%)
+
+RX  505299330 bytes :   24.1 MB/s
+TX  307154107 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read     1052.4 14455.9    37.4    50.1    53.6    65.9    79.2    85.7    96.8 214310.6 218173.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 493024.4 (9860489 / 20.0s)
+
+Total Issued Gets = 493080.0 (9861601 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 1069
+Skipped TXs = 0 (0.0%)
+
+RX  502884939 bytes :   24.0 MB/s
+TX  305709631 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      754.6  9789.0    30.9    50.1    53.6    69.2   125.4   172.4   225.4 146377.0 149015.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 484925.8 (9700860 / 20.0s)
+
+Total Issued Gets = 484965.4 (9701653 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 747
+Skipped TXs = 0 (0.0%)
+
+RX  494743860 bytes :   23.6 MB/s
+TX  300751243 bytes :   14.3 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      680.5  8619.8    41.1    51.9    54.9    69.5    95.7   115.7   206.5 133070.0 135468.8
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 483881.6 (9677633 / 20.0s)
+
+Total Issued Gets = 483921.9 (9678439 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 763
+Skipped TXs = 0 (0.0%)
+
+RX  493559283 bytes :   23.5 MB/s
+TX  300031609 bytes :   14.3 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       87.8   221.3    34.0    45.6    49.6    67.5    81.9    91.4   116.5  2940.2  2993.2
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 498894.1 (9978818 / 20.0s)
+
+Total Issued Gets = 498896.5 (9978866 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 0
+Skipped TXs = 0 (0.0%)
+
+RX  508919718 bytes :   24.3 MB/s
+TX  309344846 bytes :   14.7 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      867.7 11350.3    41.1    52.4    56.3    72.6    95.6   118.2   206.5 177116.2 180309.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 488576.9 (9771538 / 20.0s)
+
+Total Issued Gets = 488621.5 (9772430 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 849
+Skipped TXs = 0 (0.0%)
+
+RX  498348438 bytes :   23.8 MB/s
+TX  302945330 bytes :   14.4 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read     1036.9 14251.9    30.9    44.1    48.5    65.4    79.7    85.7   101.1 214310.6 218173.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 497433.4 (9950104 / 20.0s)
+
+Total Issued Gets = 497484.3 (9951121 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 972
+Skipped TXs = 0 (0.0%)
+
+RX  507455304 bytes :   24.2 MB/s
+TX  308484751 bytes :   14.7 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      772.4  9571.0    37.4    48.4    54.5    70.2   105.9   160.9  2442.5 146377.0 149015.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 481400.8 (9629898 / 20.0s)
+
+Total Issued Gets = 481440.0 (9630682 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 737
+Skipped TXs = 0 (0.0%)
+
+RX  491124798 bytes :   23.4 MB/s
+TX  298551142 bytes :   14.2 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      428.4  4897.7    34.0    51.0    54.6    66.9    82.3    87.3  2018.6 75114.5 76468.6
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 500664.7 (10014774 / 20.0s)
+
+Total Issued Gets = 500690.4 (10015288 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 468
+Skipped TXs = 0 (0.0%)
+
+RX  510753474 bytes :   24.4 MB/s
+TX  310473928 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      345.2  3744.3    41.1    50.3    53.3    68.6    93.7   118.6   186.3 56434.7 57452.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 483776.4 (9676460 / 20.0s)
+
+Total Issued Gets = 483797.1 (9676874 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 366
+Skipped TXs = 0 (0.0%)
+
+RX  493499460 bytes :   23.5 MB/s
+TX  299983094 bytes :   14.3 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      616.2  7344.3    34.0    50.9    55.1    70.5   132.1   150.8   207.0 109975.2 111957.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 499834.6 (9996693 / 20.0s)
+
+Total Issued Gets = 499867.5 (9997350 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 611
+Skipped TXs = 0 (0.0%)
+
+RX  509831343 bytes :   24.3 MB/s
+TX  309917850 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read     1153.8 15762.6    41.1    52.8    56.3    71.2   118.6   147.7   207.2 235741.6 239991.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 499930.5 (9999054 / 20.0s)
+
+Total Issued Gets = 499988.5 (10000214 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 1115
+Skipped TXs = 0 (0.0%)
+
+RX  509951754 bytes :   24.3 MB/s
+TX  310006634 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      463.8  5766.2    37.4    50.4    54.0    68.9    87.0    97.3   186.3 90888.6 92527.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 495842.1 (9916842 / 20.0s)
+
+Total Issued Gets = 495870.1 (9917403 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 515
+Skipped TXs = 0 (0.0%)
+
+RX  505758942 bytes :   24.1 MB/s
+TX  307439493 bytes :   14.7 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      348.0  4137.0    34.0    48.4    52.3    65.7    79.1    83.7    96.3 62078.1 63197.2
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 486230.8 (9725072 / 20.0s)
+
+Total Issued Gets = 486253.8 (9725532 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 416
+Skipped TXs = 0 (0.0%)
+
+RX  495978672 bytes :   23.6 MB/s
+TX  301491492 bytes :   14.4 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      407.0  4352.3    45.3    54.6    56.9    70.6    88.6   102.4  3251.0 68286.0 69516.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 493458.5 (9870125 / 20.0s)
+
+Total Issued Gets = 493482.7 (9870608 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 441
+Skipped TXs = 0 (0.0%)
+
+RX  503376375 bytes :   24.0 MB/s
+TX  305988848 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      297.0  3394.7    37.4    47.4    50.9    63.9    80.0    88.6   127.3 51304.2 52229.1
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 491392.6 (9827853 / 20.0s)
+
+Total Issued Gets = 491413.2 (9828264 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 366
+Skipped TXs = 0 (0.0%)
+
+RX  501220503 bytes :   23.9 MB/s
+TX  304676184 bytes :   14.5 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      353.6  4062.9    37.4    47.7    51.8    65.9    83.6    91.4   140.0 62078.1 63197.2
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 501189.3 (10023787 / 20.0s)
+
+Total Issued Gets = 501211.9 (10024238 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 408
+Skipped TXs = 0 (0.0%)
+
+RX  511213137 bytes :   24.4 MB/s
+TX  310751378 bytes :   14.8 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      412.7  4873.2    37.4    49.6    53.6    67.4    84.2    87.9   115.7 75114.5 76468.6
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 507014.0 (10140280 / 20.0s)
+
+Total Issued Gets = 507036.9 (10140739 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 414
+Skipped TXs = 0 (0.0%)
+
+RX  517154280 bytes :   24.7 MB/s
+TX  314362909 bytes :   15.0 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      247.3  2233.5    30.9    48.5    52.8    70.2    92.2   103.8  1516.6 35041.5 35673.2
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 494601.1 (9893971 / 20.0s)
+
+Total Issued Gets = 494618.8 (9894325 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 310
+Skipped TXs = 0 (0.0%)
+
+RX  504592521 bytes :   24.1 MB/s
+TX  306724075 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      368.0  4341.3    37.4    51.5    54.6    71.1    88.5    95.8   128.2 68286.0 69516.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 503543.6 (10070873 / 20.0s)
+
+Total Issued Gets = 503566.9 (10071339 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 421
+Skipped TXs = 0 (0.0%)
+
+RX  513614523 bytes :   24.5 MB/s
+TX  312211509 bytes :   14.9 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      369.1  4100.0    37.4    49.0    52.4    67.1    86.1    94.7  2018.6 62078.1 63197.2
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 484844.2 (9696886 / 20.0s)
+
+Total Issued Gets = 484866.7 (9697336 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 405
+Skipped TXs = 0 (0.0%)
+
+RX  494541186 bytes :   23.6 MB/s
+TX  300617416 bytes :   14.3 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       66.7    12.1    34.0    48.4    52.2    66.4    81.2    86.1   103.0   126.6   128.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 494205.5 (9884111 / 20.0s)
+
+Total Issued Gets = 494210.6 (9884213 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 56
+Skipped TXs = 0 (0.0%)
+
+RX  504089661 bytes :   24.0 MB/s
+TX  306410603 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      322.8  3475.3    37.4    51.8    56.8    73.3    95.1   104.8   707.5 51304.2 52229.1
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 494042.7 (9881239 / 20.0s)
+
+Total Issued Gets = 494063.4 (9881653 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 369
+Skipped TXs = 0 (0.0%)
+
+RX  503943189 bytes :   24.0 MB/s
+TX  306331243 bytes :   14.6 MB/s
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      352.9  3816.1    37.4    48.5    52.6    67.4    90.7   114.5  1035.9 56434.7 57452.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 495635.0 (9912700 / 20.0s)
+
+Total Issued Gets = 495656.3 (9913126 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 379
+Skipped TXs = 0 (0.0%)
+
+RX  505547700 bytes :   24.1 MB/s
+TX  307306906 bytes :   14.7 MB/s

@@ -45,8 +45,7 @@ esac
 # sudo $Memcd --help-seastar
 # exit 0
 
-sudo $Memcd -c 1 --cpuset 11 \
-	-m 8G \
+sudo $Memcd -c 1 --cpuset 11 -m 8G \
 	--poll-mode --dpdk-pmd \
 	--network-stack native \
 	--host-ipv4-addr 192.168.200.101 --netmask-ipv4-addr 255.255.255.0 \

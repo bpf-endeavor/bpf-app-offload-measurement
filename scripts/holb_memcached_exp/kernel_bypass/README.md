@@ -25,11 +25,16 @@ changes.
 
 1. Use the my-seastar repository that I forked
 
-or 
+or ...
 
 1. Apply the patches under `patches/memcached_seastar/with_bmc/`
 2. Compile as described above (for Memcached + AF\_XDP)
-3. Clone bmc and apply the patches required to send packets to AF\_XDP socket
+3. Clone BMC and apply the patches required to send packets to AF\_XDP socket
 	- Patches are at `patches/bmc/send_to_af_xdp/`
+4. use make to build BMC. We only need `bmc_kern.o`
+5. Use script `run_seastar_memcd.sh` to run experiment (the mode is hardcoded)
 
+**Socket Memcached:**
 
+1. Clone and compile memcached
+2. Use the `run_socket_server.sh`

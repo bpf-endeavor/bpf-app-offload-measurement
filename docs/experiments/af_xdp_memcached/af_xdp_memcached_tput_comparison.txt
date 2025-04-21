@@ -1,9 +1,0 @@
-generator (mutilate):
-- 6 thread
-- 8 connection per thread
-- key size: 8
-- value size: 8
-- count keys: 1
-
-seastar - af_xdp - 1 core:
-- tput: 0.86
