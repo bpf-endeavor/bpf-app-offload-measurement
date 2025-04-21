@@ -1,0 +1,41 @@
+From 03508029e302ff87b5038ab6f40228adec49ba6b Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 18 Apr 2025 22:49:33 +0200
+Subject: [PATCH 3/6] disable the github workflow
+
+---
+ {.github => .github.ignore}/workflows/alpinelinux.yaml | 0
+ {.github => .github.ignore}/workflows/docker.yaml      | 0
+ {.github => .github.ignore}/workflows/python-lint.yaml | 0
+ {.github => .github.ignore}/workflows/test.yaml        | 0
+ {.github => .github.ignore}/workflows/tests.yaml       | 0
+ 5 files changed, 0 insertions(+), 0 deletions(-)
+ rename {.github => .github.ignore}/workflows/alpinelinux.yaml (100%)
+ rename {.github => .github.ignore}/workflows/docker.yaml (100%)
+ rename {.github => .github.ignore}/workflows/python-lint.yaml (100%)
+ rename {.github => .github.ignore}/workflows/test.yaml (100%)
+ rename {.github => .github.ignore}/workflows/tests.yaml (100%)
+
+diff --git a/.github/workflows/alpinelinux.yaml b/.github.ignore/workflows/alpinelinux.yaml
+similarity index 100%
+rename from .github/workflows/alpinelinux.yaml
+rename to .github.ignore/workflows/alpinelinux.yaml
+diff --git a/.github/workflows/docker.yaml b/.github.ignore/workflows/docker.yaml
+similarity index 100%
+rename from .github/workflows/docker.yaml
+rename to .github.ignore/workflows/docker.yaml
+diff --git a/.github/workflows/python-lint.yaml b/.github.ignore/workflows/python-lint.yaml
+similarity index 100%
+rename from .github/workflows/python-lint.yaml
+rename to .github.ignore/workflows/python-lint.yaml
+diff --git a/.github/workflows/test.yaml b/.github.ignore/workflows/test.yaml
+similarity index 100%
+rename from .github/workflows/test.yaml
+rename to .github.ignore/workflows/test.yaml
+diff --git a/.github/workflows/tests.yaml b/.github.ignore/workflows/tests.yaml
+similarity index 100%
+rename from .github/workflows/tests.yaml
+rename to .github.ignore/workflows/tests.yaml
+-- 
+2.34.1
+

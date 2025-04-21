@@ -1,0 +1,383 @@
+From 9f6127f505e7f4098cf00320831463e4d4405541 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 21 Apr 2025 11:22:59 +0000
+Subject: [PATCH 2/2] make sending packets to af_xdp work
+
+---
+ bmc/bmc_common.h |   3 +-
+ bmc/bmc_kern.c   | 172 ++++++++++++++++++++++++++++++-----------------
+ bmc/bmc_user.c   |  13 +---
+ 3 files changed, 116 insertions(+), 72 deletions(-)
+
+diff --git a/bmc/bmc_common.h b/bmc/bmc_common.h
+index 73af2b6..766dad1 100644
+--- a/bmc/bmc_common.h
++++ b/bmc/bmc_common.h
+@@ -25,7 +25,8 @@
+ #define FNV_PRIME_32			16777619
+ 
+ enum {
+-	BMC_PROG_XDP_HASH_KEYS = 0,
++	BMC_PROG_XDP_RX_FILTER_MAIN = 0, /* this must be unused */
++	BMC_PROG_XDP_HASH_KEYS = 1,
+ 	BMC_PROG_XDP_PREPARE_PACKET,
+ 	BMC_PROG_XDP_WRITE_REPLY,
+ 	BMC_PROG_XDP_INVALIDATE_CACHE,
+diff --git a/bmc/bmc_kern.c b/bmc/bmc_kern.c
+index 09842c2..400e871 100644
+--- a/bmc/bmc_kern.c
++++ b/bmc/bmc_kern.c
+@@ -76,27 +76,45 @@ struct parsing_context {
+ 	unsigned short read_pkt_offset;
+ 	unsigned short write_pkt_offset;
+ };
+-struct bpf_map_def SEC("maps") map_parsing_context = {
+-	.type = BPF_MAP_TYPE_PERCPU_ARRAY,
+-	.key_size = sizeof(unsigned int),
+-	.value_size = sizeof(struct parsing_context),
+-	.max_entries = 1,
+-};
++
++struct {
++	__uint(type,  BPF_MAP_TYPE_PERCPU_ARRAY);
++	__type(key, unsigned int);
++	__type(value, struct parsing_context);
++	__uint(max_entries,  1);
++} map_parsing_context SEC(".maps");
+ 
+ /* stats */
+-struct bpf_map_def SEC("maps") map_stats = {
+-	.type = BPF_MAP_TYPE_PERCPU_ARRAY,
+-	.key_size = sizeof(unsigned int),
+-	.value_size = sizeof(struct bmc_stats),
+-	.max_entries = 1,
+-};
++struct {
++	__uint(type,  BPF_MAP_TYPE_PERCPU_ARRAY);
++	__type(key, unsigned int);
++	__type(value, struct bmc_stats);
++	__uint(max_entries,  1);
++} map_stats SEC(".maps");
++
++/* Forward declare the BPF programs */
++int bmc_rx_filter_main(struct xdp_md *ctx);
++int bmc_hash_keys_main(struct xdp_md *ctx);
++int bmc_prepare_packet_main(struct xdp_md *ctx);
++int bmc_write_reply_main(struct xdp_md *ctx);
++int bmc_invalidate_cache_main(struct xdp_md *ctx);
++/* ------------------------------- */
+ 
+ /* program maps */
+-struct bpf_map_def SEC("maps") map_progs_xdp = {
+-	.type = BPF_MAP_TYPE_PROG_ARRAY,
+-	.key_size = sizeof(__u32),
+-	.value_size = sizeof(__u32),
+-	.max_entries = BMC_PROG_XDP_MAX,
++struct {
++	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
++	__type(key, __u32);
++	__type(value, __u32);
++	__uint(max_entries, BMC_PROG_XDP_MAX);
++	__array(values, int (void *)); // Function pointer array
++} map_progs_xdp SEC(".maps") = {
++	.values = {
++		(void *)&bmc_rx_filter_main, /* add this so that forward declaration keeps the rx_filter_main the first program in the binary. it is important because the DPDK loader chooses the first program */
++		(void *)&bmc_hash_keys_main,
++		(void *)&bmc_prepare_packet_main,
++		(void *)&bmc_write_reply_main,
++		(void *)&bmc_invalidate_cache_main,
++	},
+ };
+ 
+ /* Define as XSK map. The user-space program will add its AF_XDP socket here */
+@@ -107,12 +125,16 @@ struct {
+ 	__uint(max_entries, 64);
+ } xsks_map SEC(".maps") ;
+ 
+-#define CAST_PTR_BYTE_OFFSET(lval, ptr, off) ((typeof(lval))((__u8 *)(ptr) + (off)))
+ #define ABORT_BMC XDP_DROP
+ 
+ static inline int to_userspace(struct xdp_md *ctx)
+ {
+-	return bpf_redirect_map(&xsks_map, ctx->rx_queue_index, ABORT_BMC);
++	int ret;
++	ret = bpf_redirect_map(&xsks_map, ctx->rx_queue_index, ABORT_BMC);
++	/* if (ret != XDP_REDIRECT) { */
++	/* 	bpf_printk("failed to send packet to userspace"); */
++	/* } */
++	return ret;
+ }
+ 
+ static inline __u16 compute_ip_checksum(struct iphdr *ip)
+@@ -130,7 +152,7 @@ static inline __u16 compute_ip_checksum(struct iphdr *ip)
+ 	return ~((csum & 0xffff) + (csum >> 16));
+ }
+ 
+-SEC("bmc_rx_filter")
++SEC("xdp")
+ int bmc_rx_filter_main(struct xdp_md *ctx)
+ {
+ 	void *data_end = (void *)(long)ctx->data_end;
+@@ -143,6 +165,15 @@ int bmc_rx_filter_main(struct xdp_md *ctx)
+ 	char *payload;
+ 	__be16 dport;
+ 
++	/* bpf_printk("here"); */
++	/* if ((void *)(eth + 1) > data_end) */
++	/* 	return XDP_PASS; */
++
++	/* if (eth->h_proto != bpf_ntohs(ETH_P_IP)) { */
++	/* 	bpf_printk("not an IP packet"); */
++	/* 	return XDP_PASS; */
++	/* } */
++
+ 	if ((void *)(ip + 1) > data_end)
+ 		return XDP_PASS;
+ 
+@@ -165,49 +196,65 @@ int bmc_rx_filter_main(struct xdp_md *ctx)
+ 			return XDP_PASS;
+ 	}
+ 
+-	if (dport == bpf_htons(11211) && (void *)(payload+4) <= data_end) {
+-
+-		if (ip->protocol == IPPROTO_UDP && payload[0] == 'g' && payload[1] == 'e' && payload[2] == 't' && payload[3] == ' ') { // is this a GET request
+-			unsigned int zero = 0;
+-			struct bmc_stats *stats = bpf_map_lookup_elem(&map_stats, &zero);
+-			if (!stats) {
+-				return ABORT_BMC;
+-			}
+-			stats->get_recv_count++;
+-
+-			struct parsing_context *pctx = bpf_map_lookup_elem(&map_parsing_context, &zero);
+-			if (!pctx) {
+-				return ABORT_BMC;
+-			}
+-			pctx->key_count = 0;
+-			pctx->current_key = 0;
+-			pctx->write_pkt_offset = 0;
+-
+-			unsigned int off;
++	if (dport == bpf_htons(11211)) {
++
++		if ((void *)(payload+4) <= data_end) {
++
++			if (ip->protocol == IPPROTO_UDP) {
++				/* bpf_printk("udp packet for 11211 with payload"); */
++				if (payload[0] == 'g' && payload[1] == 'e' && payload[2] == 't' && payload[3] == ' ') { // is this a GET request
++					/* bpf_printk("a get request"); */
++					unsigned int zero = 0;
++					struct bmc_stats *stats = bpf_map_lookup_elem(&map_stats, &zero);
++					if (!stats) {
++						return ABORT_BMC;
++					}
++					stats->get_recv_count++;
++
++					struct parsing_context *pctx = bpf_map_lookup_elem(&map_parsing_context, &zero);
++					if (!pctx) {
++						return ABORT_BMC;
++					}
++					pctx->key_count = 0;
++					pctx->current_key = 0;
++					pctx->write_pkt_offset = 0;
++
++					unsigned int off;
+ #pragma clang loop unroll(disable)
+-			for (off = 4; off < BMC_MAX_PACKET_LENGTH &&
+-					(void *)(payload+off+1) <= data_end &&
+-					payload[off] == ' '; off++) {} // move offset to the start of the first key
+-			if (off < BMC_MAX_PACKET_LENGTH) {
+-				pctx->read_pkt_offset = off; // save offset
+-				if (bpf_xdp_adjust_head(ctx, (int)(sizeof(*eth) + sizeof(*ip) + sizeof(*udp) + sizeof(struct memcached_udp_header) + off))) { // push headers + 'get ' keyword
+-					return XDP_PASS;
++					for (off = 4; off < BMC_MAX_PACKET_LENGTH &&
++							(void *)(payload+off+1) <= data_end &&
++							payload[off] == ' '; off++) {} // move offset to the start of the first key
++					if (off < BMC_MAX_PACKET_LENGTH) {
++						pctx->read_pkt_offset = off; // save offset
++						int delta = (sizeof(*eth) + sizeof(*ip) + sizeof(*udp) + sizeof(struct memcached_udp_header) + off);
++						if (bpf_xdp_adjust_head(ctx, delta)) { // push headers + 'get ' keyword
++							__u32 sz = data_end - data;
++							/* bpf_printk("failed to resize (%d total size: %d)", delta, sz); */
++							return ABORT_BMC;
++						}
++						/* bpf_printk("tail call to hash keys"); */
++						bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS);
++					}
+ 				}
+-				bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS);
++			} else if (ip->protocol == IPPROTO_TCP) {
++				bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_INVALIDATE_CACHE);
+ 			}
+ 		}
+-		else if (ip->protocol == IPPROTO_TCP) {
+-			bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_INVALIDATE_CACHE);
+-		}
++
++		// it is a TCP/UDP packet for our Memcached server but payload
++		// is small. Send it to userspace. Maybe it is a connection
++		// request (TCP protocol)
++		return to_userspace(ctx);
+ 	}
+ 
+ 	return XDP_PASS;
+ }
+ 
+ 
+-SEC("bmc_hash_keys")
++SEC("xdp")
+ int bmc_hash_keys_main(struct xdp_md *ctx)
+ {
++	/* bpf_printk("hash keys"); */
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+ 	char *payload = (char *) data;
+@@ -243,6 +290,7 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
+ 
+ 	if (key_len == 0 || key_len > BMC_MAX_KEY_LENGTH) {
+ 		bpf_xdp_adjust_head(ctx, 0 - (sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct memcached_udp_header) + pctx->read_pkt_offset)); // unexpected key, let the netstack handle it
++		/* bpf_printk("large key"); */
+ 		return to_userspace(ctx);
+ 	}
+ 
+@@ -269,6 +317,7 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
+ 			return ABORT_BMC;
+ 		}
+ 		stats->miss_count++;
++		/* bpf_printk("cache miss"); */
+ 	}
+ 
+ 	if (done_parsing) { // the end of the request has been reached
+@@ -284,15 +333,16 @@ int bmc_hash_keys_main(struct xdp_md *ctx)
+ 		bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_HASH_KEYS);
+ 	}
+ 
++	/* bpf_printk("cache miss to userspace"); */
+ 	return to_userspace(ctx);
+ }
+ 
+-SEC("bmc_prepare_packet")
++SEC("xdp")
+ int bmc_prepare_packet_main(struct xdp_md *ctx)
+ {
+ 	if (bpf_xdp_adjust_head(ctx, -ADJUST_HEAD_LEN)) {
+ 		// // pop empty packet buffer memory to increase the available packet size
+-		bpf_printk("bmc_prepare_packet_main: failed to increase packet size");
++		/* bpf_printk("bmc_prepare_packet_main: failed to increase packet size"); */
+ 		return ABORT_BMC;
+ 	}
+ 
+@@ -337,7 +387,7 @@ int bmc_prepare_packet_main(struct xdp_md *ctx)
+ 	return XDP_PASS;
+ }
+ 
+-SEC("bmc_write_reply")
++SEC("xdp")
+ int bmc_write_reply_main(struct xdp_md *ctx)
+ {
+ 	void *data_end = (void *)(long)ctx->data_end;
+@@ -362,7 +412,7 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+ 	__u32 cache_idx = key->hash % BMC_CACHE_ENTRY_COUNT;
+ 	struct bmc_cache_entry *entry = bpf_map_lookup_elem(&map_kcache, &cache_idx);
+ 	if (!entry) {
+-		bpf_printk("bmc_write_reply_main: cache entry not found!");
++		/* bpf_printk("bmc_write_reply_main: cache entry not found!"); */
+ 		return ABORT_BMC;
+ 	}
+ 
+@@ -419,7 +469,7 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+ 			if (bpf_xdp_adjust_head(ctx, 0 - (int) (sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr)
+ 													+ sizeof(struct memcached_udp_header) + pctx->write_pkt_offset))) {
+ 				// pop headers + previously written data
+-				bpf_printk("bmc_write_reply_main: failed to resize the packet");
++				/* bpf_printk("bmc_write_reply_main: failed to resize the packet"); */
+ 				return ABORT_BMC;
+ 			}
+ 
+@@ -449,7 +499,7 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+ 		pctx->write_pkt_offset += written; // save packet write offset
+ 		if (bpf_xdp_adjust_head(ctx, written)) {
+ 			// push written data
+-			bpf_printk("bmc_write_reply_main: failed to resize packet for written response");
++			/* bpf_printk("bmc_write_reply_main: failed to resize packet for written response"); */
+ 			return XDP_DROP;
+ 		}
+ 		bpf_tail_call(ctx, &map_progs_xdp, BMC_PROG_XDP_WRITE_REPLY);
+@@ -467,9 +517,10 @@ int bmc_write_reply_main(struct xdp_md *ctx)
+ 	return XDP_DROP;
+ }
+ 
+-SEC("bmc_invalidate_cache")
++SEC("xdp")
+ int bmc_invalidate_cache_main(struct xdp_md *ctx)
+ {
++	/* bpf_printk("tcp ..."); */
+ 	void *data_end = (void *)(long)ctx->data_end;
+ 	void *data = (void *)(long)ctx->data;
+ 	struct ethhdr *eth = data;
+@@ -478,8 +529,8 @@ int bmc_invalidate_cache_main(struct xdp_md *ctx)
+ 	char *payload = (char *) (tcp + 1);
+ 	unsigned int zero = 0;
+ 
+-	if (payload >= data_end)
+-		return ABORT_BMC;
++	if ((void *)payload >= data_end)
++		return to_userspace(ctx);
+ 
+ 	struct bmc_stats *stats = bpf_map_lookup_elem(&map_stats, &zero);
+ 	if (!stats) {
+@@ -531,6 +582,7 @@ int bmc_invalidate_cache_main(struct xdp_md *ctx)
+ 		}
+ 	}
+ 
++	/* bpf_printk("send tcp request to userspace"); */
+ 	return to_userspace(ctx);
+ }
+ 
+diff --git a/bmc/bmc_user.c b/bmc/bmc_user.c
+index 38d36d6..abea114 100644
+--- a/bmc/bmc_user.c
++++ b/bmc/bmc_user.c
+@@ -47,9 +47,6 @@ static struct bpf_progs_desc progs[] = {
+ 	{"bmc_prepare_packet", BPF_PROG_TYPE_XDP, 0, BMC_PROG_XDP_PREPARE_PACKET, NULL},
+ 	{"bmc_write_reply", BPF_PROG_TYPE_XDP, 0, BMC_PROG_XDP_WRITE_REPLY, NULL},
+ 	{"bmc_invalidate_cache", BPF_PROG_TYPE_XDP, 0, BMC_PROG_XDP_INVALIDATE_CACHE, NULL},
+-
+-	{"bmc_tx_filter", BPF_PROG_TYPE_SCHED_CLS, 1, -1, NULL},
+-	{"bmc_update_cache", BPF_PROG_TYPE_SCHED_CLS, 0, BMC_PROG_TC_UPDATE_CACHE, NULL},
+ };
+ 
+ uint32_t fnv1a_hash32(char *key, size_t length, uint32_t hash)
+@@ -139,7 +136,7 @@ static int print_bpf_verifier(enum libbpf_print_level level,
+ int main(int argc, char *argv[])
+ {
+ 	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+-	int map_progs_xdp_fd, xdp_main_prog_fd, map_progs_tc_fd, map_progs_fd, map_stats_fd;
++	int map_progs_xdp_fd, xdp_main_prog_fd, map_progs_fd, map_stats_fd;
+ 	struct bpf_object_load_attr load_attr;
+ 	struct bpf_object *obj;
+ 	char filename[PATH_MAX];
+@@ -248,12 +245,6 @@ int main(int argc, char *argv[])
+ 		return 1;
+ 	}
+ 
+-	map_progs_tc_fd = bpf_object__find_map_fd_by_name(obj, "map_progs_tc");
+-	if (map_progs_tc_fd < 0) {
+-		fprintf(stderr, "Error: bpf_object__find_map_fd_by_name failed\n");
+-		return 1;
+-	}
+-
+ 	for (int i = 0; i < prog_count; i++) {
+ 		int prog_fd = bpf_program__fd(progs[i].prog);
+ 
+@@ -274,7 +265,7 @@ int main(int argc, char *argv[])
+ 				map_progs_fd = map_progs_xdp_fd;
+ 				break;
+ 			case BPF_PROG_TYPE_SCHED_CLS:
+-				map_progs_fd = map_progs_tc_fd;
++				assert (0);
+ 				break;
+ 			default:
+ 				fprintf(stderr, "Error: Program type doesn't correspond to any prog array map\n");
+-- 
+2.34.1
+

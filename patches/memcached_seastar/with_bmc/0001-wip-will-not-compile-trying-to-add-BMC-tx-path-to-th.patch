@@ -1,0 +1,253 @@
+From 5e99d75bead145f3259106124bea9753d5aca68a Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Thu, 17 Apr 2025 20:10:56 +0200
+Subject: [PATCH 1/6] wip: [will not compile] trying to add BMC tx path to the
+ seastar memcached
+
+---
+ apps/memcached/CMakeLists.txt |   2 +
+ apps/memcached/bmc_common.h   |  64 ++++++++++++++++++
+ apps/memcached/bmc_tx_path.hh | 122 ++++++++++++++++++++++++++++++++++
+ apps/memcached/memcache.cc    |   6 +-
+ 4 files changed, 193 insertions(+), 1 deletion(-)
+ create mode 100644 apps/memcached/bmc_common.h
+ create mode 100644 apps/memcached/bmc_tx_path.hh
+
+diff --git a/apps/memcached/CMakeLists.txt b/apps/memcached/CMakeLists.txt
+index ec213fd0..884521d0 100644
+--- a/apps/memcached/CMakeLists.txt
++++ b/apps/memcached/CMakeLists.txt
+@@ -39,6 +39,8 @@ target_include_directories (app_memcached
+   PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+ 
+ add_dependencies (app_memcached app_memcached_ascii)
++add_library(app_memcached "bpf")
++add_library(app_memcached "elf")
+ 
+ #
+ # Tests.
+diff --git a/apps/memcached/bmc_common.h b/apps/memcached/bmc_common.h
+new file mode 100644
+index 00000000..45795cb9
+--- /dev/null
++++ b/apps/memcached/bmc_common.h
+@@ -0,0 +1,64 @@
++/*
++ *  Software Name : bmc-cache
++ *  SPDX-FileCopyrightText: Copyright (c) 2021 Orange
++ *  SPDX-License-Identifier: LGPL-2.1-only
++ *
++ *  This software is distributed under the
++ *  GNU Lesser General Public License v2.1 only.
++ *
++ *  Author: Yoann GHIGOFF <yoann.ghigoff@orange.com> et al.
++ */
++
++#ifndef _BMC_COMMON_H
++#define _BMC_COMMON_H
++
++#define BMC_MAX_KEY_LENGTH 250
++#define BMC_MAX_VAL_LENGTH 1000
++#define BMC_MAX_ADDITIONAL_PAYLOAD_BYTES 53
++#define BMC_MAX_CACHE_DATA_SIZE BMC_MAX_KEY_LENGTH+BMC_MAX_VAL_LENGTH+BMC_MAX_ADDITIONAL_PAYLOAD_BYTES
++#define BMC_MAX_KEY_IN_MULTIGET 30
++#define BMC_CACHE_ENTRY_COUNT 3250000
++#define BMC_MAX_PACKET_LENGTH 1500
++#define BMC_MAX_KEY_IN_PACKET BMC_MAX_KEY_IN_MULTIGET
++
++#define FNV_OFFSET_BASIS_32		2166136261
++#define FNV_PRIME_32			16777619
++
++#include <bpf/bpf.h>
++
++enum {
++	BMC_PROG_XDP_HASH_KEYS = 0,
++	BMC_PROG_XDP_PREPARE_PACKET,
++	BMC_PROG_XDP_WRITE_REPLY,
++	BMC_PROG_XDP_INVALIDATE_CACHE,
++
++	BMC_PROG_XDP_MAX
++};
++
++enum {
++	BMC_PROG_TC_UPDATE_CACHE = 0,
++
++	BMC_PROG_TC_MAX
++};
++
++
++struct bmc_cache_entry {
++	struct bpf_spin_lock lock;
++	unsigned int len;
++	char valid;
++	int hash;
++	char data[BMC_MAX_CACHE_DATA_SIZE];
++};
++
++struct bmc_stats {
++	unsigned int get_recv_count;			// Number of GET command received
++	unsigned int set_recv_count;			// Number of SET command received
++	unsigned int get_resp_count;			// Number of GET command reply analyzed
++	unsigned int hit_misprediction;			// Number of keys that were expected to hit but did not (either because of a hash colision or a race with an invalidation/update)
++	unsigned int hit_count;				// Number of HIT in kernel cache
++	unsigned int miss_count;			// Number of MISS in kernel cache
++	unsigned int update_count;			// Number of kernel cache updates
++	unsigned int invalidation_count;		// Number of kernel cache entry invalidated
++};
++
++#endif
+diff --git a/apps/memcached/bmc_tx_path.hh b/apps/memcached/bmc_tx_path.hh
+new file mode 100644
+index 00000000..176e89a6
+--- /dev/null
++++ b/apps/memcached/bmc_tx_path.hh
+@@ -0,0 +1,122 @@
++#pragma once
++#include <iostream>
++#include <seastar/net/packet.hh>
++#include "bmc_common.h"
++
++typedef int16_t __be16;
++
++struct memcached_udp_header {
++    __be16 request_id;
++    __be16 seq_num;
++    __be16 num_dgram;
++    __be16 unused;
++    char data[];
++} __attribute__((__packed__))
++
++int bmc_tx_filter_main(seastar::packet &p)
++{
++  // Make sure we can assume that data is linear
++  seastar::packet::psuedo_vector frags = p.fragments();
++  seastar::fragment f0 = frags.begin();
++  if (f0 == frags.end()) {
++    std::cout << "Empty packet!" << std::endl;
++    return 0;
++  }
++  if ((frags.end() - f0) / sizeof(fragments) > 1) {
++    std::cout <<  "Multi fragment packet" << std::endl;
++    return 0;
++  }
++
++  int ret;
++  char *payload = f0.base;
++  char *data_end = payload + f0.size;
++  unsigned int zero = 0;
++
++  // if the size exceeds the size of a cache entry do not bother going further
++  if (p->len > BMC_MAX_CACHE_DATA_SIZE + sizeof(struct memcached_udp_header))
++    return 0;
++
++  if (payload+5+1 <= data_end && payload[0] == 'V' && payload[1] == 'A' && payload[2] == 'L'
++      && payload[3] == 'U' && payload[4] == 'E' && payload[5] == ' ') { // if this is a GET reply
++
++    struct bmc_stats stats;
++    ret = bpf_map_lookup_elem(&map_stats, &zero, &stats);
++    if (!stats) {
++      return XDP_PASS;
++    }
++    stats->get_resp_count++;
++
++    bpf_tail_call(skb, &map_progs_tc, BMC_PROG_TC_UPDATE_CACHE);
++  }
++
++  return TC_ACT_OK;
++}
++
++  SEC("bmc_update_cache")
++int bmc_update_cache_main(struct __sk_buff *skb)
++{
++  void *data_end = (void *)(long)skb->data_end;
++  void *data = (void *)(long)skb->data;
++  char *payload = (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(struct memcached_udp_header));
++  unsigned int zero = 0;
++
++  u32 hash = FNV_OFFSET_BASIS_32;
++
++  // compute the key hash
++#pragma clang loop unroll(disable)
++  for (unsigned int off = 6; off-6 < BMC_MAX_KEY_LENGTH && payload+off+1 <= data_end && payload[off] != ' '; off++) {
++    hash ^= payload[off];
++    hash *= FNV_PRIME_32;
++  }
++
++  u32 cache_idx = hash % BMC_CACHE_ENTRY_COUNT;
++  struct bmc_cache_entry *entry = bpf_map_lookup_elem(&map_kcache, &cache_idx);
++  if (!entry) {
++    return TC_ACT_OK;
++  }
++
++  bpf_spin_lock(&entry->lock);
++  if (entry->valid && entry->hash == hash) { // cache is up-to-date; no need to update
++    int diff = 0;
++    // loop until both bytes are spaces ; or break if they are different
++#pragma clang loop unroll(disable)
++    for (unsigned int off = 6; off-6 < BMC_MAX_KEY_LENGTH && payload+off+1 <= data_end && off < entry->len && (payload[off] != ' ' || entry->data[off] != ' '); off++) {
++      if (entry->data[off] != payload[off]) {
++        diff = 1;
++        break;
++      }
++    }
++    if (diff == 0) {
++      bpf_spin_unlock(&entry->lock);
++      return TC_ACT_OK;
++    }
++  }
++
++  unsigned int count = 0;
++  entry->len = 0;
++  // store the reply from start to the '\n' that follows the data
++#pragma clang loop unroll(disable)
++  for (unsigned int j = 0; j < BMC_MAX_CACHE_DATA_SIZE && payload+j+1 <= data_end && count < 2; j++) {
++    entry->data[j] = payload[j];
++    entry->len++;
++    if (payload[j] == '\n')
++      count++;
++  }
++
++  if (count == 2) { // copy OK
++    entry->valid = 1;
++    entry->hash = hash;
++    bpf_spin_unlock(&entry->lock);
++    struct bmc_stats *stats = bpf_map_lookup_elem(&map_stats, &zero);
++    if (!stats) {
++      return XDP_PASS;
++    }
++    stats->update_count++;
++  } else {
++    bpf_spin_unlock(&entry->lock);
++  }
++
++  return TC_ACT_OK;
++}
++
++
+diff --git a/apps/memcached/memcache.cc b/apps/memcached/memcache.cc
+index 071e7376..cc56f1df 100644
+--- a/apps/memcached/memcache.cc
++++ b/apps/memcached/memcache.cc
+@@ -50,6 +50,8 @@
+ #include "memcached.hh"
+ #include <unistd.h>
+ 
++#include "bmc_tx_path.hh"
++
+ #define PLATFORM "seastar"
+ #define VERSION "v1.0"
+ #define VERSION_STRING PLATFORM " " VERSION
+@@ -1273,7 +1275,9 @@ class udp_server {
+                 out_hdr->_request_id = _request_id;
+                 out_hdr->_sequence_number = i++;
+                 out_hdr->_n = _out_bufs.size();
+-                *out_hdr = hton(*out_hdr);
++                *out_hdr = hton(*out_hdr); // it is changing byteorder of _request_id
++                // Attach BMC tx_main here <---------------
++                bmc_tx_filter_main(p);
+                 return chan.send(_src, std::move(p));
+             });
+         }
+-- 
+2.34.1
+

@@ -1,0 +1,218 @@
+From f9dc9da2dcfe5e504299b312930d4b8368cb6e39 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 21 Apr 2025 10:17:46 +0000
+Subject: [PATCH 6/6] First test with memcached + af_xdp socket + bmc
+
+---
+ apps/memcached/bmc_tx_path.hh | 34 ++++++++++++++++++++++++----------
+ apps/memcached/memcache.cc    | 17 +++++++++++------
+ src/core/dpdk_rte.cc          | 35 +++++++++++++++++++++++++++++++----
+ src/net/dpdk.cc               |  2 +-
+ 4 files changed, 67 insertions(+), 21 deletions(-)
+
+diff --git a/apps/memcached/bmc_tx_path.hh b/apps/memcached/bmc_tx_path.hh
+index c830a77f..f57c4782 100644
+--- a/apps/memcached/bmc_tx_path.hh
++++ b/apps/memcached/bmc_tx_path.hh
+@@ -14,6 +14,8 @@ struct memcached_udp_header {
+     char data[];
+ } __attribute__((__packed__));
+ 
++#define MEMCD_HDR_SIZE sizeof(struct memcached_udp_header)
++
+ typedef uint64_t u64;
+ typedef uint32_t u32;
+ typedef uint16_t u16;
+@@ -21,6 +23,7 @@ typedef uint8_t u8;
+ 
+ /* static int stats_map_fd; */
+ static int kcache_map_fd;
++static bool initilized = false;
+ 
+ /* Initialize the things we need for BMC tx path. For example the map handles
+  * */
+@@ -35,6 +38,7 @@ int bmc_initilize(void)
+     if (ret != 0) {
+         return -1;
+     }
++    initilized = true;
+     return 0;
+ }
+ 
+@@ -90,28 +94,38 @@ static int bmc_update_cache(char *payload, char *data_end)
+ 
+ int bmc_tx_filter_main(seastar::net::packet &p)
+ {
++  /* std::cout << "HERE" << std::endl; */
++  if (!initilized)
++    return 0;
++
++  // if the size exceeds the size of a cache entry do not bother going further
++  if (p.len() > BMC_MAX_CACHE_DATA_SIZE + MEMCD_HDR_SIZE)
++    return 0;
++
++  p.linearize();
++
+   // Make sure we can assume that data is linear
+   auto frags = p.fragments();
+   seastar::net::fragment *f0 = frags.begin();
+-  if (f0 == frags.end()) {
+-    std::cout << "Empty packet!" << std::endl;
+-    return 0;
+-  }
+-  int count_frags = (frags.end() - f0) / sizeof(*f0);
+-  if (count_frags > 1) {
+-    std::cout <<  "Multi fragment packet" << std::endl;
++  int count_frags = ((uint64_t)frags.end() - (uint64_t)f0) / sizeof(*f0);
++  if (count_frags != 1) {
++    std::cout <<  "Unexpected: Multi fragment packet (count: " << count_frags << ")" << std::endl;
++    /* std::cout << "diff: " << (uint64_t)frags.end() - (uint64_t)f0 << std::endl; */
+     return 0;
+   }
+ 
++  // frag
+   int ret;
+   char *payload = f0->base;
+   char *data_end = payload + f0->size;
+   /* unsigned int zero = 0; */
+   assert(f0->size == p.len()); // since we only have one fragment the size of packet should be same as the size of fragment
+ 
+-  // if the size exceeds the size of a cache entry do not bother going further
+-  if (p.len() > BMC_MAX_CACHE_DATA_SIZE + sizeof(struct memcached_udp_header))
+-    return 0;
++  payload +=  MEMCD_HDR_SIZE;
++  /* std::cout << "BMC Tx Pkt content: " << payload << std::endl; */
++  /* for (int i = 0; i < 32; i++) { */
++  /*   std::cout << "@" << i << ":" << payload + i << std::endl; */
++  /* } */
+ 
+   if (payload+5+1 <= data_end && payload[0] == 'V' && payload[1] == 'A' && payload[2] == 'L'
+       && payload[3] == 'U' && payload[4] == 'E' && payload[5] == ' ') { // if this is a GET reply
+diff --git a/apps/memcached/memcache.cc b/apps/memcached/memcache.cc
+index cb6cf326..5956848a 100644
+--- a/apps/memcached/memcache.cc
++++ b/apps/memcached/memcache.cc
+@@ -1299,6 +1299,7 @@ class udp_server {
+         // Run in the background.
+         _task = keep_doing([this] {
+             return _chan.receive().then([this](datagram dgram) {
++                /* std::cout << "received a dgram" << std::endl; */
+                 packet& p = dgram.get_data();
+                 if (p.len() < sizeof(header)) {
+                     // dropping invalid packet
+@@ -1442,11 +1443,6 @@ int main(int ac, char** av) {
+     distributed<memcache::tcp_server> tcp_server;
+     memcache::stats_printer stats(cache);
+ 
+-    if (bmc_initilize() != 0) {
+-      std::cerr << "Failed at initializing BMC" << std::endl;
+-      return -1;
+-    }
+-
+     namespace bpo = boost::program_options;
+     app_template app;
+     app.add_options()
+@@ -1472,6 +1468,7 @@ int main(int ac, char** av) {
+         uint16_t port = config["port"].as<uint16_t>();
+         uint64_t per_cpu_slab_size = config["max-slab-size"].as<uint64_t>() * MB;
+         uint64_t slab_page_size = config["slab-page-size"].as<uint64_t>() * MB;
++
+         return cache_peers.start(std::move(per_cpu_slab_size), std::move(slab_page_size)).then([&system_stats] {
+             return system_stats.start(memcache::clock_type::now());
+         }).then([&] {
+@@ -1492,10 +1489,18 @@ int main(int ac, char** av) {
+                     (size_t)config["max-datagram-size"].as<int>());
+         }).then([&] {
+             return udp_server.invoke_on_all(&memcache::udp_server::start);
+-        }).then([&stats, start_stats = config.count("stats")] {
++        }).then([&]() {
++            if (bmc_initilize() != 0) {
++              std::cerr << "Failed at initializing BMC" << std::endl;
++            } else {
++              std::cout << "Initializing BMC ..." << std::endl;
++            }
++            return make_ready_future<>();
++          }).then([&stats, start_stats = config.count("stats")] {
+             if (start_stats) {
+                 stats.start();
+             }
+         });
+     });
++
+ }
+diff --git a/src/core/dpdk_rte.cc b/src/core/dpdk_rte.cc
+index eb59693e..4a6a30df 100644
+--- a/src/core/dpdk_rte.cc
++++ b/src/core/dpdk_rte.cc
+@@ -51,7 +51,7 @@ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::s
+     std::vector<std::vector<char>> args {
+         string2vector(argv0),
+         string2vector("-c"), string2vector(mask_str),
+-        string2vector("-n"), string2vector("1")
++        string2vector("-n"), string2vector("4")
+     };
+ 
+     // If "hugepages" is not provided and DPDK PMD drivers mode is requested -
+@@ -75,16 +75,43 @@ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::s
+         args.push_back(string2vector("--no-huge"));
+     }
+ 
+-    args.push_back(string2vector("-a"));
+-    args.push_back(string2vector("0000:ca:00.0"));
++    /* args.push_back(string2vector("-a")); */
++    /* args.push_back(string2vector("0000:ca:00.0")); */
++
++    // Enable AF_XDP -----------------------------------------------------------
++    /* args.push_back(string2vector("--log-level=pmd.net.af_xdp:debug")); */
++    args.push_back(string2vector("--no-pci"));
++    /* args.push_back(string2vector("--iova=va")); */
++
++    // 0 - 23 copymode
++    // 24 - 47 zero-copy
++    std::string af_xdp_conf = "--vdev=net_af_xdp";
++    const char * iface = "iface=enp202s0f0np0";
++    const char * start_queue = "start_queue=26";
++    const char * queue_count = "queue_count=1";
++    const char * xdp_prog = "xdp_prog=/home/farbod/afxdp_bmc/bmc/bmc_kern.o";
++
++    const char *af_xdp_conf_args[] = {iface, start_queue, queue_count, xdp_prog};
++    for (const char *a : af_xdp_conf_args) {
++      af_xdp_conf.append(",");
++      af_xdp_conf.append(a);
++    }
++
+ 
+-    args.push_back(string2vector("--vdev=net_af_xdp,iface=enp202s0f0np0,start_queue=3,queue_count=1"));
++    /* args.push_back(string2vector("--vdev=net_af_xdp,iface=enp202s0f0np0,start_queue=26,queue_count=1")); */
++    args.push_back(string2vector(af_xdp_conf));
+ 
+     std::vector<char*> cargs;
+ 
+     for (auto&& a: args) {
+         cargs.push_back(a.data());
+     }
++
++    std::cout << "EAL arguemnts are:" << std::endl;
++    for (char *a : cargs)
++        std::cout << "\t* " << a << std::endl;
++
++    
+     /* initialise the EAL for all */
+     int ret = rte_eal_init(cargs.size(), cargs.data());
+     if (ret < 0) {
+diff --git a/src/net/dpdk.cc b/src/net/dpdk.cc
+index 865a7a12..be2f8705 100644
+--- a/src/net/dpdk.cc
++++ b/src/net/dpdk.cc
+@@ -127,7 +127,7 @@ namespace seastar {
+ namespace dpdk {
+ 
+ /******************* Net device related constatns *****************************/
+-static constexpr uint16_t default_ring_size      = 512;
++static constexpr uint16_t default_ring_size      = 4096;
+ 
+ //
+ // We need 2 times the ring size of buffers because of the way PMDs
+-- 
+2.34.1
+

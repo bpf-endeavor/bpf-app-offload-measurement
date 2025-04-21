@@ -1,0 +1,115 @@
+From 15d72520762c52f8b7993a917adbbf3e02c2c80b Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Fri, 18 Apr 2025 22:30:56 +0000
+Subject: [PATCH 5/6] wip: trying to add BMC tx path to seastar memcached
+ (compiled)
+
+---
+ apps/memcached/CMakeLists.txt |  3 +--
+ apps/memcached/bmc_common.h   |  2 +-
+ cmake/Finddpdk.cmake          | 14 ++++++++++++--
+ src/core/dpdk_rte.cc          | 15 +++++----------
+ 4 files changed, 19 insertions(+), 15 deletions(-)
+
+diff --git a/apps/memcached/CMakeLists.txt b/apps/memcached/CMakeLists.txt
+index 884521d0..0c1845d0 100644
+--- a/apps/memcached/CMakeLists.txt
++++ b/apps/memcached/CMakeLists.txt
+@@ -39,8 +39,7 @@ target_include_directories (app_memcached
+   PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+ 
+ add_dependencies (app_memcached app_memcached_ascii)
+-add_library(app_memcached "bpf")
+-add_library(app_memcached "elf")
++target_link_libraries(app_memcached PRIVATE "bpf" "elf")
+ 
+ #
+ # Tests.
+diff --git a/apps/memcached/bmc_common.h b/apps/memcached/bmc_common.h
+index 45795cb9..967c710d 100644
+--- a/apps/memcached/bmc_common.h
++++ b/apps/memcached/bmc_common.h
+@@ -46,7 +46,7 @@ struct bmc_cache_entry {
+ 	struct bpf_spin_lock lock;
+ 	unsigned int len;
+ 	char valid;
+-	int hash;
++	unsigned int hash;
+ 	char data[BMC_MAX_CACHE_DATA_SIZE];
+ };
+ 
+diff --git a/cmake/Finddpdk.cmake b/cmake/Finddpdk.cmake
+index 7219af62..03e325b5 100644
+--- a/cmake/Finddpdk.cmake
++++ b/cmake/Finddpdk.cmake
+@@ -69,6 +69,17 @@ set(rte_libs
+   net_ring
+   net_sfc
+   net_vmxnet3
++  # Add for af_xdp
++  net_af_xdp
++  # Add for mlx5
++  bus_auxiliary
++  common_mlx5
++  # compress_mlx5
++  # crypto_mlx5
++  # regex_mlx5
++  # vdpa_mlx5
++  net_mlx5
++  #-------------
+   pci
+   rcu
+   ring
+@@ -134,7 +145,7 @@ find_package_handle_standard_args (dpdk
+ # rte_libs logic elsewhere, external dependencies ('bsd' and 'numa' in this case) are
+ # explicitly handled below. This foreach loop checks if these specific libraries are
+ # present in dpdk_PC_LIBRARIES and adds them to the dpdk_dependencies list if found.
+-foreach (lib "bsd" "numa")
++foreach (lib "bsd" "numa" "mlx5" "ibverbs" "bpf" "xdp" "elf")
+   if (lib IN_LIST dpdk_PC_STATIC_LIBRARIES)
+     list (APPEND dpdk_dependencies ${lib})
+   endif()
+@@ -159,7 +170,6 @@ if (dpdk_FOUND AND NOT (TARGET dpdk))
+     # "++". but this is deprecated by GCC, so silence it.
+     set(compile_options
+       INTERFACE_COMPILE_OPTIONS "-Wno-volatile")
+->>>>>>> e44af9b05a45a8141254e70281d2db225137ac77
+   endif()
+   if (library_suffix STREQUAL CMAKE_STATIC_LIBRARY_SUFFIX)
+     # No pmd driver code will be pulled in without "--whole-archive". To
+diff --git a/src/core/dpdk_rte.cc b/src/core/dpdk_rte.cc
+index fb355a37..eb59693e 100644
+--- a/src/core/dpdk_rte.cc
++++ b/src/core/dpdk_rte.cc
+@@ -32,7 +32,7 @@ bool eal::initialized = false;
+ 
+ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::string>& hugepages_path, bool dpdk_pmd)
+ {
+-	printf("Initialize EAL\n");
++    printf("Initialize EAL\n");
+     if (initialized) {
+         return;
+     }
+@@ -75,15 +75,10 @@ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::s
+         args.push_back(string2vector("--no-huge"));
+     }
+ 
+-    // Farbod: add some hard coded dpdk parameters
+-    // args.push_back(string2vector("--vdev"));
+-    // args.push_back(string2vector("virtio_user0,path=/tmp/tmp_vhost0.sock,queues=1"));
+-    // args.push_back(string2vector("--vdev=virtio_user0,path=/tmp/tmp_vhost0.sock,queues=1"));
+-    // args.push_back(string2vector("--no-pci"));
+-    for (const std::string &o : opts["dpdk-extra"].as<std::vector<std::string>>()) {
+-        std::cout << "dpdk extra: " << o << std::endl;
+-        args.push_back(string2vector(o));
+-    } 
++    args.push_back(string2vector("-a"));
++    args.push_back(string2vector("0000:ca:00.0"));
++
++    args.push_back(string2vector("--vdev=net_af_xdp,iface=enp202s0f0np0,start_queue=3,queue_count=1"));
+ 
+     std::vector<char*> cargs;
+ 
+-- 
+2.34.1
+

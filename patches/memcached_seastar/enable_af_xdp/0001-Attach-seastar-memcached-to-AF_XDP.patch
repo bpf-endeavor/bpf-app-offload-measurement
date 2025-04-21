@@ -1,0 +1,71 @@
+From 30643c4c3ac19cb52d26b1e6a7f1468dae543ca2 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Mon, 21 Apr 2025 10:30:53 +0000
+Subject: [PATCH] Attach seastar memcached to AF_XDP
+
+---
+ cmake/Finddpdk.cmake | 13 ++++++++++++-
+ src/core/dpdk_rte.cc |  9 ++++++++-
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/cmake/Finddpdk.cmake b/cmake/Finddpdk.cmake
+index f9d0f506..03e325b5 100644
+--- a/cmake/Finddpdk.cmake
++++ b/cmake/Finddpdk.cmake
+@@ -69,6 +69,17 @@ set(rte_libs
+   net_ring
+   net_sfc
+   net_vmxnet3
++  # Add for af_xdp
++  net_af_xdp
++  # Add for mlx5
++  bus_auxiliary
++  common_mlx5
++  # compress_mlx5
++  # crypto_mlx5
++  # regex_mlx5
++  # vdpa_mlx5
++  net_mlx5
++  #-------------
+   pci
+   rcu
+   ring
+@@ -134,7 +145,7 @@ find_package_handle_standard_args (dpdk
+ # rte_libs logic elsewhere, external dependencies ('bsd' and 'numa' in this case) are
+ # explicitly handled below. This foreach loop checks if these specific libraries are
+ # present in dpdk_PC_LIBRARIES and adds them to the dpdk_dependencies list if found.
+-foreach (lib "bsd" "numa")
++foreach (lib "bsd" "numa" "mlx5" "ibverbs" "bpf" "xdp" "elf")
+   if (lib IN_LIST dpdk_PC_STATIC_LIBRARIES)
+     list (APPEND dpdk_dependencies ${lib})
+   endif()
+diff --git a/src/core/dpdk_rte.cc b/src/core/dpdk_rte.cc
+index e79c7853..54b51a98 100644
+--- a/src/core/dpdk_rte.cc
++++ b/src/core/dpdk_rte.cc
+@@ -50,7 +50,7 @@ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::s
+     std::vector<std::vector<char>> args {
+         string2vector(argv0),
+         string2vector("-c"), string2vector(mask_str),
+-        string2vector("-n"), string2vector("1")
++        string2vector("-n"), string2vector("4")
+     };
+ 
+     // If "hugepages" is not provided and DPDK PMD drivers mode is requested -
+@@ -74,6 +74,13 @@ void eal::init(cpuset cpus, const std::string& argv0, const std::optional<std::s
+         args.push_back(string2vector("--no-huge"));
+     }
+ 
++    args.push_back(string2vector("-a"));
++    args.push_back(string2vector("0000:ca:00.0"));
++
++    args.push_back(string2vector("--no-pci"));
++
++    args.push_back(string2vector("--vdev=net_af_xdp,iface=enp202s0f0np0,start_queue=26,queue_count=1"));
++
+     std::vector<char*> cargs;
+ 
+     for (auto&& a: args) {
+-- 
+2.34.1
+
