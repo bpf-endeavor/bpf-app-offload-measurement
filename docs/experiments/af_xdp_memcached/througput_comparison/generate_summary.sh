@@ -1,5 +1,5 @@
 #!/bin/bash
-files=( socket.txt bmc.txt af_xdp.txt )
+files=( socket.txt bmc.txt af_xdp.txt af_xdp_bmc.txt )
 output="summary.txt"
 statscript="../../../latency_script.py"
 
