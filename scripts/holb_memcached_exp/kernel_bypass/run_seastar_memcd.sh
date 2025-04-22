@@ -5,13 +5,60 @@
 # Assumptions:
 # System has hugepages and it is mounted in /dev/hugepages (look at TAS readme)
 
+server_ip=192.168.200.101
+net_mask=255.255.255.0
+
+# Possible values: plain, bmc, bg, bmc-bg
 mode="plain"
-# mode="bmc"
+
+# Seastar build type
+build_type=release
+# build_type=debug
 
 if [ -z $NET_IFACE ]; then
 	echo "NET_IFACE is not set"
 	exit 1
 fi
+
+usage() {
+	printf "Usage: $1 [options]:\n"
+	printf "\t--help: show this message\n"
+	printf "\t--bmc: run Seastar's Memcached implementation on with BMC support\n"
+	printf "\t--bg-exp: Load Memcached + AF_XDP without BMC offload:\n\t\tbaseline configuration to investigate the affect of loading BMC on BG flows\n"
+	printf "\t--bmc-bg-exp: Load Memcached + AF_XDP + BMC offload:\n\t\tconfigure the test for investigating the affect of loading BMC on BG flows\n"
+	printf "\n"
+}
+
+parse_args() {
+	while [ $# -gt 0 ]; do
+		key=$1
+		case $key in
+			-h|--help)
+				usage $0
+				shift
+				exit 0
+				;;
+			--bmc)
+				mode="bmc"
+				shift
+				;;
+			--bg-exp)
+				mode="bg"
+				shift
+				;;
+			--bmc-bg-exp)
+				mode="bmc-bg"
+				shift
+				;;
+			*)
+				echo "Unrecognize argument: $1"
+				echo "Use --help to see the usage guide for the program"
+				shift
+				exit 1
+				;;
+		esac
+	done
+}
 
 launch_bmc() {
 	# launch bmc on the given interface
@@ -27,34 +74,47 @@ launch_bmc() {
 	printf "\tsudo ethtool -U $NET_IFACE flow-type udp4 dst-port 11211 action 26\n\tsudo ethtool -U $NET_IFACE flow-type tcp4 dst-port 11211 action 26\n\n"
 }
 
-build_type=release
-# build_type=debug
-
 main() {
-case $mode in
-	plain)
-		Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
-		;;
-	bmc)
-		Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
-		launch_bmc
-		;;
-esac
+	parse_args $@
 
+	count_cores=1
+	cpu_set=11
 
-# sudo $Memcd --help-seastar
-# exit 0
+	case $mode in
+		plain)
+			Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
+			;;
+		bmc)
+			Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
+			launch_bmc
+			;;
+		bg)
+			Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
+			count_cores=4
+			cpu_set=11,13,15,17
+			;;
+		"bmc-bg")
+			Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
+			count_cores=4
+			cpu_set=11,13,15,17
+			;;
+	esac
 
-sudo $Memcd -c 1 --cpuset 11 -m 8G \
-	--poll-mode --dpdk-pmd \
-	--network-stack native \
-	--host-ipv4-addr 192.168.200.101 --netmask-ipv4-addr 255.255.255.0 \
-	--collectd 0
+	# sudo $Memcd --help-seastar
+	# exit 0
 
-# Make sure the XDP program is deatched
-sudo ip link set dev $NET_IFACE xdp off
+	sudo $Memcd -c $count_cores \
+		--cpuset $cpu_set -m 8G \
+		--poll-mode --dpdk-pmd \
+		--network-stack native \
+		--host-ipv4-addr $server_ip \
+		--netmask-ipv4-addr $net_mask \
+		--collectd 0
 
-echo Done!
+	# Make sure the XDP program is deatched
+	sudo ip link set dev $NET_IFACE xdp off
+
+	echo Done!
 }
 
-main
+main $@

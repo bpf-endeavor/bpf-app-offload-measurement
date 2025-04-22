@@ -12,7 +12,7 @@ MEMCD_DIR_BIN=$HOME/memcached/memcached
 BMC_BIN=$HOME/bmc/bmc/bmc
 
 # M1
-taskset -c 1,3,5,7 \
+taskset -c 11,13,15,17 \
 	$MEMCD_DIR_BIN -U 11211 -l 192.168.200.101 \
 	-m 1024 -M -k -P /tmp/M1_PID -d -t 4 -C
 

@@ -10,6 +10,13 @@ M1_PORT=11211
 TIME=20
 REPEAT=1
 
+## NOTE ABOUT LOADING VALUES:
+## We insert two records for the BG flow, then one for the foreground flow. The
+## one we insert for FG will overwrite one of the keys of the BG. So each would
+## have only one key.
+## Key ``0'' (zero) will be the foreground and (1100 B)
+## Key ``1'' (one) will be the background flow (1000 B)
+
 # KEY 0 --> Large (in user-space)
 # KEY 1 --> Small (in BMC)
 WORKLOAD_DESC_BG="--records=2 -K 200 -V 1000"
