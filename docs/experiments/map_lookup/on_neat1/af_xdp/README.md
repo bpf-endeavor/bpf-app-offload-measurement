@@ -9,6 +9,8 @@ consuming and report the average time.
 
 The experiment was repeated 100 times
 
+> For running experiment 100 times, use the `scripts/af_xdp_rx_ring_access/repeat_exp.sh`
+
 ## Commands
 
 run the AF\_XDP program

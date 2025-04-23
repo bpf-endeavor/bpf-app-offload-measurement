@@ -1,0 +1,166 @@
+From 05a975a5f16d95fc3a51843cbdedd62d38f7c7ad Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Wed, 23 Apr 2025 17:47:37 +0000
+Subject: [PATCH] measure rx_ring access time
+
+---
+ src/af_xdp/lpc18/xdpsock_user.c | 89 +++++++++++++++++++++++++++------
+ 1 file changed, 73 insertions(+), 16 deletions(-)
+
+diff --git a/src/af_xdp/lpc18/xdpsock_user.c b/src/af_xdp/lpc18/xdpsock_user.c
+index d09e87b..0971ff2 100644
+--- a/src/af_xdp/lpc18/xdpsock_user.c
++++ b/src/af_xdp/lpc18/xdpsock_user.c
+@@ -53,7 +53,11 @@
+ #define PF_XDP AF_XDP
+ #endif
+ 
+-#define NUM_FRAMES (4 * 1024)
++/* #define NUM_FRAMES (4 * 1024) */
++#define rx_ring_size (1024 * 32)
++#define NUM_FRAMES (4 * rx_ring_size)
++#define fill_ring_size (2 * rx_ring_size)
++
+ #define MIN_PKT_SIZE 64
+ 
+ #define DEBUG_HEXDUMP 0
+@@ -794,7 +798,9 @@ static struct xsk_umem_info *xsk_configure_umem(void *buffer, u64 size)
+ 		 * allocated memory is used that only runs out in OOM situations
+ 		 * that should be rare.
+ 		 */
+-		.fill_size = XSK_RING_PROD__DEFAULT_NUM_DESCS * 2,
++		// .fill_size = XSK_RING_PROD__DEFAULT_NUM_DESCS * 2,
++		.fill_size = fill_ring_size,
++
+ 		.comp_size = XSK_RING_CONS__DEFAULT_NUM_DESCS,
+ 		.frame_size = opt_xsk_frame_size,
+ 		.frame_headroom = XSK_UMEM__DEFAULT_FRAME_HEADROOM,
+@@ -824,10 +830,12 @@ static void xsk_populate_fill_ring(struct xsk_umem_info *umem)
+ 				     XSK_RING_PROD__DEFAULT_NUM_DESCS * 2, &idx);
+ 	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS * 2)
+ 		exit_with_error(-ret);
+-	for (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS * 2; i++)
++	/* for (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS * 2; i++) */
++	for (i = 0; i < fill_ring_size; i++)
+ 		*xsk_ring_prod__fill_addr(&umem->fq, idx++) =
+ 			i * opt_xsk_frame_size;
+-	xsk_ring_prod__submit(&umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS * 2);
++	/* xsk_ring_prod__submit(&umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS * 2); */
++	xsk_ring_prod__submit(&umem->fq, fill_ring_size);
+ }
+ 
+ static struct xsk_socket_info *xsk_configure_socket(struct xsk_umem_info *umem,
+@@ -844,7 +852,8 @@ static struct xsk_socket_info *xsk_configure_socket(struct xsk_umem_info *umem,
+ 		exit_with_error(errno);
+ 
+ 	xsk->umem = umem;
+-	cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
++	/* cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS; */
++	cfg.rx_size = rx_ring_size;
+ 	cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
+ 	if (opt_num_xsks > 1 || opt_reduced_cap)
+ 		cfg.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
+@@ -1173,6 +1182,15 @@ static inline void complete_tx_only(struct xsk_socket_info *xsk,
+ 	}
+ }
+ 
++static volatile bool may_consume = false;
++static uint64_t received = 0;
++static uint64_t start_ts = 0;
++
++static void usr1_interrupt() {
++	may_consume = true;
++	printf("received the usr1 signal\n");
++}
++
+ static void rx_drop(struct xsk_socket_info *xsk)
+ {
+ 	unsigned int rcvd, i;
+@@ -1207,6 +1225,10 @@ static void rx_drop(struct xsk_socket_info *xsk)
+ 		addr = xsk_umem__add_offset_to_addr(addr);
+ 		char *pkt = xsk_umem__get_data(xsk->umem->buffer, addr);
+ 
++		if (*(uint32_t *)pkt == 123) {
++			printf("this should not be here :)!\n");
++		}
++
+ 		hex_dump(pkt, len, addr);
+ 		*xsk_ring_prod__fill_addr(&xsk->umem->fq, idx_fq++) = orig;
+ 	}
+@@ -1214,6 +1236,15 @@ static void rx_drop(struct xsk_socket_info *xsk)
+ 	xsk_ring_prod__submit(&xsk->umem->fq, rcvd);
+ 	xsk_ring_cons__release(&xsk->rx, rcvd);
+ 	xsk->ring_stats.rx_npkts += rcvd;
++	received += rcvd;
++}
++
++
++static inline unsigned long int get_ns(void) {
++	struct timespec spec = {};
++	clock_gettime(CLOCK_MONOTONIC, &spec);
++	unsigned long int rprt_ts = spec.tv_sec * 1000000000LL + spec.tv_nsec;
++	return rprt_ts;
+ }
+ 
+ static void rx_drop_all(void)
+@@ -1226,20 +1257,46 @@ static void rx_drop_all(void)
+ 		fds[i].events = POLLIN;
+ 	}
+ 
++	int pid = getpid();
++	signal(SIGUSR1, usr1_interrupt);
++	printf("Waiting for SIGUSR1 to start consuming ...\n");
++	printf("sudo kill -SIGUSR1 %d\n", pid);
++
+ 	for (;;) {
+-		if (opt_poll) {
+-			for (i = 0; i < num_socks; i++)
+-				xsks[i]->app_stats.opt_polls++;
+-			ret = poll(fds, num_socks, opt_timeout);
+-			if (ret <= 0)
+-				continue;
+-		}
++		if (benchmark_done)
++			return;
++		if (!may_consume)
++			continue;
++		printf("consumming...\n");
++		start_ts = get_ns();
++
++		for (;;) {
++			if (opt_poll) {
++				for (i = 0; i < num_socks; i++)
++					xsks[i]->app_stats.opt_polls++;
++				ret = poll(fds, num_socks, opt_timeout);
++				if (ret <= 0)
++					continue;
++			}
+ 
+-		for (i = 0; i < num_socks; i++)
+-			rx_drop(xsks[i]);
++			for (i = 0; i < num_socks; i++)
++				rx_drop(xsks[i]);
++
++			if (received >= rx_ring_size) {
++				uint64_t duration = get_ns() - start_ts;
++				printf("Ring access time: %lu / %lu = %f\n",
++						duration, received,
++						(double)duration / (double)received);
++				start_ts = 0;
++				received = 0;
++				may_consume = false;
++				printf("Waiting for USERSIG1 to start consuming ...\n");
++				break;
++			}
+ 
+-		if (benchmark_done)
+-			break;
++			if (benchmark_done)
++				return;
++		}
+ 	}
+ }
+ 
+-- 
+2.34.1
+

@@ -1,0 +1,35 @@
+From 63190a864e423221d4078eb671a77b648415c608 Mon Sep 17 00:00:00 2001
+From: Farbod Shahinfar <fshahinfar1@gmail.com>
+Date: Wed, 23 Apr 2025 17:52:00 +0000
+Subject: [PATCH] send specific number of packets
+
+---
+ client.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/client.c b/client.c
+index e43f3ef..145bed5 100644
+--- a/client.c
++++ b/client.c
+@@ -247,7 +247,9 @@ int do_client(void *_cntx) {
+   }
+ 
+   // main tx worker loop
+-  while (cntx->running) {
++  const size_t target = 40 * 1024;
++  size_t sent = 0;
++  while (sent < target) {
+     end_time = rte_get_timer_cycles();
+ 
+     // TODO: this is just for testing the switch system
+@@ -489,6 +491,7 @@ int do_client(void *_cntx) {
+       // tb.tokens -= 64 * nb_tx;
+ 
+       throughput[cur_flow] += nb_tx;
++      sent += nb_tx;
+ 
+       /* delay between sending each batch */
+       /* wait(get_exponential_sample(0.001)); */
+-- 
+2.34.1
+
