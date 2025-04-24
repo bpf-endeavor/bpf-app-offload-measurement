@@ -14,4 +14,4 @@ ylabel: 'Req. Time (us)'
 yticks: [30, 40, 50]
 label_percision: 1
 grid: true
-output: 'echo_lat_box.pdf'
+output: 'echo_lat_box.png'

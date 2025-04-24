@@ -1,13 +1,15 @@
 # figsize: [5, 2.5]
-figsize: [2.5, 2.5]
-x: ['Array', 'Ring', 'MMap Ring']
-y: [[0.948, 0, 0],
-    [0, 2.17, 0],
-    [0, 0, 5.4]]
-yticks: [0, 2, 4, 6]
+figsize: [3.0, 2.5]
+x: ['Array', 'Ring', "MMap\nRing", 'AF_XDP']
+y: [[0.948, 0, 0, 0],
+    [0, 2.17, 0, 0],
+    [0, 0, 5.4, 0],
+    [0, 0, 0, 13.4],
+]
+yticks: [0, 3, 6, 9, 12, 15]
 ylabel: 'Throughput (Mpps)'
-color: ['tab:blue', 'tab:purple', 'tab:orange']
-hatch: ['++', '\\', '--']
+color: ['tab:blue', 'tab:purple', 'tab:orange', 'tab:red']
+hatch: ['++', '\\', '--', 'oo']
 annotate:
   - xy: [-0.1, 1.1]
     text: '0.9'
@@ -15,6 +17,8 @@ annotate:
     text: '2.1'
   - xy: [1.90, 5.6]
     text: '5.4'
+  - xy: [2.80, 13.6]
+    text: '13.4'
 grid: true
 # output: 'communication_tput_wide_bar.pdf'
 output: 'communication_tput_bar.pdf'

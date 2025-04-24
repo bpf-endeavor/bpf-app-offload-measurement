@@ -1,0 +1,32 @@
+figsize: [4,2.0]
+subplots:
+  - x: ['Socket', "Socket +\nOffload" ]
+    y: [ [126.5, 0], [0, 318.3] ]
+    yerr: [[9.3, 0], [0, 97.1]]
+    color: ['tab:blue', 'tab:purple']
+    hatch: ['++', '\\']
+      # xlabel: ''
+    ylabel: "Throughput\n(K Req / sec)"
+    ylim: [0, 600]
+    yticks: [0, 150, 300, 450, 600]
+    grid: true
+    annotate:
+      - xy: [-0.10, 170]
+        text: 126.5
+      - xy: [0.65, 350]
+        text: 318
+  - x : [ 'AF_XDP', "AF_XDP +\nOffload" ]
+    y : [ [297, 0], [ 0, 333.2], ]
+    yerr: [[22.8, 0], [0, 8.1]]
+    color: ['tab:orange', 'tab:red']
+    hatch: ['--', 'xx']
+    ylim: [0, 600]
+    yticks: [0, 150, 300, 450, 600]
+    ytick_labels: ['','','','','']
+    grid: true
+    annotate:
+      - xy: [-0.10, 340]
+        text: 297
+      - xy: [0.90, 380]
+        text: 333
+output: 'memcached_tput.pdf'
