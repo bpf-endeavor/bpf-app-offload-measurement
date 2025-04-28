@@ -15,6 +15,9 @@ mode="plain"
 build_type=release
 # build_type=debug
 
+bmc_binary=/home/farbod/afxdp_bmc/bmc/bmc_kern.o
+af_xdp_queue=26
+
 if [ -z $NET_IFACE ]; then
 	echo "NET_IFACE is not set"
 	exit 1
@@ -80,36 +83,46 @@ main() {
 	count_cores=1
 	cpu_set=11
 
+	# Where is the Seastar's memcached binary
+	# Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
+	Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
+
+	# Configure Seastar to attach to AF_XDP (use the custom version of Seastar)
+	extra_flags="--af-xdp-opts iface=$NET_IFACE,start_queue=$af_xdp_queue,queue_count=1,xdp_prog=$bmc_binary"
+
 	case $mode in
+		# Just a throughput experiment with a single core setup
 		plain)
-			Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
 			;;
 		bmc)
-			Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
-			launch_bmc
+			extra_flags="$extra_flags --bmc 1"
 			;;
+		# Interference experiment with multi-core setup
 		bg)
-			Memcd="/home/farbod/seastar/build/$build_type/apps/memcached/memcached"
 			count_cores=4
 			cpu_set=11,13,15,17
+			extra_flags="$extra_flags --hw-fc off"
 			;;
 		"bmc-bg")
-			Memcd="/home/farbod/my-seastar/build/$build_type/apps/memcached/memcached"
 			count_cores=4
 			cpu_set=11,13,15,17
+			extra_flags="$extra_flags --hw-fc off --bmc 1"
 			;;
 	esac
 
+
+	# sudo $Memcd --help
 	# sudo $Memcd --help-seastar
 	# exit 0
 
 	sudo $Memcd -c $count_cores \
-		--cpuset $cpu_set -m 8G \
+		--cpuset $cpu_set -m 4G \
 		--poll-mode --dpdk-pmd \
 		--network-stack native \
 		--host-ipv4-addr $server_ip \
 		--netmask-ipv4-addr $net_mask \
-		--collectd 0
+		--collectd 0 \
+		$extra_flags
 
 	# Make sure the XDP program is deatched
 	sudo ip link set dev $NET_IFACE xdp off
