@@ -1,7 +1,7 @@
 From 9f6127f505e7f4098cf00320831463e4d4405541 Mon Sep 17 00:00:00 2001
 From: Farbod Shahinfar <fshahinfar1@gmail.com>
 Date: Mon, 21 Apr 2025 11:22:59 +0000
-Subject: [PATCH 2/2] make sending packets to af_xdp work
+Subject: [PATCH 2/3] make sending packets to af_xdp work
 
 ---
  bmc/bmc_common.h |   3 +-
