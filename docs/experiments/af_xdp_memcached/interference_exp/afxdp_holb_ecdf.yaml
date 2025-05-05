@@ -1,0 +1,42 @@
+figsize: [4.0, 2.0]
+subplots:
+  - lines:
+    - label: "without BMC"
+      data: 'm2_lat_baseline.txt'
+      color: "black"
+    - label: "with BMC"
+      data: 'm2_lat_bmc.txt'
+      color: "tab:orange"
+      linestyle: '--'
+    # title: '(1) HOLB of non-accelerated flows'
+    ylabel: 'CDF'
+    xlabel: 'Response latency (us)'
+    xlim: [0, 200]
+    yticks: [0, 0.25, 0.5, 0.75, 1.0]
+    legend: true
+    # legend:
+    #   outside: true
+    #   ncol: 2
+    #   loc: 'upper center'
+
+    # annotate:
+    #   - xy: [40.6, 0.5]
+    #     xytext: [1, 0.8]
+    #     text: '40.6 us'
+    #     fontsize: 9
+    #     arrowprops:
+    #       arrowstyle: "->"
+    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+    #   - xy: [61.5, 0.5]
+    #     xytext: [75, 0.25]
+    #     text: '61.5 us'
+    #     fontsize: 9
+    #     arrowprops:
+    #       arrowstyle: "->"
+    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+# tight_layout:
+#   rect: [0, 0, 1, 0.90]
+# rc:
+#   - name: 'font'
+#     size: 24
+output: "afxdp_holb_ecdf.pdf"
