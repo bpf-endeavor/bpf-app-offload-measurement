@@ -9,6 +9,7 @@ M1_PORT=11211
 # NOTE: Experiment duration in seconds
 TIME=20
 REPEAT=20
+# OUTPUT_DIR=$HOME/af_xdp/interference/xsk_cache/with_bmc/
 OUTPUT_DIR=$HOME/af_xdp/interference/xsk_cache/baseline/
 
 # KEY 0 --> Large (in user-space)
@@ -44,9 +45,10 @@ for i in $(seq $REPEAT); do
                 --time=$TIME --qps=$LOAD_RATE \
                 $WORKLOAD_DESC_BG --popularity const:1 \
                 --server=$SERVER_HOST:$M1_PORT --noload --connections=2 \
-                --measure_connections=1 --measure_qps=10 \
-                --agent=localhost -p '5556' &>> $OUTPUT_DIR/m1_result.txt &
-                # --save=$OUTPUT_DIR/m1_lat_samples_$i.txt \
+                --measure_connections=1 --measure_qps=$MEASUREMENT_RATE \
+                --agent=localhost -p '5556' \
+                --save=$OUTPUT_DIR/m1_lat_samples_$i.txt \
+                &>> $OUTPUT_DIR/m1_result.txt &
 
         taskset -c 17 $MUTILATE_DIR/mutilateudp \
                 --time=$TIME --qps=$MEASUREMENT_RATE \

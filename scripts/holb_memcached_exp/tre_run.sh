@@ -1,3 +1,4 @@
+$ cat tre_run.sh
 #!/bin/bash
 
 # set -x
@@ -8,7 +9,9 @@ SERVER_HOST=192.168.200.101
 M1_PORT=11211
 # NOTE: Experiment duration in seconds
 TIME=20
-REPEAT=1
+REPEAT=10
+# OUTPUT_DIR=$HOME/socket_partial_offload/baseline
+OUTPUT_DIR=$HOME/socket_partial_offload/with_bmc
 
 ## NOTE ABOUT LOADING VALUES:
 ## We insert two records for the BG flow, then one for the foreground flow. The
@@ -29,8 +32,13 @@ trap "handle_signal" SIGINT SIGHUP
 
 function handle_signal {
         echo Received a signal...
-        pkill -SIGINT mutilateudp
+        pkill mutilateudp
+        exit 0
 }
+
+if [ ! -d $OUTPUT_DIR ]; then
+        mkdir -p $OUTPUT_DIR
+fi
 
 echo Loading ...
 $MUTILATE_DIR/mutilate -s $SERVER_HOST:$M1_PORT $WORKLOAD_DESC_BG --loadonly -t 1
@@ -45,17 +53,18 @@ for i in $(seq $REPEAT); do
                 --time=$TIME --qps=$LOAD_RATE \
                 $WORKLOAD_DESC_BG --popularity const:1 \
                 --server=$SERVER_HOST:$M1_PORT --noload --connections=2 \
-                --measure_connections=1 --measure_qps=10 \
-                --agent=localhost -p '5556' &>> /tmp/m1_result.txt &
-                # --save=/tmp/m1_lat_samples_$i.txt \
+                --measure_connections=1 --measure_qps=$MEASUREMENT_RATE \
+                --agent=localhost -p '5556' \
+                --save=$OUTPUT_DIR/m1_lat_samples_$i.txt \
+                &>> $OUTPUT_DIR/m1_result.txt &
 
         taskset -c 17 $MUTILATE_DIR/mutilateudp \
                 --time=$TIME --qps=$MEASUREMENT_RATE \
                 $WORKLOAD_DESC_FG  --popularity const:0 \
                 --server=$SERVER_HOST:$M1_PORT --noload --threads=1 --connections=1 \
-                --save=/tmp/m2_lat_samples_$i.txt \
+                --save=$OUTPUT_DIR/m2_lat_samples_$i.txt \
                 --measure_connections=1 --measure_qps=$MEASUREMENT_RATE \
-                &>> /tmp/m2_result.txt &
+                &>> $OUTPUT_DIR/m2_result.txt &
 
         # Wait until mutilate instances close
         sleep $TIME
@@ -67,6 +76,7 @@ done
 
 echo ---------------------------------
 echo Check results at:
-echo /tmp/m1_result.txt
-echo /tmp/m2_result.txt
+echo $OUTPUT_DIR/m1_result.txt
+echo $OUTPUT_DIR/m2_result.txt
 echo Done!
+

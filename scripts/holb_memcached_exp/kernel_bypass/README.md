@@ -50,3 +50,9 @@ script to generate traffic.
 1. Launch the Seastar's Memcached with BMC support with `run_seastar_memcd.sh --bmc-bg-exp`
 2. Use `run_tre.sh` to generate load (configures and uses Mutilate)
 
+## XSK Cache
+
+```
+sudo taskset -c 9,11,13,15,17 ./build/cache --threads 4  $NET_IFACE 26
+sudo taskset -c 9,11,13,15,17 ./build/cache --threads 4 --bmc --xdp ~/afxdp_bmc/bmc/bmc_kern.o $NET_IFACE 26
+```
