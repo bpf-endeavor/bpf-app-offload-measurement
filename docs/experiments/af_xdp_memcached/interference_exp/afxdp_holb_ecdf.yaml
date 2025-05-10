@@ -8,7 +8,6 @@ subplots:
       data: 'm2_lat_bmc.txt'
       color: "tab:orange"
       linestyle: '--'
-    # title: '(1) HOLB of non-accelerated flows'
     ylabel: 'CDF'
     xlabel: 'Response latency (us)'
     xlim: [0, 300]
@@ -19,21 +18,21 @@ subplots:
     #   ncol: 2
     #   loc: 'upper center'
 
-    # annotate:
-    #   - xy: [40.6, 0.5]
-    #     xytext: [1, 0.8]
-    #     text: '40.6 us'
-    #     fontsize: 9
-    #     arrowprops:
-    #       arrowstyle: "->"
-    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
-    #   - xy: [61.5, 0.5]
-    #     xytext: [75, 0.25]
-    #     text: '61.5 us'
-    #     fontsize: 9
-    #     arrowprops:
-    #       arrowstyle: "->"
-    #       connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+    annotate:
+      - xy: [39, 0.5]
+        xytext: [5.0, 0.8]
+        text: '39 us'
+        fontsize: 9
+        arrowprops:
+          arrowstyle: "->"
+          connectionstyle: "angle,angleA=90,angleB=-45,rad=10"
+      - xy: [58.8, 0.5]
+        xytext: [75, 0.55]
+        text: '58 us'
+        fontsize: 9
+        arrowprops:
+          arrowstyle: "->"
+          connectionstyle: "angle,angleA=90,angleB=0,rad=10"
 # tight_layout:
 #   rect: [0, 0, 1, 0.90]
 # rc:

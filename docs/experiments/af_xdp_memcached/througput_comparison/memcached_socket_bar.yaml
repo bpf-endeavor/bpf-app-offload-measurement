@@ -1,0 +1,18 @@
+figsize: [2.5,2.0]
+subplots:
+  - x: ['baseline', "with BMC" ]
+    y: [ [126.5, 0], [0, 318.3] ]
+    yerr: [[9.3, 0], [0, 97.1]]
+    color: ['tab:blue', 'tab:purple']
+    hatch: ['++', '\\']
+      # xlabel: ''
+    ylabel: "Throughput\n(K Req / sec)"
+    ylim: [0, 600]
+    yticks: [0, 150, 300, 450, 600]
+    grid: true
+    annotate:
+      - xy: [-0.10, 170]
+        text: 126.5
+      - xy: [0.65, 350]
+        text: 318
+output: 'memcached_tput_left.pdf'
