@@ -2,22 +2,17 @@ figsize: [3.0, 2.0]
 subplots:
   - lines:
     - label: "no offload"
-      data: 'm2_lat_baseline.txt'
+      data: 'all_lat_baseline.txt'
       color: "black"
     - label: "offload"
-      data: 'm2_lat_bmc.txt'
-      color: "tab:orange"
+      data: 'all_lat_bmc.txt'
+      color: "tab:cyan"
       linestyle: '--'
-    # title: '(1) HOLB of non-accelerated flows'
     ylabel: 'CDF'
     xlabel: 'Response latency (us)'
     xlim: [0, 300]
     yticks: [0, 0.25, 0.5, 0.75, 1.0]
     legend: true
-    # legend:
-    #   outside: true
-    #   ncol: 2
-    #   loc: 'upper center'
 
     # annotate:
     #   - xy: [40.6, 0.5]
@@ -39,4 +34,4 @@ subplots:
 # rc:
 #   - name: 'font'
 #     size: 24
-output: "afxdp_holb_ecdf.pdf"
+output: "afxdp_partial_offload_ecdf.pdf"
