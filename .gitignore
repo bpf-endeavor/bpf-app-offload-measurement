@@ -3,3 +3,11 @@ deps/
 tags
 nohup.out
 src/include/vmlinux.h
+# some files that are too large to push
+docs/experiments/bpf_holb/cur/socket_partial_offload.tar.gz
+docs/experiments/bpf_holb/cur/old/
+docs/experiments/bpf_holb/cur/old1/
+docs/experiments/bpf_holb/cur/old2/
+docs/experiments/bpf_holb/cur/old3/
+docs/experiments/bpf_holb/cur/old4/
+docs/experiments/bpf_holb/cur/socket_partial_offload/

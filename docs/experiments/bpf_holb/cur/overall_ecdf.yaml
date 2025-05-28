@@ -1,4 +1,4 @@
-figsize: [3.375, 2.25]
+figsize: [3.375, 1.50]
 subplots:
   - lines:
     - label: "baseline"
@@ -11,6 +11,7 @@ subplots:
     ylabel: 'CDF'
     xlabel: 'Response latency (us)'
     xlim: [0, 300]
-    yticks: [0, 0.25, 0.5, 0.75, 1.0]
+      # yticks: [0, 0.25, 0.5, 0.75, 1.0]
+    yticks: [0, 0.5, 1.0]
     legend: true
 output: "bmc_overall_latency.pdf"

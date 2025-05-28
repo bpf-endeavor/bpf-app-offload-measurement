@@ -1,4 +1,4 @@
-figsize: [3.0, 2.0]
+figsize: [3.0, 1.5]
 subplots:
   - lines:
     - label: "no offload"

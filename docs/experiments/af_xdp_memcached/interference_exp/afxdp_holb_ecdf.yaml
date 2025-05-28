@@ -1,4 +1,4 @@
-figsize: [3.0, 2.0]
+figsize: [3.0, 1.5]
 subplots:
   - lines:
     - label: "no offload"
@@ -11,7 +11,7 @@ subplots:
     ylabel: 'CDF'
     xlabel: 'Response latency (us)'
     xlim: [0, 300]
-    yticks: [0, 0.25, 0.5, 0.75, 1.0]
+    yticks: [0, 0.5, 1.0]
     legend: true
     # legend:
     #   outside: true
@@ -20,19 +20,19 @@ subplots:
 
     annotate:
       - xy: [39, 0.5]
-        xytext: [5.0, 0.8]
+        xytext: [1.0, 0.8]
         text: '39 us'
         fontsize: 9
         arrowprops:
           arrowstyle: "->"
-          connectionstyle: "angle,angleA=90,angleB=-45,rad=10"
+          connectionstyle: "angle,angleA=75,angleB=-45,rad=3"
       - xy: [58.8, 0.5]
-        xytext: [75, 0.55]
+        xytext: [65, 0.05]
         text: '58 us'
         fontsize: 9
         arrowprops:
           arrowstyle: "->"
-          connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+          connectionstyle: "angle,angleA=130,angleB=45,rad=1"
 # tight_layout:
 #   rect: [0, 0, 1, 0.90]
 # rc:

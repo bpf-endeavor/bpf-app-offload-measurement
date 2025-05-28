@@ -1,4 +1,4 @@
-figsize: [2.5,2.0]
+figsize: [2.5,1.5]
 subplots:
   - x: ['baseline', "with BMC" ]
     y: [ [126.5, 0], [0, 318.3] ]
@@ -7,8 +7,8 @@ subplots:
     hatch: ['++', '\\']
       # xlabel: ''
     ylabel: "Throughput\n(K Req / sec)"
-    ylim: [0, 600]
-    yticks: [0, 150, 300, 450, 600]
+    ylim: [0, 450]
+    yticks: [0, 150, 300, 450]
     grid: true
     annotate:
       - xy: [-0.10, 170]

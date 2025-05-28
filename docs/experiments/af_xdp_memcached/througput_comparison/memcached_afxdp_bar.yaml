@@ -1,0 +1,17 @@
+figsize: [2.5,1.5]
+subplots:
+  - x : [ 'AF_XDP', "AF_XDP +\nOffload" ]
+    y : [ [297, 0], [ 0, 333.2], ]
+    yerr: [[22.8, 0], [0, 8.1]]
+    color: ['tab:orange', 'tab:red']
+    hatch: ['--', 'xx']
+    ylim: [0, 450]
+    yticks: [0, 150, 300, 450]
+    ylabel: "Throughput\n(K Req / sec)"
+    grid: true
+    annotate:
+      - xy: [-0.10, 340]
+        text: 297
+      - xy: [0.90, 380]
+        text: 333
+output: 'memcached_tput_right.pdf'
