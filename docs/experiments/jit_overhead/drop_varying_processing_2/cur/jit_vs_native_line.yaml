@@ -1,4 +1,4 @@
-figsize: [3, 3]
+figsize: [3, 2]
 subplots:
   - lines:
       - label: 'Hard-coded'
@@ -17,10 +17,10 @@ subplots:
         color: 'tab:red'
     # title: 'Program 1'
     ylogscale: 2
-    ylabel: "Throughput (Mpps)"
+      # ylabel: "Throughput (Mpps)"
     xlabel: "Repetition"
-    yticks: [0.25, 0.5, 1, 2, 4, 8, 16]
-    ytick_labels: ['0.25', '0.5', '1', '2', '4', '8', '16']
+    yticks: [0.25, 1, 4, 16]
+    ytick_labels: ['0.25', '1', '4', '16']
     # xticks: [0, 2, 4, 6, 8]
     # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
     # xlim: [-1, 100]
@@ -50,8 +50,8 @@ annotate:
   #   text: "52%"
   #   fontsize: 9
   # #  1
-  - xy: [2, 15]
-    text: "14.15%"
+  - xy: [2, 12.5]
+    text: "14.1%"
     fontsize: 9
   # #  1
   # - xy: [1, 10]
@@ -67,7 +67,7 @@ annotate:
   #   fontsize: 9
   # #  4
   - xy: [4, 4.7]
-    text: "49.35%"
+    text: "49.3%"
     fontsize: 9
   # #  5
   # - xy: [5, 5]
@@ -91,7 +91,7 @@ annotate:
   #   fontsize: 9
   # #  16
   - xy: [16, 1.55]
-    text: "55.32%"
+    text: "55.3%"
     fontsize: 9
   # #   20
   # - xy: [20, 1.5]
@@ -103,7 +103,7 @@ annotate:
   #   fontsize: 9
   # #   32
   - xy: [32, 0.8]
-    text: "57.14%"
+    text: "57.1%"
     fontsize: 9
   # #   64
   - xy: [53, 0.5]

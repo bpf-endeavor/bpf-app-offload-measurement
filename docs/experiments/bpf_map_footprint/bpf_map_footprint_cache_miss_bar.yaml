@@ -1,4 +1,4 @@
-figsize: [5, 2.25]
+figsize: [4, 1.75]
 subplots:
   - x: ['100', '5K', '10K', '50K', '100K']
     experiments:
@@ -15,7 +15,7 @@ subplots:
         color: 'tab:orange'
         hatch: '--'
     xlabel: 'Number of flows'
-    ylabel: "L1 miss per packet\n(normalized)"
+    ylabel: "L1 miss/packet\n(normalized)"
     yticks: [0, 0.5, 1, 1.5, 2]
     grid: true
     annotate_line:

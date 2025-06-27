@@ -1,4 +1,4 @@
-figsize: [5, 2.5]
+figsize: [4, 2.0]
 subplots:
   - x: ['0', '0.5', '1', '1.5', '2']
     experiments:

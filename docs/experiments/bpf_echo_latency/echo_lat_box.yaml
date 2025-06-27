@@ -1,4 +1,4 @@
-figsize: [4, 2]
+figsize: [4.0, 1.5]
 scale: 0.001
 values: [
   './sock_samples.txt',
@@ -14,4 +14,5 @@ ylabel: 'Req. Time (us)'
 yticks: [30, 40, 50]
 label_percision: 1
 grid: true
-output: 'echo_lat_box.png'
+bar_width: 0.35
+output: 'echo_lat_box.pdf'

@@ -1,4 +1,4 @@
-figsize: [3,3]
+figsize: [3,2]
 subplots:
   - lines:
       - label: 'Hard-coded'
@@ -19,19 +19,19 @@ subplots:
     xlabel: "Requested number"
     ylogscale: 2
     # xlogscale: 2
-    yticks: [0.25, 0.5, 1, 2, 4, 8, 16]
-    ytick_labels: ['0.25', '0.5', '1', '2', '4', '8', '16']
+    yticks: [0.25, 1, 4, 16]
+    ytick_labels: ['0.25', '1', '4', '16']
     # xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
     # xlim: [0, 100]
     ax_below: true
-    legend:
-      loc: 'upper right'
+    # legend:
+    #   loc: 'upper right'
     zoom:
       - top_left: [-5, 18]
         bottom_right: [50, 10]
-        zoom_box_bottom_left: [0.35, 0.40]
+        zoom_box_bottom_left: [0.35, 0.45]
         zoom_box_width: 0.5
-        zoom_box_height: 0.3
+        zoom_box_height: 0.4
         grid: true
         yticks: [12, 14, 16, 18]
         xticks: [0, 25, 50]

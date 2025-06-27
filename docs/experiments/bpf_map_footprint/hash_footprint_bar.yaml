@@ -1,23 +1,24 @@
-figsize: [5.5,2.5]
+figsize: [5.0,2.0]
 subplots:
   - x: ['100', '5K', '10K', '50K', '100K']
     y: [8.5, 8.1, 7.7, 6.3, 5.9]
     color: 'tab:green'
     hatch: '//'
     xlabel: 'Number of flows'
-    ylabel: "Throughput\n(Mpps)"
-    yticks: [0, 3, 6, 9]
+    ylabel: "Throughput (Mpps)"
+    yticks: [0, 5, 10]
     grid: true
+    bar_width: 0.5
     annotate:
-      - xy: [-0.10, 8.8]
+      - xy: [-0.20, 8.8]
         text: 8.5
-      - xy: [0.90, 8.4]
+      - xy: [0.80, 8.4]
         text: 8.1
-      - xy: [1.90, 8.0]
+      - xy: [1.80, 8.0]
         text: 7.7
-      - xy: [2.90, 6.6]
+      - xy: [2.80, 6.6]
         text: 6.3
-      - xy: [3.90, 6.2]
+      - xy: [3.75, 6.2]
         text: 5.9
   - x: ['100', '5K', '10K', '50K', '100K']
     y: [1.16 , 1.54 , 1.62 , 1.67 , 1.73]
@@ -25,17 +26,18 @@ subplots:
     hatch: 'xx'
     xlabel: 'Number of flows'
     ylabel: "L1 miss per packet\n(normalized)"
-    yticks: [0, 0.5, 1, 1.5, 2]
+    yticks: [0, 1, 2]
     grid: true
+    bar_width: 0.5
     annotate:
-      - xy: [-0.10, 1.2]
-        text: 1.16
-      - xy: [0.90, 1.6]
-        text: 1.54
-      - xy: [1.90, 1.7]
-        text: 1.62
-      - xy: [2.90, 1.7]
-        text: 1.67
-      - xy: [3.90, 1.8]
-        text: 1.73
-output: 'hash_map_footprint.png'
+      - xy: [-0.20, 1.2]
+        text: 1.1
+      - xy: [0.80, 1.6]
+        text: 1.5
+      - xy: [1.80, 1.7]
+        text: 1.6
+      - xy: [2.80, 1.7]
+        text: 1.6
+      - xy: [3.75, 1.8]
+        text: 1.7
+output: 'hash_map_footprint.pdf'

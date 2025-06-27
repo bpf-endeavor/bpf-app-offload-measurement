@@ -1,4 +1,4 @@
-figsize: [5, 2.25]
+figsize: [4, 1.75]
 subplots:
   - x: ['0', '0.5', '1', '1.5', '2']
     experiments:
@@ -15,7 +15,7 @@ subplots:
         color: 'tab:orange'
         hatch: '--'
     xlabel: 'Skewness (Zipfian parameter)'
-    ylabel: "L1 miss per packet\n(normalized)"
+    ylabel: "L1 miss/packet\n(normalized)"
     yticks: [0, 0.5, 1, 1.5, 2]
     grid: true
     annotate_line:
@@ -25,7 +25,7 @@ subplots:
         linestyle: '-.'
         linewidth: 2
     annotate:
-      - xy: [5.5, 1.1]
+      - xy: [5.2, 1.1]
         text: 'baseline'
 # legend:
 #   ncol: 3
