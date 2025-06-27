@@ -255,7 +255,7 @@ int load_xdp(struct bpf_object *bpfobj, struct attach_request *bpf_req,
 		DEBUG("if: %d prog fd: %d\n", bpf_req->ifindex, prog_fd);
 		ERROR("Failed to attach XDP program! %s\n", strerror(errno));
 		detach_xdp(bpf_req, xdp_flags);
-		INFO("It is likely another program is attached, attempted to remove it.");
+		INFO("It is likely another program is attached, attempted to remove it.\n");
 		return 1;
 	}
 	return 0;

@@ -17,7 +17,8 @@ void usage(void)
 	INFO("  --help     -h:  path to bpf binary file\n");
 	INFO("  --bpf_bin  -b:  path to bpf binary file\n");
 	/* INFO("  --bpf_prog -p:  name of bpf program to load (can suply multiple)\n"); */ 
-	INFO("  --iface:   -i:  the interface to use for TC or XDP program\n");
+	INFO("  --iface:   -i:  the interface to use for TC or XDP program\n"
+	     "                  (default value read from NET_IFACE env. variable)\n");
 	INFO("  --port     -P:  the destination port (for connection monitor)\n");
 	INFO("  --xdp:          load XDP program on given interface\n");
 	INFO("  --gxdp:         load XDP program in generic mode\n");
@@ -34,6 +35,12 @@ static int get_default_cgroup_fd(void)
 		fd = open("/sys/fs/cgroup/unified/", O_DIRECTORY | O_RDONLY);
 	}
 	return fd;
+}
+
+static inline
+char *get_default_ifacename(void)
+{
+	return getenv("NET_IFACE");
 }
 
 int parse_args(int argc, char *argv[])
@@ -75,6 +82,18 @@ int parse_args(int argc, char *argv[])
 	context.port = 8080;
 	context.bpf_bin = NULL;
 	context.cgroup_fd = get_default_cgroup_fd();
+
+	const char * net_ifacename = get_default_ifacename();
+	if (net_ifacename != NULL) {
+		ifindex = if_nametoindex(net_ifacename);
+		if (ifindex > 0) {
+			INFO("Found interface: %s (index: %d)\n",
+					net_ifacename, ifindex);
+		}
+		/* on error, ifindex will be set to zero, which is okay */
+	} else {
+		INFO("NET_IFACE is not set\n");
+	}
 
 	while(1) {
 		ret = getopt_long(argc, argv, "hb:p:P:i:", long_opts, NULL);

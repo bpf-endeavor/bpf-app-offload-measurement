@@ -15,7 +15,7 @@ build_libbpf: ./libbpf/
 	# # Create 3rd-party deps directory
 	if [ ! -d  ${DEPS_DIR} ]; then mkdir -p ${DEPS_DIR}; fi
 	# Build libbpf into deps directory
-	BUILD_STATIC_ONLY=y DESTDIR=${DEPS_DIR} OBJDIR=${DEPS_DIR} $(MAKE) -C libbpf/src install
+	CC=clang BUILD_STATIC_ONLY=y DESTDIR=${DEPS_DIR} OBJDIR=${DEPS_DIR} $(MAKE) -C libbpf/src install
 
 	# C-HashMap
 	INCDIR=${DEPS_DIR}/usr/include/c-hashmap/; \

@@ -4,10 +4,10 @@ INCLUDES = -I ./include/ -I ../deps/usr/include/
 CFLAGS = -g -O2 -Wall -Wno-unused-but-set-variable -Wno-unused-variable
 
 # Output directory (executables are in this dir)
-OUTPUT_DIR = ./build/
+OUTPUT_DIR = ./build
 # BPF programs are in this dir
 OUTPUT_DIR_BPF = ./build/bpf/
-OUTPUT_DIR_BPF_LL = ./build/bpf/ll/
+OUTPUT_DIR_BPF_LL = ./build/bpf/ll
 
 # Loader:
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
