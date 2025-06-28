@@ -1,0 +1,32 @@
+figsize: [4, 2]
+subplots:
+  - lines:
+    - label: '0'
+      data: './src/zipf_0.0.txt'
+      linestyle: 'solid'
+    - label: '0.5'
+      data: './src/zipf_0.5.txt'
+      linestyle: '-.'
+    - label: '1'
+      data: './src/zipf_1.0.txt'
+      linestyle: 'dotted'
+    - label: '1.5'
+      data: './src/zipf_1.5.txt'
+      linestyle: '--'
+    - label: '2'
+      data: './src/zipf_2.0.txt'
+      linestyle: ':'
+    ylim: [0, 1.10]
+    yticks: [0, 0.25, 0.5, 0.75, 1]
+    xticks: [0, 25000, 50000, 75000, 100000]
+    xtick_labels: [0, '25K', '50K', '75K', '100K']
+    ylabel: 'CDF'
+    xlabel: 'Element Index'
+    legend:
+      ncol: 3
+      loc: 'lower right'
+      handlelength: 1.00
+      handletextpad: 0.2
+      labelspacing: 0.2
+      columnspacing: 0.5
+output: 'zipf.pdf'
