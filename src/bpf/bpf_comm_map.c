@@ -142,7 +142,7 @@ int tc_prog(struct __sk_buff *skb)
 	 * after the other.  Do not notify the userspace until last data is
 	 * inserted.
 	 *
-	 * Command for triggering this about function 100K
+	 * Command for triggering this function ~100K
 	 * sudo ./build/app -a 17:00.0 -l 1 -- --client --ip-local
 	 * 192.168.200.102 --ip-dest 192.168.200.101 --port-dest 8080
 	 * --duration 2 --rate 51000 --payload 22 --batch 8

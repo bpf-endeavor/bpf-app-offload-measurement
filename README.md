@@ -1,28 +1,28 @@
-# Benchmark Kernel Offload Strategies
+# Benchmark for eBPF Runtime
 
-Some bench marks for BPF environment.
-Searching for good offloading strategies and trade offs.
-We look into some offloading benefits and try to characterize their value.
+This repositry hosts:
 
-* BPF runtime cost
-* Context switch
-* Data summarization
-* Request-batching (multishot) [? Left inconclusive]
-* Sharing state, map lookup, on the packet
+- A set of benchmark designed to shade light on some corners of eBPF runtime
+  and help decide challenges in offloading an end-host application to the
+  kernel.
 
+- This repository is also the artifacts from paper ["Demystifying Performance of
+  eBPF Network Applications"](./docs/paper.pdf) presented at
+  [CoNEXT'25](https://conferences.sigcomm.org/co-next/2025/#!/home). Look at
+  [ARTIFACT.md](./ARTIFACT.md) for reproducing different figures and tables
+  from the paper.
 
-## How to Build?
+## List of Benchmarks
 
-Run `make` in the root directory
+* Overhead of entering and exiting eBPF for XDP, TC, and SK\_SKB
+* Time since packet arrival (since received in driver / XDP) until it reachs to TC, and SK\_SKB hooks
+* Report overhead of having a bound-check in a tight loop
+* Comparing the overhead of hardcoding code into the driver vs. having a eBPF program
+* Overhead of using Array, Hash-map, Ring, ... for communication with user program
+* Measure benefit of reducing the size of packet when passing it from kernel to user program
+* Demonstrate performance interference among flows belonging accelerated by eBPF and those not
+* Investigate overhead of different techniques for chaining programs used to mitigate the eBPF program's complexity limit
 
+## Cite Paper
 
-## How is the Repo Structured
-
-* `kernel/`: some kernel patches helping with benchmarks
-* `src/bpf/`: it has the bpf programs used in benchmarks
-* `src/userspace/server`: has userspace part of the benchmarks
-* `src/userspace/loader`: has a bpf loader
-* `src/autogen/*/`: has some benchmarks which were generated using Kashk.
-Both the userspace and bpf prgorams are organized in the sub-directories under
-`src/autogen`.
-
+> the paper is still under publication ...
