@@ -1,4 +1,4 @@
-figsize: [3,2]
+figsize: [3,2.5]
 subplots:
   - lines:
       - label: 'Hard-coded'

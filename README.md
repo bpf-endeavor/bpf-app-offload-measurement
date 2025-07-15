@@ -14,14 +14,27 @@ This repositry hosts:
 
 ## List of Benchmarks
 
+**eBPF Hook Related:**
+
 * Overhead of entering and exiting eBPF for XDP, TC, and SK\_SKB
 * Time since packet arrival (since received in driver / XDP) until it reachs to TC, and SK\_SKB hooks
+* Overhead of an empty eBPF program on throughput and latency
+
+
+**eBPF API (MAPs, Helpers, ...):**
+
+* Overhead of using Array, Hash-map, Ring, ... for communication with user program
+* Investigate overhead of different techniques for chaining programs used to mitigate the eBPF program's complexity limit
+
+**eBPF Compilation Process:**
+
 * Report overhead of having a bound-check in a tight loop
 * Comparing the overhead of hardcoding code into the driver vs. having a eBPF program
-* Overhead of using Array, Hash-map, Ring, ... for communication with user program
+
+**System Design Elements:**
+
 * Measure benefit of reducing the size of packet when passing it from kernel to user program
 * Demonstrate performance interference among flows belonging accelerated by eBPF and those not
-* Investigate overhead of different techniques for chaining programs used to mitigate the eBPF program's complexity limit
 
 ## Cite Paper
 
