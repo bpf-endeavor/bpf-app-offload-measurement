@@ -53,9 +53,11 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_jit_vs_native.o \
 	bpf_demux.o \
 	bpf_skskb_redir.o \
-	bpf_jit_vs_native_prime.o \
 	bpf_jit_vs_native_fib.o \
 	bpf_map_access_throughput.o
+
+# bpf_jit_vs_native_prime.o 
+
 _KERN_OBJECTS = $(addprefix $(OUTPUT_DIR_BPF), $(KERN_OBJECTS))
 # BPF source code is in this dir
 KERN_DIR = ./bpf/

@@ -14,7 +14,7 @@ install_pkgs() {
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
 		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
 		libzstd-dev libunwind-dev libreadline-dev numactl neovim \
-		"linux-tools-$(uname -r)" )
+		iperf "linux-tools-$(uname -r)" )
 
 	sudo apt update
 	sudo apt install -y "${PACKAGES[@]}"
@@ -75,6 +75,7 @@ install_kernel_tools() {
 	cd "$KERNEL_SOURCE_DIR/tools/power/cpupower" || exit 1
 	make -j
 	sudo make install
+	echo /usr/lib64 | sudo tee -a /etc/ld.so.conf.d/tmp.conf
 	sudo ldconfig
 
 	## INSTALL x86 Energy

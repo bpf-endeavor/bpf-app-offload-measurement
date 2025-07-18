@@ -8,7 +8,7 @@ set -e
 
 CURDIR=$(realpath $(dirname $0))
 ROOTDIR=$(realpath "$CURDIR/../../")
-THIRD=$(realpath $CURDIR/../others/)
+THIRD=$(realpath $ROOTDIR/others/)
 KERNEL_SOURCE_DIR="$THIRD/linux-6.8.7"
 
 # make sure this directory exists
