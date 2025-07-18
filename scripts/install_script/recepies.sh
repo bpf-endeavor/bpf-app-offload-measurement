@@ -1,25 +1,6 @@
 #!/bin/bash
 
-set -e
-
-# !! DESCLAIMER NOTE:
-# read the installation script, make sure the commands are compatible with
-# your enviroment
-
-CURDIR=$(realpath $(dirname $0))
-ROOTDIR=$(realpath "$CURDIR/../")
-THIRD=$(realpath $CURDIR/../others/)
-KERNEL_SOURCE_DIR="$THIRD/linux-6.8.7"
-PROGFILE="$THIRD/_progress_level.txt"
-# make sure this directory exists
-mkdir -p "$THIRD"
-
-PROGRESS=$(cat $PROGFILE)
-if [ -z "$PROGRESS" ];then
-	PROGRESS=0
-fi
-
-if [ $PROGRESS -lt 1 ]; then
+install_pkgs() {
 	## INSTALL PACKAGES
 	# Disclaimer: these are a set of packages that I use across my projects. Not
 	# all of them are exactly related to this repository. Have a look and decide
@@ -38,11 +19,9 @@ if [ $PROGRESS -lt 1 ]; then
 	sudo apt update
 	sudo apt install -y "${PACKAGES[@]}"
 	pip install scapy flask
+}
 
-	echo 1 > $PROGFILE
-fi
-
-if [ $PROGRESS -lt 2 ]; then
+install_clang() {
 	## INSTALL CLANG
 	cd "$THIRD" || exit 1
 	CLANG_VERSION=14
@@ -51,20 +30,31 @@ if [ $PROGRESS -lt 2 ]; then
 	sudo ./llvm.sh $CLANG_VERSION
 	# Configure the clang-14 as clang
 	sudo bash "$CURDIR/update-alternatives-clang.sh" $CLANG_VERSION 100
+}
 
-	echo 2 > $PROGFILE
-fi
 
-if [ $PROGRESS -lt 3 ]; then
+install_dwarf() {
+	# INSTALL DWARF (required for BTF)
+	cd $THIRD || exit 1
+	git clone https://github.com/acmel/dwarves.git
+	cd dwarves
+	git checkout v1.29
+	mkdir build/
+	cd build/
+	cmake ../
+	make -j
+	sudo make install
+	sudo ldconfig
+}
+
+get_kernel_source() {
 	## GET Custom Kernel <-- you can apply patches to this kernel
 	cd "$THIRD" || exit 1
 	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.7.tar.xz
 	tar -xf linux-6.8.7.tar.xz
+}
 
-	echo 3 > $PROGFILE
-fi
-
-if [ $PROGRESS -lt 4 ]; then
+install_kernel_tools() {
 	## Install BPFTOOL
 	cd "$KERNEL_SOURCE_DIR/tools/bpf/" || exit 1
 	make clean
@@ -91,23 +81,18 @@ if [ $PROGRESS -lt 4 ]; then
 	cd "$KERNEL_SOURCE_DIR/tools/power/x86/x86_energy_perf_policy" || exit 1
 	make
 	sudo make install
+}
 
-	echo 4 > $PROGFILE
-fi
-
-if [ $PROGRESS -lt 5 ]; then
+patch_kernel() {
 	## Patch kernel
 	cd "$KERNEL_SOURCE_DIR"
-	for p in $( ls $ROOTDIR/patches/kernel/ ); do
+	for p in $(ls $ROOTDIR/patches/kernel/); do
 		echo "patch -p1 < $ROOTDIR/patches/kernel/$p"
 		patch -p1 < "$ROOTDIR/patches/kernel/$p"
 	done
+}
 
-	echo 5 > $PROGFILE
-fi
-
-if [ $PROGRESS -lt 6 ]; then
-	## Build
+config_kernel() {
 	cd "$KERNEL_SOURCE_DIR"
 	mkdir ./build/
 	cd ./build/ || exit 1
@@ -115,6 +100,10 @@ if [ $PROGRESS -lt 6 ]; then
 	cp $CURDIR/kernel_config .config
 	yes '' | make oldconfig
 	# make -j 40
+}
 
-	echo 6 > $PROGFILE
-fi
+build_repo() {
+	cd $ROOTDIR
+	make
+}
+

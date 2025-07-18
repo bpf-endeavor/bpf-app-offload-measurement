@@ -1,7 +1,8 @@
 
-CURDIR = ${shell pwd}
 DEPS_DIR = ${CURDIR}/deps/
 $(info ${DEPS_DIR})
+
+.PHONY: make_project benchmarks build_libbpf prepare_env
 
 make_project: build_libbpf benchmarks
 
@@ -21,3 +22,6 @@ build_libbpf: ./libbpf/
 	INCDIR=${DEPS_DIR}/usr/include/c-hashmap/; \
 	if [ ! -d $$INCDIR ]; then mkdir -p $$INCDIR; fi ; \
 	cp ${CURDIR}/c-hashmap/map.h $$INCDIR
+
+prepare_env:
+	bash $(CURDIR)/scripts/install_script/install_deps.sh
