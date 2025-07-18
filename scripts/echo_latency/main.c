@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define SERVER_IP "192.168.200.101"
+#define SERVER_IP "192.168.1.1"
+#define CLIENT_IP "192.168.1.2"
 #define CLIENT_PORT 3000
 #define SERVER_PORT 8080
 #define PAYLOAD "hello world\r\n"
@@ -112,7 +113,7 @@ int main(int argc, char **argv)
 	}
 
 	addr.sin_family = AF_INET;
-	inet_pton(AF_INET, "192.168.200.102", &addr.sin_addr);
+	inet_pton(AF_INET, CLIENT_IP, &addr.sin_addr);
 	addr.sin_port = htons(CLIENT_PORT);
 	addrlen = sizeof(addr);
 	ret = bind(s, (struct sockaddr *)&addr, addrlen);

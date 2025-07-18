@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* If a value should be shared across multiple message of a socket place it in
  * this struct */
@@ -175,6 +176,10 @@ void report_samples(void)
 	}
 }
 
+static int connect_to_client = 0;
+static char *client_ip = NULL;
+static short client_port = 3000;
+
 /* Handle a socket message
  * Return value:
  *     0: Keep connection open for more data.
@@ -318,22 +323,25 @@ void register_socket(int fd)
 	int zero = 0;
 	char cmd;
 
-	/* Connect the socket to a target so that I can use bpf_sk_map_redirect
-	 * More description:
-	 * For UDP sockets, we can not use bpf_sk_map_redirect in the
-	 * stream_verdict eBPF program unless the socket is connected.
-	 * */
-	INFO("NOTE: bpf_sk_map_redirect will not work (change code to connect server socket if you need it)\n");
-	// struct sockaddr_in addr;
-	// addr.sin_family = AF_INET;
-	// addr.sin_port = htons(3000);
-	// inet_pton(AF_INET, "192.168.200.102", &addr.sin_addr);
-	// socklen_t addrlen = sizeof(addr);
-	// ret = connect(fd, (struct sockaddr *)&addr, addrlen);
-	// if (ret != 0) {
-	// 	ERROR("Failed to connect the socket");
-	// 	exit(EXIT_FAILURE);
-	// }
+	if (!connect_to_client) {
+		INFO("NOTE: bpf_sk_map_redirect will not work (change code to connect server socket if you need it)\n");
+	} else {
+		/* Connect the socket to a target so that I can use bpf_sk_map_redirect
+		 * More description:
+		 * For UDP sockets, we can not use bpf_sk_map_redirect in the
+		 * stream_verdict eBPF program unless the socket is connected.
+		 * */
+		struct sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(client_port);
+		inet_pton(AF_INET, client_ip, &addr.sin_addr);
+		socklen_t addrlen = sizeof(addr);
+		ret = connect(fd, (struct sockaddr *)&addr, addrlen);
+		if (ret != 0) {
+			ERROR("Failed to connect the socket");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	if (first != 0) {
 		ERROR("Multiple sockets, this code expects only one socket update it\n");
@@ -435,6 +443,7 @@ static void enable_hwts_on_iface(int sock) {
 
 static int hw_timestamp = 0;
 static int sock_map_register = 0;
+
 static int udp = 1;
 void on_socket_ready(int fd) {
 	if (hw_timestamp) {
@@ -471,6 +480,18 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	} else {
 		INFO("Running server in UDP mode.\n");
+	}
+
+
+	for (int i=5; i < argc; i++) {
+		if (strcmp("--connect-client", argv[i]) == 0) {
+			connect_to_client = 1;
+			client_ip = strdup(argv[i + 1]);
+			i++;
+		} else if (strcmp("--connect-client-port", argv[i]) == 0) {
+			client_port = atoi(argv[i + 1]);
+			i++;
+		}
 	}
 
 	app.core_listener = 0;
