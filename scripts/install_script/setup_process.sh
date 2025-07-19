@@ -29,5 +29,6 @@ PROCESS=(
 	patch_kernel
 	config_kernel
 	build_repo
+	bring_bmc
 )
 

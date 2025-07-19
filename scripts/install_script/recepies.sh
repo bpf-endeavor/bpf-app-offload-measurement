@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Make sure we already have set these
+if [ -z "$CURDIR" ] || [ -z "$ROOTDIR" ] || [ -z "$THIRD" ] || [ -z "$KERNEL_SOURCE_DIR" ]; then
+	echo Some variables are not defined!
+	exit 1
+fi
+
 install_pkgs() {
 	## INSTALL PACKAGES
 	# Disclaimer: these are a set of packages that I use across my projects. Not
@@ -14,7 +20,7 @@ install_pkgs() {
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
 		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
 		libzstd-dev libunwind-dev libreadline-dev numactl neovim \
-		iperf "linux-tools-$(uname -r)" )
+		iperf libevent-dev "linux-tools-$(uname -r)" )
 
 	sudo apt update
 	sudo apt install -y "${PACKAGES[@]}"
@@ -108,3 +114,47 @@ build_repo() {
 	make
 }
 
+bring_bmc() {
+	# Print instructions 
+	set -x
+
+	PATCH_DIR=$(realpath $ROOTDIR/patches/bmc)
+	# This must be at $HOME, because the patches update the makefile to read
+	# from here. Let's not update the patches :)
+	OLD_LIBBPF=$HOME/old_libbpf 
+	BMC_DIR=$THIRD/bmc
+	MEMCD_DIR=$THIRD/memcached
+
+	# Memcached
+	# sudo apt install -y libevent-dev
+	git clone https://github.com/memcached/memcached $MEMCD_DIR
+	cd $MEMCD_DIR || exit 1
+	git checkout 1.6.31
+	./autogen.sh
+	./configure
+	make -j
+
+	# OLD libbpf
+	git clone https://github.com/libbpf/libbpf.git $OLD_LIBBPF
+	cd $OLD_LIBBPF/src || exit 1
+	git checkout "v0.5.0"
+	make
+	make DESTDIR=build install
+
+	# BMC + patches
+	git clone https://github.com/Orange-OpenSource/bmc-cache/ $BMC_DIR
+	cd $BMC_DIR/bmc/
+	for branch_name in $(ls $PATCH_DIR); do
+		git checkout -b $branch_name
+		git am $PATCH_DIR/$branch_name/*.patch
+		make
+		# store different versions of BMC binary
+		BIN_DIR=$THIRD/bmc_bins/$branch_name
+		mkdir -p $BIN_DIR/
+		cp ./bmc ./bmc_kern.o $BIN_DIR/
+		make clean
+		git checkout main
+	done
+
+	set +x
+}
