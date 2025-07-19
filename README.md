@@ -7,9 +7,9 @@ This repositry hosts:
   kernel.
 
 - This repository is also the artifacts from paper ["Demystifying Performance of
-  eBPF Network Applications"](./docs/paper.pdf) presented at
+  eBPF Network Applications"](/docs/paper.pdf) presented at
   [CoNEXT'25](https://conferences.sigcomm.org/co-next/2025/#!/home). Look at
-  [ARTIFACT.md](./ARTIFACT.md) for reproducing different figures and tables
+  [ARTIFACT.md](/docs/ARTIFACT.md) for reproducing different figures and tables
   from the paper.
 
 ## List of Benchmarks
