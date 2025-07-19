@@ -20,7 +20,7 @@ install_pkgs() {
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
 		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
 		libzstd-dev libunwind-dev libreadline-dev numactl neovim \
-		iperf libevent-dev "linux-tools-$(uname -r)" )
+		iperf libevent-dev autotools-dev automake "linux-tools-$(uname -r)" )
 
 	sudo apt update
 	sudo apt install -y "${PACKAGES[@]}"
@@ -125,6 +125,18 @@ bring_bmc() {
 	BMC_DIR=$THIRD/bmc
 	MEMCD_DIR=$THIRD/memcached
 
+	if [ -d "$MEMCD_DIR" ]; then
+		rm -rf "$MEMCD_DIR"
+	fi
+
+	if [ -d "$BMC_DIR" ]; then
+		rm -rf "$BMC_DIR"
+	fi
+
+	if [ -d "$OLD_LIBBPF" ]; then
+		rm -rf "$OLD_LIBBPF"
+	fi
+
 	# Memcached
 	# sudo apt install -y libevent-dev
 	git clone https://github.com/memcached/memcached $MEMCD_DIR
@@ -141,6 +153,9 @@ bring_bmc() {
 	make
 	make DESTDIR=build install
 
+	# NOTE: My patched BMC Makefile is using an old script to compile. Let's
+	# not update things and try to hack around it.
+	export KASHK_DIR=$ROOTDIR/scripts/
 	# BMC + patches
 	git clone https://github.com/Orange-OpenSource/bmc-cache/ $BMC_DIR
 	cd $BMC_DIR/bmc/
