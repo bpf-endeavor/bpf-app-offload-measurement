@@ -1,4 +1,4 @@
-figsize: [2.5,1.5]
+figsize: [2.5,2.0]
 subplots:
   - x: ['baseline', "with BMC" ]
     y: [ [126.5, 0], [0, 318.3] ]

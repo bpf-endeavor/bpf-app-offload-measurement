@@ -1,4 +1,4 @@
-figsize: [3.375, 1.50]
+figsize: [3.375, 2.00]
 subplots:
   - lines:
     - label: "baseline"

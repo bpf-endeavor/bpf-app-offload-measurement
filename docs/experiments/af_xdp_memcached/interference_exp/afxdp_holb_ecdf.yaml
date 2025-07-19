@@ -1,4 +1,4 @@
-figsize: [3.0, 1.5]
+figsize: [3.0, 2.0]
 subplots:
   - lines:
     - label: "no offload"
@@ -32,7 +32,7 @@ subplots:
         fontsize: 9
         arrowprops:
           arrowstyle: "->"
-          connectionstyle: "angle,angleA=130,angleB=45,rad=1"
+          connectionstyle: "angle,angleA=110,angleB=45,rad=3"
 # tight_layout:
 #   rect: [0, 0, 1, 0.90]
 # rc:

@@ -1,4 +1,4 @@
-figsize: [2.5,1.5]
+figsize: [2.5,2.0]
 subplots:
   - x : [ 'AF_XDP', "AF_XDP +\nOffload" ]
     y : [ [297, 0], [ 0, 333.2], ]
