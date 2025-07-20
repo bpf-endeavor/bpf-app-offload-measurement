@@ -2,12 +2,13 @@
 
 This document describes the steps to repodruce the results from the paper
 ["Demystifying Performance of eBPF Network Applications"](./paper.pdf).
+The experiments are discussed in the order of appearance in the paper.
 
 *Please be kind with the codes, commands, and machines you're using. It has
 taken us a lot of time and many surprises to do these test. It will require
 time and understanding to repeat them. :)*
 
-Contact [farbod.shahinfar [at] polimi.it](mailto:farbod.shahinfar@polimi.it)
+Contact [farbod.shahinfar [at] polimi.it](mailto:farbod.shahinfar@polimi.it?subject=[CoNEXT'25] Demystifying Performance of eBPF Network Applications)
 regarding your questions.
 
 
@@ -30,16 +31,14 @@ Get two c6525-100g servers from Cloudlab Utah cluster with Ubuntu-22 image.
 
 ## Setup
 
-Clone the repository and run `make prepare_env`
-
-> Make sure there are no errors!
-
-For preparing the load generator machine look at the [this instructions](/docs/LOAD_GENERATOR.md)
+Clone the repository and run `make prepare_env`.
+**Make sure there are no errors!**
+For preparing the load generator machine look at [this instructions](/docs/LOAD_GENERATOR.md).
 
 
 ### Enable Measuring Overhead of Hooks and Time to Reach to Different Hooks
 
-> This instructions are only needed for reproducing Table 1
+*This instructions are only for reproducing Table 1 which require instrumenting kernel*
 
 Go to `/others/linux-6.8.7/`. This directory holds the patched kernel.
 We need to enable the measurements we want to do and compile and reinstall the
@@ -77,7 +76,7 @@ sudo make install
 # sudo reboot # <-- reboot the system and boot with the new kernel
 ```
 
-> Make sure you are using the new kernel with this command `uname -r`. The value must be `6.8.7art`.
+**Make sure you are using the new kernel with this command `uname -r`. The value must be `6.8.7art`.**
 
 
 ### OS Level Configurations
@@ -103,12 +102,6 @@ sudo ip link set dev $NET_IFACE mtu 1500
 
 
 ## Table 1:
-
-### Description
-
-> to be written
-
-> paper results are at: /docs/experiments/time\_to\_hook
 
 ### Experiment
 
@@ -198,10 +191,6 @@ sudo dmesg -w
 
 ## Figure 3
 
-### Description
-
-> to be written ...
-
 ### Experiment
 
 This experiment meausre the latency of echoing back packets at different hooks.
@@ -277,10 +266,6 @@ usage: prog <core> <ip> <port> <mode>
 
 ## Figure 4
 
-### Description
-
-> to be written ...
-
 ### Experiment
 
 **Baseline Memcached**
@@ -353,7 +338,7 @@ For ingesting the raw latency data look at script provided here
 * Files `all_lat_baseline.txt` and `all_lat_bmc.txt` are for figure 4.
 * Files `m2_lat_baseline.txt` and `m2_lat_bmc.txt` are for figure 5.
 
-### Figure 7, 8 & 9
+## Figure 7, 8 & 9
 
 These experiments are similar to the past two sections. Use the scripts in
 `/xsk_cache/scripts/` to run the server (these use the AF\_XDP socket (XSK)).
@@ -365,3 +350,66 @@ These experiments are similar to the past two sections. Use the scripts in
 On the load-generator machine, use the previously discussed (Look above and at
 description for Figure 4 and Figure 5 & 6) scripts for measuring throughput and
 latency of foreground and background flows.
+
+## Table 2
+
+### Description
+
+This experiment investigates the overhead of different eBPF hooks on the path
+of a packet going to user-space.
+
+### Experiment
+
+The script located at `/scripts/iperf_tput_exp.sh` runs this experiment. Copy
+it to the load-generator machine.  Make sure you can ssh into the DUT machine
+from load-generator machine.  In the script, set the `USER` to the username
+used for ssh connection.  Set the `SERVER` to the IP address of DUT/server
+machine's control NIC/interface, and `SERVER_EXP` to IP address of its
+experiment NIC. `BENCHMARK_INSTALL_DIR` must be set to path at which you have
+cloned this repository. Also set `SERVER_IFACE_NAME` to the name of the
+server's experiment interface.
+
+After configuring the script to access your DUT machine, run it. It will run
+the `iperf` server on DUT, load and attach eBPF program to different hooks and
+generate load. The results of measurment are stored in the path indicated by
+`OUTPUT_DIR`.
+
+
+## Figure 10
+
+### Description
+
+This figure explores effect of packet size on the throuhgput for the packets
+going to the userspace. The intuation is that small packets have lower memory
+footprint and less memory copy overhead. The question is will reducing packet
+size in the kernel increase the throughput for user-space applications?
+
+### Experiment
+
+Run a user-space program that just drops requests and reports throughput.
+
+```
+sudo ./build/server_drop 10 192.168.1.1 8080 0
+```
+
+We use the `bpf_summarize_3` benchmark for this experiment which reduces the
+payload size of UDP packets for port 8080 to the value set by control-plane.
+Load and attach the program to XDP with following command.
+
+```
+sudo ./build/loader -b ./build/bpf/bpf_summarize_3.o -i $NET_IFACE --xdp xdp_prog
+```
+
+Set the target size (size of new payload) using the following command.  `I` is
+the path to the script that converts integers in to hex formated string.
+`SIZE` is a variable holding the target size we want to config.  We use
+`bpftool` to update the config MAP (named `size_map`) with the new value.
+
+```
+export I=../scripts/int2hex.py; sudo bpftool
+export SIZE=[new size]
+map update name size_map key $(echo 0 | $I) value $(echo $SIZE | $I); sudo bpftool map dump name size_map
+```
+
+Generate traffic of UDP packets with size 1458 toward the system. The
+user-space program (`server_drop`) reports the throughput.

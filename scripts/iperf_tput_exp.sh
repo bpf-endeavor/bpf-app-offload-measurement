@@ -7,7 +7,7 @@ SERVER=neat-01
 # experiment ip of the server
 SERVER_EXP=192.168.200.101
 # Where on server we have installed the benchamrk
-BENCHMARK_INSTALL_DIR=/home/farbod/auto_kern_offload_bench
+BENCHMARK_INSTALL_DIR=/home/farbod/bpf-app-offload-measurement
 OUTPUT_DIR=$HOME/empty_ebpf_overhead/
 OUTPUT_FILE=$OUTPUT_DIR/iperf_result.txt
 SERVER_IFACE_NAME=enp202s0f0np0
