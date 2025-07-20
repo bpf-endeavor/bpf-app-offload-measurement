@@ -1,3 +1,0 @@
-# TO BE WRITTEN ...
-In this file you will have the details of how the experiement was conducted.
-Unfortunately at the moment it has not been written. Hopefully it will soon.

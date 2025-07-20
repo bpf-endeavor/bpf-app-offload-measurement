@@ -36,6 +36,57 @@ This repositry hosts:
 * Measure benefit of reducing the size of packet when passing it from kernel to user program
 * Demonstrate performance interference among flows belonging accelerated by eBPF and those not
 
+
+## Structure
+
+```
+.
+├── c-hashmap/   <-- A library (not used)
+├── deps/   <-- a local version of libbpf will be compiled and installed here
+├── docs/   <-- documents on how to reproduce results, ...
+│   ├── ARTIFACT.md  <-- Step-by-step guide for artifact evaluation
+│   ├── experiments/ <-- Data and scripts for plotting figures
+│   ├── images/   <-- Images used in documentation files
+│   ├── latency_script.py   <-- Script for calculating distribution of numbers
+│   ├── LOAD_GENERATOR.md   <-- How to setup load-generator machine
+│   ├── paper.pdf           <-- Demystifying Performance of eBPF Network Applications
+├── libbpf   <-- local libbpf (submodule)
+├── Makefile
+├── patches
+│   ├── af_xdp_access_time/
+│   ├── bmc/
+│   ├── kernel/
+│   └── memcached_seastar/
+├── README.md
+├── scripts/ <-- Many different scripts of setting up system and experimenting
+├── src/  <-- source code of benchmarks
+│   ├── bpf/  <-- source code of eBPF programs
+│   ├── include
+│   ├── Makefile
+│   ├── measure_comm_channel.sh
+│   └── userspace/  <-- source code of user-space program
+│       ├── loader/    <-- the loader program we usually use
+│       └── server/    <-- some other user-space program
+└── xsk_cache/   <-- The AF_XDP program used as kernel bypass case-study
+```
+
 ## Cite Paper
 
-> the paper is still under publication ...
+**BibTex**
+
+```
+@inproceedings{demystify_perf_ebpf_net_app,
+title={Demystifying Performance of eBPF Network Applications},
+author={Farbod Shahinfar and Sebastiano Miano and Aurojit Panda and Gianni Antichi},
+year={2025},
+booktitle={International Conference on Emerging Networking Experiments and Technologies (CoNEXT)},
+publisher={ACM}
+}
+```
+
+**Text**
+
+```
+Farbod Shahinfar, Sebastiano Miano, Aurojit Panda, and Gianni Antichi. 2025. Demystifying Performance of eBPF Network Applications. In International Conference on Emerging Networking Experiments and Technologies (CoNEXT). ACM.
+```
+

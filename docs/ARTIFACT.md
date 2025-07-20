@@ -1,6 +1,14 @@
 # Complete Guide To Reproducing Everything
 
-> Please be kind with the codes, commands, and machines you're using. It has taken us a lot of time and many surprises to do these test. It will require time and understanding to repeat them. :)
+This document describes the steps to repodruce the results from the paper
+["Demystifying Performance of eBPF Network Applications"](./paper.pdf).
+
+*Please be kind with the codes, commands, and machines you're using. It has
+taken us a lot of time and many surprises to do these test. It will require
+time and understanding to repeat them. :)*
+
+Contact [farbod.shahinfar [at] polimi.it](mailto:farbod.shahinfar@polimi.it)
+regarding your questions.
 
 
 ## Hardware
@@ -27,6 +35,7 @@ Clone the repository and run `make prepare_env`
 > Make sure there are no errors!
 
 For preparing the load generator machine look at the [this instructions](/docs/LOAD_GENERATOR.md)
+
 
 ### Enable Measuring Overhead of Hooks and Time to Reach to Different Hooks
 
@@ -71,6 +80,17 @@ sudo make install
 > Make sure you are using the new kernel with this command `uname -r`. The value must be `6.8.7art`.
 
 
+### OS Level Configurations
+
+We have provided a script (`/script/setup_exp.sh`) which configures the system.
+This script disables *hyperthreading*, *turbo-boost*, and irq balancer; set the
+CPU governor to *performance*, and adds some flow-steering rules among other
+configurations. Run the script and keep it open during experiments, hitting
+Ctrl-C will exit the script and set the system configuration back to normal.
+
+> Make sure the UDP & TCP traffic are redirected to single queue using `ethtool -u $NET_IFACE`. There must be two rules for this.
+
+
 ### Frequent Issues
 
 1. **Can not attach XDP program to the interface**
@@ -92,11 +112,6 @@ sudo ip link set dev $NET_IFACE mtu 1500
 
 ### Experiment
 
-Run `script/setup_exp.sh` to configure the system. Hitting Ctrl-C will bring
-back the system configuration back to normal.
-
-> Make sure the UDP & TCP traffic are redirected to single queue using `ethtool -u $NET_IFACE`. There must be two rules for this.
-
 **Overhead of Each Hook (Preparing Context, Entring, and Exiting The Hook**
 
 Run an iperf server on port **8080**.
@@ -108,23 +123,23 @@ iperf -s -p 8080
 Go to `src/` directory and load a minimal eBPF program and attach it to a hook.
 Test each hook separately.
 
-- for SK\_SKB:
+  - for SK\_SKB:
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --skskb verdict
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --skskb verdict
+  ```
 
-- for TC:
+  - for TC:
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --tc tc_prog
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --tc tc_prog
+  ```
 
-- for XDP:
+  - for XDP:
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --xdp xdp_prog
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --xdp xdp_prog
+  ```
 
 Run iperf client and generate traffic toward the server. The overhead of each hook is logged in `dmesg`.
 
@@ -140,7 +155,7 @@ sudo dmesg -w
 
 > You can gather the values and use the `./docs/latency_script.py` to calculate the distribution of values and report "median +- interquantile range"
 
-![./assets/time_to_reach_hook.png](./docs/images/overhead_of_hook.png)
+![Logs showing overhead of SK\_SKB hook](./images/overhead_of_hook.png)
 
 **Time to reach to a hook**
 
@@ -153,17 +168,17 @@ iperf -s -u -p 3030
 Attach a minimal program to TC, or SK\_SKB.
 Test each hook separately.
 
-- for SK\_SKB:
+  - for SK\_SKB:
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --skskb verdict
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --skskb verdict
+  ```
 
-- for TC:
+  - for TC:
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --tc tc_prog
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_pass_perf.o --tc tc_prog
+  ```
 
 Run iperf client and generate traffic toward the server. The time to reach each
 hook is logged in `dmesg`.
@@ -178,7 +193,7 @@ Seeing the log:
 sudo dmesg -w
 ```
 
-![...](./docs/images/time_to_reach_hook.png)
+![Logs showing time to reach TC hook](./images/time_to_reach_hook.png)
 
 
 ## Figure 3
@@ -217,15 +232,15 @@ usage: prog <core> <ip> <port> <mode>
 
   - Load \& attach XDP program
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --skskb verdict
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --skskb verdict
+  ```
 
   - Run `server_hook_timestamp` program! (Our SK\_SKB programs can automatically attach to TCP socket but UDP sockets should explicitly inserted! That's the reason why we use different program instead of `server_bounce`.)
 
-```
-sudo ./build/server_hook_timestamp 10 192.168.1.1 8080 0 --connect-client 192.168.1.2 --connect-client-port 3000
-```
+  ```
+  sudo ./build/server_hook_timestamp 10 192.168.1.1 8080 0 --connect-client 192.168.1.2 --connect-client-port 3000
+  ```
 
   - Run the clinet
 
@@ -233,19 +248,19 @@ sudo ./build/server_hook_timestamp 10 192.168.1.1 8080 0 --connect-client 192.16
 
   - Find the interface index of your experiment NIC using
 
-```
-ip -json addr show $NET_IFACE
-```
+  ```
+  ip -json addr show $NET_IFACE
+  ```
 
   - Update the `./src/bpf/bpf_redirect.bpf.c (line: 191)` file with the index you found and compile (run `make`).
 
-![...](./docs/images/tc_redirect_iface_index.png)
+![Location where the interface index should be hard coded along with some comments on how to get the index.](./images/tc_redirect_iface_index.png)
 
   - Attach the eBPF program
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --tc tc_prog
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --tc tc_prog
+  ```
 
   - Run the clinet
 
@@ -253,9 +268,9 @@ sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --tc tc_prog
 
   - Load \& attach XDP program
 
-```
-sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --xdp xdp_prog
-```
+  ```
+  sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --xdp xdp_prog
+  ```
 
   - Run the clinet
 
@@ -283,7 +298,7 @@ copy the script in to the mutilate root directory on your load-generator
 machine. Then update the server IP addresses and run it.
 The script runs the throughput measurement 40 times.
 
-![...](./docs/images/mutilate_tput_exp.png)
+![Mutilate reporting the throughput of Memcached](./images/mutilate_tput_exp.png)
 
 **BMC: Fast Path for Memached**
 
@@ -295,3 +310,58 @@ SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE NET_IFACE_INDEX=<iface index> ./run_s
 
 * Run Mutilate. Use the same script as above (`run_mutilate.sh`).
 
+
+## Figure 5 & Figure 6
+
+Similar to previous experiment, use `run_server_v2.sh` to launch Memcached and
+measure its latency under the workload specified in the paper (the script has
+the workload parameters already set). Then run the Memcached with BMC
+acceleration and repeat the experiments. The provided script will gather raw
+latency measurements for each case, store the files in separate paths and use
+the ingestion script provided to get the "baseline" and "with BMC" lines from
+figures 5 and 6 in the paper.
+
+* Running the Memcached (baseline)
+
+  ```
+  SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE ./run_server_v2.sh
+  ```
+
+* Running Memcached with BMC
+
+  ```
+  SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE NET_IFACE_INDEX=<iface index> ./run_server_v2.sh bmc
+  ```
+
+After running the server, on the load-generator machine use script
+`/scripts/holb_memcached_exp/tre_run.sh` to generate traffic. For this purpose
+copy the script to the install directory of Mutilate (Must be `~/gen/multilate`
+if you followed instruction in [load-generator setup](./LOAD_GENERATOR.md)).
+You must set the value for `SERVER_HOST` defined at the top of the
+script to IP address of your Memcached server.
+The results will be written to a folder pointed to by `OUTPUT_DIR` variable.
+Set the path according to your system.
+
+In the output directory, files with `m1_lat_samples_*.txt` are the latency
+results of background flow (served in the fast-path by BMC if available) and
+`m2_lat_samples_*.txt` are the latency results of foreground flow (always going
+to the user-space).
+
+For ingesting the raw latency data look at script provided here
+`/docs/experiments/bpf_holb/cur/command.sh` it will generate four files:
+
+* Files `all_lat_baseline.txt` and `all_lat_bmc.txt` are for figure 4.
+* Files `m2_lat_baseline.txt` and `m2_lat_bmc.txt` are for figure 5.
+
+### Figure 7, 8 & 9
+
+These experiments are similar to the past two sections. Use the scripts in
+`/xsk_cache/scripts/` to run the server (these use the AF\_XDP socket (XSK)).
+
+* `run_normal.sh`: runs the user-space program without partial offload (baseline)
+* `run_bmc.sh`: runs the user-space program with partial offload
+
+
+On the load-generator machine, use the previously discussed (Look above and at
+description for Figure 4 and Figure 5 & 6) scripts for measuring throughput and
+latency of foreground and background flows.

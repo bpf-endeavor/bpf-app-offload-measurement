@@ -2,8 +2,8 @@
 
 # Some notes
 echo "1- pass \`bmc' as the first argument to also configure BMC"
-echo "2- Make sure to remove steering rule"
-echo "3- The interface index (ifindex), server ip, ... is hard-coded. Update it for your env"
+echo "2- The interface index (ifindex), server ip, ... is hard-coded. Update it for your env"
+# echo "2- Make sure to remove steering rule"
 
 trap 'quit=1' SIGINT
 quit=0
