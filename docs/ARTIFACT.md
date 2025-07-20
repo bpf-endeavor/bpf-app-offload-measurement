@@ -8,7 +8,8 @@ The experiments are discussed in the order of appearance in the paper.
 taken us a lot of time and many surprises to do these test. It will require
 time and understanding to repeat them. :)*
 
-Contact [farbod.shahinfar [at] polimi.it](mailto:farbod.shahinfar@polimi.it?subject=[CoNEXT'25] Demystifying Performance of eBPF Network Applications)
+Contact
+<a href="mailto:farbod.shahinfar@polimi.it?subject=[CoNEXT'25] Demystifying Performance of eBPF Network Applications">farbod.shahinfar [at] polimi.it</a>
 regarding your questions.
 
 
@@ -215,7 +216,7 @@ usage: prog <core> <ip> <port> <mode>
 
 * For Socket:
 
-  - Run `server_bounce` and run the provided clinet. Terminate the clinet after some time, it will write the measured latencies in a filed named `samples.txt` at the current directory. The values are in *nanoseconds*.
+  - Run `server_bounce` and run the provided client. Terminate the client after some time, it will write the measured latencies in a filed named `samples.txt` at the current directory. The values are in *nanoseconds*.
 
 * For SK\_SKB:
 
@@ -231,7 +232,7 @@ usage: prog <core> <ip> <port> <mode>
   sudo ./build/server_hook_timestamp 10 192.168.1.1 8080 0 --connect-client 192.168.1.2 --connect-client-port 3000
   ```
 
-  - Run the clinet
+  - Run the client
 
 * For TC:
 
@@ -251,7 +252,7 @@ usage: prog <core> <ip> <port> <mode>
   sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --tc tc_prog
   ```
 
-  - Run the clinet
+  - Run the client
 
 * For XDP:
 
@@ -261,7 +262,7 @@ usage: prog <core> <ip> <port> <mode>
   sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --xdp xdp_prog
   ```
 
-  - Run the clinet
+  - Run the client
 
 
 ## Figure 4
@@ -279,7 +280,7 @@ SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE ./run_server_v2.sh
 
 * Run the Mutilate client. For measuring the maximum throughput sustained by
 the system use script at `scripts/bmc_tail_call_overhead_exp/run_mutilate.sh`.
-copy the script in to the mutilate root directory on your load-generator
+Copy the script in to the mutilate root directory on your load-generator
 machine. Then update the server IP addresses and run it.
 The script runs the throughput measurement 40 times.
 
@@ -371,7 +372,7 @@ server's experiment interface.
 
 After configuring the script to access your DUT machine, run it. It will run
 the `iperf` server on DUT, load and attach eBPF program to different hooks and
-generate load. The results of measurment are stored in the path indicated by
+generate load. The results of measurement are stored in the path indicated by
 `OUTPUT_DIR`.
 
 
@@ -379,8 +380,8 @@ generate load. The results of measurment are stored in the path indicated by
 
 ### Description
 
-This figure explores effect of packet size on the throuhgput for the packets
-going to the userspace. The intuation is that small packets have lower memory
+This figure explores effect of packet size on the throughput for the packets
+going to the user-space. The intuition is that small packets have lower memory
 footprint and less memory copy overhead. The question is will reducing packet
 size in the kernel increase the throughput for user-space applications?
 
@@ -401,9 +402,9 @@ sudo ./build/loader -b ./build/bpf/bpf_summarize_3.o -i $NET_IFACE --xdp xdp_pro
 ```
 
 Set the target size (size of new payload) using the following command.  `I` is
-the path to the script that converts integers in to hex formated string.
-`SIZE` is a variable holding the target size we want to config.  We use
-`bpftool` to update the config MAP (named `size_map`) with the new value.
+the path to the script that converts integers in to hex formatted string.
+`SIZE` is a variable with the value for the target size we want to configure.
+We use `bpftool` for configuring MAP (named `size_map`) with the new value.
 
 ```
 export I=../scripts/int2hex.py; sudo bpftool
@@ -413,3 +414,32 @@ map update name size_map key $(echo 0 | $I) value $(echo $SIZE | $I); sudo bpfto
 
 Generate traffic of UDP packets with size 1458 toward the system. The
 user-space program (`server_drop`) reports the throughput.
+
+
+## Table 3
+
+### Description
+
+This table reports time to access different collections.
+
+### Experiment
+
+The `bpf_map_lookup_access_time` benchmark is used for this experiment.
+At the top of its source code, there are different flags controlling the type
+of collections (MAPs) used in the experiment. Set them accordingly for the test
+you want to do and recompile.
+
+![Different flags in the top of the eBPF source code that controls the behavior of the experiment](./images/map_access_time_exp_config.png)
+
+Run the benchmark with the following command:
+
+```
+sudo ./build/local_runner -b ./build/bpf/bpf_map_lookup_access_time.o -C 1
+```
+
+The output will be similar to figure below. Device the value shown as
+`benchmark res` to 100000 (value of `REPEAT` defined in the source file)
+to get the average access time.
+
+![...](./images/map_lookup_access_time.png)
+

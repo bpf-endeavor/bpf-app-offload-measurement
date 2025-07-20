@@ -12,6 +12,10 @@ OUTPUT_DIR_BPF_LL = ./build/bpf/ll
 # Loader:
 LOADER_FILES = $(wildcard ./userspace/loader/*.c) $(wildcard ./userspace/*.c)
 
+# Local runner
+LOCAL_RUNNER_FILES = $(wildcard ./userspace/runner/*.c)
+LOCAL_RUNNER_HEADERS = $(wildcard ./userspace/runner/*.h)
+
 # Userspace Server
 SERVER_FILES = $(wildcard ./userspace/server/*.c)
 SERVER_SHARED_C_FILES = $(wildcard ./userspace/*.c) ../c-hashmap/map.c
@@ -54,7 +58,8 @@ KERN_OBJECTS := bpf_inst.o \
 	bpf_demux.o \
 	bpf_skskb_redir.o \
 	bpf_jit_vs_native_fib.o \
-	bpf_map_access_throughput.o
+	bpf_map_access_throughput.o \
+	bpf_map_lookup_access_time.o
 
 # bpf_jit_vs_native_prime.o 
 
@@ -64,7 +69,10 @@ KERN_DIR = ./bpf/
 KERN_HEADERS = $(wildcard ./include/bpf/*.h) $(wildcard ./include/*.h)
 
 # All the binary object that should be created
-OUTPUTS = ${SERVER_BINS} ${OUTPUT_DIR}/loader ${_KERN_OBJECTS}
+OUTPUTS = ${SERVER_BINS}
+OUTPUTS += ${OUTPUT_DIR}/loader
+OUTPUTS += ${OUTPUT_DIR}/local_runner
+OUTPUTS += ${_KERN_OBJECTS}
 
 VMLINUX = ./include/vmlinux.h
 
@@ -90,6 +98,9 @@ ${SERVER_BINS}: ${SERVER_FILES} ${SERVER_SHARED_C_FILES} ${USERSPACE_HEADERS}
 ${OUTPUT_DIR}/loader: ${LOADER_FILES} ${USERSPACE_HEADERS}
 	$(CC) ${LOADER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz
 
+${OUTPUT_DIR}/local_runner: ${LOCAL_RUNNER_FILES} ${LOCAL_RUNNER_HEADERS}
+	$(CC) ${LOCAL_RUNNER_FILES} ${CFLAGS} ${INCLUDES} -o $@ -L ../deps -lbpf -lelf -lz -lrt
+
 $(_KERN_OBJECTS): $(OUTPUT_DIR_BPF)%.o:$(KERN_DIR)%.c $(KERN_HEADERS)
 	LL_FILE=${OUTPUT_DIR_BPF_LL}/$(notdir $@); \
 	$(CC) ${INCLUDES} \
@@ -109,3 +120,4 @@ $(VMLINUX): $(KFUNC_MEMCPY_TARGET)
 	# Remove the old vmlinux.h
 	if [ -f $@ ]; then rm $@; fi
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@
+
