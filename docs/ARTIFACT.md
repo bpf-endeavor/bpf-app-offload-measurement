@@ -27,13 +27,12 @@ eBPF programs and targeted version 3 of the eBPF ISA (`-mcpu=v3`).
 **The experiments in the paper were not performed on Cloudlab machines. But we
 tested them on following Cloudlab machines for the sake of reproducibility.**
 
-Get two c6525-100g servers from Cloudlab Utah cluster with Ubuntu-22 image.
-
+Get two sm110p servers from Cloudlab Wisconsin cluster with Ubuntu-22 image.
 
 ## Setup
 
-For preparing the load generator machine look at [this instructions](./LOAD_GENERATOR.md).
-For preparing the DUT  machine look at [this instructions](./DUT.md).
+* For preparing the load-generator machine look at [LOAD_GENERATOR.md](./LOAD_GENERATOR.md).
+* For preparing the DUT  machine look at [DUT.md](./DUT.md).
 
 
 ## Table 1:
@@ -273,6 +272,7 @@ For ingesting the raw latency data look at script provided here
 * Files `all_lat_baseline.txt` and `all_lat_bmc.txt` are for figure 4.
 * Files `m2_lat_baseline.txt` and `m2_lat_bmc.txt` are for figure 5.
 
+
 ## Figure 7, 8 & 9
 
 These experiments are similar to the past two sections. Use the scripts in
@@ -285,6 +285,7 @@ These experiments are similar to the past two sections. Use the scripts in
 On the load-generator machine, use the previously discussed (Look above and at
 description for Figure 4 and Figure 5 & 6) scripts for measuring throughput and
 latency of foreground and background flows.
+
 
 ## Table 2
 
@@ -422,8 +423,13 @@ Pass the core-number that is handling *softirq* and running XDP programs.
 sudo measure_cache_miss.sh $CPU_NUM
 ```
 
+
 ## Table 4
 
 ### Description
 
-...
+This experiment measure the access latency to different eBPF maps from user-space.
+
+### Experiment
+
+The `server_comm_map` user-space program is used along with `bpf_comm_map`

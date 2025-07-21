@@ -100,6 +100,7 @@ sudo ip link set dev $NET_IFACE mtu 1500
 
 2. The XDP throughput is low
 
-On machines with out **cache direct technology** (e.g., DDIO) technology the
-network XDP will experience many cache misses limiting the achieved throughput.
+On machines without **cache direct technology** (e.g., DDIO) the
+network driver (eBPF/XDP) will experience many cache misses limiting the
+throughput.
 
