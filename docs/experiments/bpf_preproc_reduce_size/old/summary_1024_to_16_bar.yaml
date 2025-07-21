@@ -1,0 +1,25 @@
+figsize: [4.0,2.0]
+title:
+x: ["UDP Socket\n(isolated)", "SK_SKB\nverdict", "TC", " XDP"]
+y: [
+  [545, 0, 0, 0],
+  [0, 140, 0, 0],
+  [0, 0, 505, 0],
+  [0, 0, 0, 512],
+]
+yticks: [0, 100, 200, 300, 400, 500, 600]
+bar_width: 0.25
+ylabel: "Throughput (Kpps)"
+output: "summary_1k_to_16.pdf"
+grid: true
+ax_below: false
+legend: false
+annotate:
+  - xy: [-0.10, 550]
+    text: 545
+  - xy: [0.90, 145]
+    text: 140
+  - xy: [1.90, 510]
+    text: 505
+  - xy: [2.80, 517]
+    text: 512

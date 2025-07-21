@@ -1,0 +1,170 @@
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       88.0    61.5    23.2    32.7    34.6    60.2   183.2   213.7   251.4   282.3   323.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49941.2 (998825 / 20.0s)
+
+Total Issued Gets = 49941.5 (998831 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 0
+Skipped TXs = 0 (0.0%)
+
+RX 1228554750 bytes :   58.6 MB/s
+TX  214748665 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_1.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       99.6   430.3    23.2    32.1    33.7    65.7   211.2   240.8   269.1   301.6   487.3
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49958.3 (999167 / 20.0s)
+
+Total Issued Gets = 49962.8 (999256 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 84
+Skipped TXs = 0 (0.0%)
+
+RX 1228975410 bytes :   58.6 MB/s
+TX  214840040 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_2.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      102.0    79.3    23.2    32.4    34.2    74.7   211.2   239.2   266.5   296.9   348.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49956.3 (999127 / 20.0s)
+
+Total Issued Gets = 49956.7 (999134 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 7
+Skipped TXs = 0 (0.0%)
+
+RX 1228926210 bytes :   58.6 MB/s
+TX  214813810 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_3.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       97.7    84.3    23.2    33.5    35.8    68.6   203.3   236.2   264.3   293.6   368.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49961.8 (999237 / 20.0s)
+
+Total Issued Gets = 49962.4 (999249 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 7
+Skipped TXs = 0 (0.0%)
+
+RX 1229061510 bytes :   58.6 MB/s
+TX  214838535 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_4.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       90.7    88.9    23.2    32.4    34.2    60.3   189.8   229.2   263.9   293.4   329.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49957.8 (999157 / 20.0s)
+
+Total Issued Gets = 49958.3 (999167 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 7
+Skipped TXs = 0 (0.0%)
+
+RX 1228963110 bytes :   58.6 MB/s
+TX  214820905 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_5.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      105.0   359.5    23.2    33.7    36.0    77.8   214.3   241.7   269.1   297.5   368.7
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49942.8 (998856 / 20.0s)
+
+Total Issued Gets = 49946.6 (998933 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 70
+Skipped TXs = 0 (0.0%)
+
+RX 1228592880 bytes :   58.6 MB/s
+TX  214770595 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_6.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      102.4    80.0    23.2    32.5    34.4    74.1   211.9   239.0   267.2   296.4   330.5
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49951.1 (999022 / 20.0s)
+
+Total Issued Gets = 49951.8 (999036 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 7
+Skipped TXs = 0 (0.0%)
+
+RX 1228797060 bytes :   58.6 MB/s
+TX  214792740 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_7.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       94.7    73.5    23.2    33.6    35.4    65.0   196.6   235.0   262.9   295.5   329.9
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 50029.9 (1000598 / 20.0s)
+
+Total Issued Gets = 50030.0 (1000600 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 2
+Skipped TXs = 0 (0.0%)
+
+RX 1230735540 bytes :   58.7 MB/s
+TX  215129000 bytes :   10.3 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_8.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read      103.9   403.5    23.2    32.9    35.0    77.0   219.1   241.1   264.8   299.7   393.1
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49946.5 (998931 / 20.0s)
+
+Total Issued Gets = 49950.9 (999018 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 80
+Skipped TXs = 0 (0.0%)
+
+RX 1228685130 bytes :   58.6 MB/s
+TX  214788870 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_9.txt.
+using a fixed key 1
+#type       avg     std     min     5th    10th    50th    90th    95th    99th  99.9th 99.99th
+read       93.3   120.5    23.2    33.1    35.0    64.5   191.9   230.8   264.0   310.6   369.0
+update      0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+op_q        1.0     0.0     1.0     1.0     1.0     1.1     1.1     1.1     1.1     1.1     1.1
+
+Total QPS = 49957.1 (999142 / 20.0s)
+
+Total Issued Gets = 49958.4 (999168 / 20.0s)
+
+Misses = 0 (0.0%)
+Retransmitted TXs = 20
+Skipped TXs = 0 (0.0%)
+
+RX 1228944660 bytes :   58.6 MB/s
+TX  214821120 bytes :   10.2 MB/s
+Saving latency samples to /home/farbod/socket_partial_offload/baseline/m1_lat_samples_10.txt.

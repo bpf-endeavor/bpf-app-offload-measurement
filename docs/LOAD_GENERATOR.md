@@ -10,9 +10,15 @@ Our test environment is two servers connected back to back
   |   [eBPF]<-|----|->[ client ] |
   |           |    |             |                                
   +-----------+    +-------------+                               
-                                                   
- Device Under Test
+                          *
+                         /_\
+                        /___\
+                          │
+                          │
+            We are setting up this one
 ```
+
+For preparing the DUT  machine look at [this instructions](./DUT.md).
 
 Clients we need:
 

@@ -1,0 +1,4 @@
+Used dpdk-client-server to generate load (1500 B packets) [1458 byte payload]
+command:
+	sudo ./build/app -a 17:00.0 -l 1 -- --client --ip-local 192.168.200.102 --ip-dest 192.168.200.101 --port-dest 8080 --duration 10 --payload 1458 --batch 32
+

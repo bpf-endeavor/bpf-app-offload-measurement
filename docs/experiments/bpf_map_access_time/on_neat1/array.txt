@@ -1,0 +1,600 @@
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382453.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 477612.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430094.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382132.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382327.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 437382.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 573250.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430064.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 431629.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382374.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382111.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382225.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382252.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 525531.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430070.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430072.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 477594.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429864.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 389622.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382086.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382308.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430025.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382137.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382235.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382347.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382323.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 477571.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430079.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 437163.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382247.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382441.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 389519.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382199.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382261.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382276.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429875.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 477559.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429873.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429855.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382330.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382174.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430051.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430110.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382287.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429854.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 525497.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429872.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 402371.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429864.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430067.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382145.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382146.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382188.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382158.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429960.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382312.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382097.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429847.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429968.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429926.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 389535.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430034.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429807.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382254.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382140.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382247.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382294.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430059.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429864.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382147.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429955.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429832.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382233.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 414923.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429848.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429860.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 390113.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382143.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382087.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382142.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 430042.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382136.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382110.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 390672.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382099.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 541426.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 437656.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429923.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382088.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382350.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 525433.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 477566.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429836.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382146.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382104.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 382371.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 389212.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 429883.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 572987.000000
+return value: 1
+XDP_DROP
+Input file is larger than buffer!
+BPF binary: ./build/map_lookup.o
+Program fd: 5
+benchmark res: 393427.000000
+return value: 1
+XDP_DROP

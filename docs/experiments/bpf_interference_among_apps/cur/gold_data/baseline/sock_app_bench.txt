@@ -1,0 +1,6 @@
+Hit Ctrl-C to stop ...
+
+ran for 30.021111 sec
+avg rate: 4296.04
+num samples: 128972
+writing to samples.txt

@@ -1,0 +1,27 @@
+figsize: [4.0,2.0]
+subplots:
+  - lines:
+      - label: 'Reduced message size'
+        x: [0, 10, 20, 30, 40, 50, 60, 70,80, 90, 95]
+        y: [934562.0, 937924.0, 959816.0, 945496.0, 982790.0, 950215.0, 960147.0, 969025.0, 982922.0, 968179.0, 979163.0]
+          # yerr: [3595.0, 2066.0, 1762.0, 1496.0, 12526.0, 1547.0, 2850.0, 6095.0, 5907.0, 3747.0, 1029.0]
+        scale: 0.001
+        marker: 'd'
+        markersize: 3
+        color: 'tab:red'
+      - label: 'Original message size'
+        x: [-5, 100]
+        y: [934562.0, 934562.0]
+        scale: 0.001
+        marker: ''
+        color: 'black'
+        linestyle: 'dotted'
+    ylabel: "Throughput (kpps)"
+    xlabel: "Payload reduction percentage"
+    yticks: [0, 300, 600, 900, 1200]
+    xticks: [0, 20, 40, 60, 80, 100]
+    xtick_labels: ['0%', '20%', '40%', '60%', '80%', '100%']
+    xlim: [-1, 100]
+    ax_below: true
+    legend: true
+output: "summary_effect.pdf"

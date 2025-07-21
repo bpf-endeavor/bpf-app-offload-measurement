@@ -1,0 +1,41 @@
+figsize: [4.0, 2.0]
+subplots:
+  - lines:
+    - label: "without BMC"
+      data: './gold_data/baseline/samples.txt'
+      scale: 0.001
+      color: "black"
+    - label: "with BMC"
+      data: './gold_data/with_bpf_offload/samples.txt'
+      color: "tab:green"
+      scale: 0.001
+      linestyle: '--'
+    ylabel: 'CDF'
+    xlabel: 'Response latency (us)'
+    xlim: [0, 300]
+    yticks: [0, 0.5, 1.0]
+    # title: "(2) HOLB of other applications"
+    legend: true
+    legend:
+    #   outside: true
+      ncol: 1
+      loc: 'lower right'
+
+    annotate:
+      - xy: [57.9, 0.5]
+        xytext: [10, 0.6]
+        text: '57.9 us'
+        fontsize: 9
+        arrowprops:
+          arrowstyle: "->"
+          connectionstyle: "angle,angleA=90,angleB=0,rad=10"
+      - xy: [89.0, 0.5]
+        xytext: [100, 0.05]
+        text: '89.0 us'
+        fontsize: 9
+        arrowprops:
+          arrowstyle: "->"
+          connectionstyle: "angle,angleA=90,angleB=-10,rad=5"
+# tight_layout:
+#   rect: [0, 0, 1, 0.90]
+output: "bpf_sock_holb_ecdf.pdf"
