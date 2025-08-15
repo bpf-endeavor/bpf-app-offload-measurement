@@ -34,12 +34,24 @@ Get two sm110p servers from Cloudlab Wisconsin cluster with Ubuntu-22 image.
 * For preparing the load-generator machine look at [LOAD_GENERATOR.md](./LOAD_GENERATOR.md).
 * For preparing the DUT  machine look at [DUT.md](./DUT.md).
 
+**Placeholders & variables used in the commands:**
+
+Through out this doccument you will observer following variables in the commands.
+You should replace them with appropriate value depending on your setup and environment.
+Optionally you can also define them in your bash environment (e.g., export them in `$HOME/.bashrc`).
+
+* `$NET_IFACE`: name of the interface to which you want to use in your experiment. For example the interface to which you want to attach your XDP/eBPF program. You can find all network interfaces on your machine using `ip addr` command.
+* `$NET_PCI`: the  PICe address of your `$NET_IFACE`. You can find this with `cat /sys/class/net/$NET_IFACE/device/uevent | grep PCI_SLOT_NAME`.
+* `$NET_IFACE_INDEX`: this is the index of your experiment inteface `$NET_IFACE`. You can find it using `ip -json addr show $NET_IFACE | jq .[0].ifindex` command.
+* `$DUT_IP`: This is the IP address of your DUT machine that you want to use during your experiment. You can find this using `ip addr` command.
+* `LOAD_GEN_IP`: This is the IP address of your load generator machine. You can find this using `ip addr` command.
+
 
 ## Table 1:
 
 ### Experiment
 
-**Overhead of Each Hook (Preparing Context, Entring, and Exiting The Hook**
+**Overhead of Each Hook (Preparing Context, Entering, and Exiting The Hook)**
 
 Run an iperf server on port **8080**.
 
@@ -71,7 +83,7 @@ Test each hook separately.
 Run iperf client and generate traffic toward the server. The overhead of each hook is logged in `dmesg`.
 
 ```
-iperf -c 192.168.1.1 -p 8080 -l 128 -t 100
+iperf -c $DUT_IP -p 8080 -l 128 -t 100
 ```
 
 Seeing the log:
@@ -86,14 +98,13 @@ sudo dmesg -w
 
 **Time to reach to a hook**
 
-For measuring time to reach a hook run a UDP iperf server on port **3030**
+For measuring time to reach a hook run a UDP iperf server on port **3030** on DUT machine
 
 ```
 iperf -s -u -p 3030
 ```
 
-Attach a minimal program to TC, or SK\_SKB.
-Test each hook separately.
+On that machine, attach a minimal program to TC, or SK\_SKB (test each hook separately).
 
   - for SK\_SKB:
 
@@ -111,7 +122,7 @@ Run iperf client and generate traffic toward the server. The time to reach each
 hook is logged in `dmesg`.
 
 ```
-iperf -u -c 192.168.1.1 -p 3030 -l 128 -t 100
+iperf -u -c $DUT_IP -p 3030 -l 128 -t 100
 ```
 
 Seeing the log:
@@ -125,19 +136,21 @@ sudo dmesg -w
 
 ## Figure 3
 
-### Experiment
+### Description
 
-This experiment meausre the latency of echoing back packets at different hooks.
+This experiment measure the latency of echoing back packets at different hooks.
+
+### Experiment
 
 Use the client provided at `./scripts/echo_latency` to measure the latency.
 At the top of `./scripts/echo_latency/main.c` file you can hard code the client
 and server's IP address and compile the program using `make` command.
 
-The socket echo server is `server_bounce` that you can run with the following
+The echo server is `server_bounce` that you can run with the following
 command.
 
 ```
-sudo ./build/server_bounce 4 192.168.1.1 8080 0
+sudo ./build/server_bounce 4 $DUT_IP 8080 0
 ```
 
 The arguments of program is as shown below.
@@ -149,7 +162,9 @@ usage: prog <core> <ip> <port> <mode>
 
 * For Socket:
 
-  - Run `server_bounce` and run the provided client. Terminate the client after some time, it will write the measured latencies in a filed named `samples.txt` at the current directory. The values are in *nanoseconds*.
+  - Run `server_bounce` and run the provided client.
+  - Run the provided client on you load generator machine.
+  - Terminate the client after 100 seconds. It will write the measured latencies in a filed named `samples.txt` at the current directory. The values are in *nanoseconds*.
 
 * For SK\_SKB:
 
@@ -162,20 +177,20 @@ usage: prog <core> <ip> <port> <mode>
   - Run `server_hook_timestamp` program! (Our SK\_SKB programs can automatically attach to TCP socket but UDP sockets should explicitly inserted! That's the reason why we use different program instead of `server_bounce`.)
 
   ```
-  sudo ./build/server_hook_timestamp 10 192.168.1.1 8080 0 --connect-client 192.168.1.2 --connect-client-port 3000
+  sudo ./build/server_hook_timestamp 10 $DUT_IP 8080 0 --connect-client $LOAD_GEN_IP --connect-client-port 3000
   ```
 
-  - Run the client
+  - Run the client similar to previous case
 
 * For TC:
 
-  - Find the interface index of your experiment NIC using
+  - Find the interface index of your experiment NIC (`$NET_IFACE_INDEX`) using
 
   ```
   ip -json addr show $NET_IFACE
   ```
 
-  - Update the `./src/bpf/bpf_redirect.bpf.c (line: 191)` file with the index you found and compile (run `make`).
+  - Update the `./src/bpf/bpf_redirect.bpf.c (line: 191)` file with the index you found (`$NET_IFACE_INDEX`) and compile (run `make`).
 
 ![Location where the interface index should be hard coded along with some comments on how to get the index.](./images/tc_redirect_iface_index.png)
 
@@ -185,7 +200,7 @@ usage: prog <core> <ip> <port> <mode>
   sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --tc tc_prog
   ```
 
-  - Run the client
+  - Run the client similar to previous case
 
 * For XDP:
 
@@ -195,7 +210,7 @@ usage: prog <core> <ip> <port> <mode>
   sudo ./build/loader -i $NET_IFACE -b ./build/bpf/bpf_redirect.o --xdp xdp_prog
   ```
 
-  - Run the client
+  - Run the client similar to previous case
 
 
 ## Figure 4
@@ -208,7 +223,7 @@ usage: prog <core> <ip> <port> <mode>
 launch a Memcached server.
 
 ```
-SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE ./run_server_v2.sh
+SERVER_IP=$DUT_IP NET_IFACE=$NET_IFACE ./run_server_v2.sh
 ```
 
 * Run the Mutilate client. For measuring the maximum throughput sustained by
@@ -219,15 +234,15 @@ The script runs the throughput measurement 40 times.
 
 ![Mutilate reporting the throughput of Memcached](./images/mutilate_tput_exp.png)
 
-**BMC: Fast Path for Memached**
+**BMC: Fast Path for Memcached**
 
 * Use `run_server_v2.sh` with `bmc` argument to run Memcached with BMC. The `iface index` value is the one you found using `ip -json addr show $NET_IFACE`.
 
 ```
-SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE NET_IFACE_INDEX=<iface index> ./run_server_v2.sh bmc
+SERVER_IP=$DUT_IP NET_IFACE=$NET_IFACE NET_IFACE_INDEX=$NET_IFACE_INDEX ./run_server_v2.sh bmc
 ```
 
-* Run Mutilate. Use the same script as above (`run_mutilate.sh`).
+* Run Mutilate similar to previouse case.
 
 
 ## Figure 5 & Figure 6
@@ -243,13 +258,13 @@ figures 5 and 6 in the paper.
 * Running the Memcached (baseline)
 
   ```
-  SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE ./run_server_v2.sh
+  SERVER_IP=$DUT_IP NET_IFACE=$NET_IFACE ./run_server_v2.sh
   ```
 
 * Running Memcached with BMC
 
   ```
-  SERVER_IP=192.168.1.1 NET_IFACE=$NET_IFACE NET_IFACE_INDEX=<iface index> ./run_server_v2.sh bmc
+  SERVER_IP=$DUT_IP NET_IFACE=$NET_IFACE NET_IFACE_INDEX=$NET_IFACE_INDEX ./run_server_v2.sh bmc
   ```
 
 After running the server, on the load-generator machine use script
@@ -325,7 +340,7 @@ size in the kernel increase the throughput for user-space applications?
 Run a user-space program that just drops requests and reports throughput.
 
 ```
-sudo ./build/server_drop 10 192.168.1.1 8080 0
+sudo ./build/server_drop 10 $DUT_IP 8080 0
 ```
 
 We use the `bpf_summarize_3` benchmark for this experiment which reduces the

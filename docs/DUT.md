@@ -27,11 +27,35 @@ Clone the repository and run `make prepare_env`.
 
 ### XDP DROP Perf Test
 
-To make sure everything is almost right, do a XDP drop performance test.
+To make sure everything is right, do a XDP drop performance test:
 
-> TODO: ... write it
+**Part 1: Load XDP drop program**
 
-> If the performance is low there is something wrong.
+on DUT machine:
+
+```
+cd ./src/
+sudo ./build/loader -b ./build/bpf/bpf_drop_perf.o -i $NET_IFACE --xdp xdp_prog
+```
+
+**Part 2: Generate traffic toward program**
+
+on load generator machine:
+
+```
+cd ./dpdk-client-server/
+sudo ./build/app -n 4 -a $NET_PCI --lcores 0@(2,4) -- --client --local-ip 192.168.1.2 --dest-ip 192.168.1.1 --duration 60
+```
+
+**Part 3: Monitor the logs**
+
+on DUT machine:
+
+```
+sudo cat /sys/kernel/tracing/trace_pipe
+```
+
+> If the performance is low (less than 7 Mpps) there is something wrong.
 
 
 ### Enable Measuring Overhead of Hooks and Time to Reach to Different Hooks
