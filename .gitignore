@@ -1,9 +1,13 @@
-*/build/*
+*.o
+*.a
+*.so
+*.pyc
+build/
 others/
 deps/
 tags
 nohup.out
-src/include/vmlinux.h
+vmlinux.h
 # some files that are too large to push
 docs/experiments/bpf_holb/cur/socket_partial_offload.tar.gz
 docs/experiments/bpf_holb/cur/old/
