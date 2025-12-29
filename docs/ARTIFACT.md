@@ -44,7 +44,7 @@ Optionally you can also define them in your bash environment (e.g., export them 
 * `$NET_PCI`: the  PICe address of your `$NET_IFACE`. You can find this with `cat /sys/class/net/$NET_IFACE/device/uevent | grep PCI_SLOT_NAME`.
 * `$NET_IFACE_INDEX`: this is the index of your experiment inteface `$NET_IFACE`. You can find it using `ip -json addr show $NET_IFACE | jq .[0].ifindex` command.
 * `$DUT_IP`: This is the IP address of your DUT machine that you want to use during your experiment. You can find this using `ip addr` command.
-* `LOAD_GEN_IP`: This is the IP address of your load generator machine. You can find this using `ip addr` command.
+* `$LOAD_GEN_IP`: This is the IP address of your load generator machine. You can find this using `ip addr` command.
 
 
 ## Table 1:
@@ -336,7 +336,7 @@ footprint and less memory copy overhead. The question is will reducing packet
 size in the kernel increase the throughput for user-space applications?
 
 ### Experiment
-
+`
 Run a user-space program that just drops requests and reports throughput.
 
 ```

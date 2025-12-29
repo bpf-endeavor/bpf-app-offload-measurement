@@ -1,0 +1,17 @@
+figsize: [3.0, 2.0]
+scale: 0.001
+values: [
+  './sock_samples.txt',
+  './skskb_samples.txt',
+  './xdp_samples.txt',
+]
+medianprops:
+  color: 'tab:red'
+labels: ['Socket', 'SK_SKB', 'XDP']
+showfliers: false
+ylabel: 'Req. Time (us)'
+yticks: [30, 40, 50]
+label_percision: 1
+grid: true
+bar_width: 0.35
+output: 'echo_lat_box_presentation.png'
